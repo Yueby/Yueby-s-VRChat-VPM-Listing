@@ -1,0 +1,17 @@
+{
+    "name":"Yueby's VPM Listing",
+    "id":"com.yueby.vpm",
+    "author":{
+        "name":"Yueby"
+    },
+    "description":"VPM-Compatible repo for Yueby's packages",
+    "infoLink":{
+        "url":"https://github.com/Yueby/yueby-vrc-vpm-listing",
+        "text":"View on Github"
+    },
+    "url":"https://vpm.thry.dev/index.json",
+    "githubRepos":[
+        "Yueby/AvatarTools"
+    ],
+    "packages":[]
+}
