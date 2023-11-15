@@ -1,3 +1,5 @@
+# 修改了 35行、48行、65行、89行
+
 name: Build Release
 
 on: 
@@ -55,7 +57,7 @@ jobs:
 
       # Zip the Package for release
       - name: Create Package Zip
-        working-directory: #"${{ env.packagePath }}"
+        working-directory: "${{ env.packagePath }}"
         run: zip -r "${{ github.workspace }}/${{ env.zipFile }}" .
       
       # Build a list of .meta files for future use
