@@ -49,7 +49,7 @@ namespace Yueby.AvatarTools.Other
             });
         }
 
-        [MenuItem("Tools/YuebyTools/Avatar/Other/Remove Clothes", false, 20)]
+        [MenuItem("Tools/YuebyTools/Avatar/Other/Remove Clothes", false, 30)]
         private static void Open()
         {
             var window = GetWindow<RemoveClothesTool>();

@@ -30,7 +30,7 @@ namespace Yueby.AvatarTools.Other
             });
         }
 
-        [MenuItem("Tools/YuebyTools/Avatar/Other/Sync Bone Transform", false, 20)]
+        [MenuItem("Tools/YuebyTools/Avatar/Other/Sync Bone Transform", false, 41)]
         private static void Open()
         {
             var window = GetWindow<SyncBoneTransform>();

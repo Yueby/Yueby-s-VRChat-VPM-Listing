@@ -80,7 +80,7 @@ namespace Yueby.AvatarTools.Other
             });
         }
 
-        [MenuItem("Tools/YuebyTools/Avatar/Other/Rename Object", false, 20)]
+        [MenuItem("Tools/YuebyTools/Avatar/Other/Rename Object", false, 31)]
         private static void Open()
         {
             var window = GetWindow<RenameObjectTool>();
