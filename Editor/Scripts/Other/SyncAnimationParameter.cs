@@ -135,7 +135,11 @@ namespace Yueby.AvatarTools.Other
                     if (GUILayout.Button("应用"))
                     {
                         _isPreview = false;
+
+                        Undo.RegisterCompleteObjectUndo(_meshRenderer, "Apply BlendShapes");
                         ApplyToMesh();
+                        
+                        ShowNotification(new GUIContent("已应用形态键！CTRL+Z撤销"));
                     }
                 });
             });
