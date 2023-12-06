@@ -123,7 +123,7 @@ namespace Yueby.AvatarTools.DressingTools
             FocusAvatarWhenGetDescriptor();
         }
 
-        [MenuItem("Tools/YuebyTools/Avatar/DressingTool")]
+        [MenuItem("Tools/YuebyTools/Avatar/DressingTool",false,10)]
         public static void OpenWindow()
         {
             _window = GetWindow<DressingToolEditorWindow>();
@@ -407,12 +407,12 @@ namespace Yueby.AvatarTools.DressingTools
 
                     if (_descriptor != null)
                     {
-                        YuebyUtil.Line(LineType.Vertical, 2f, 5f, 40f);
+                        YuebyUtil.Line(LineType.Vertical);
                         EditorGUI.BeginChangeCheck();
                         _clothes = (GameObject)YuebyUtil.ObjectFieldVertical(_clothes, _localization.Get("configure_clothes_label"), typeof(GameObject));
                         if (EditorGUI.EndChangeCheck()) OnClothesChanged();
                     }
-                });
+                }, GUILayout.MaxHeight(40));
                 if (_descriptor == null)
                 {
                     EditorGUILayout.HelpBox(_localization.Get("configure_avatar_tip"), MessageType.Info);

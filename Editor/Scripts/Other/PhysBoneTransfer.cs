@@ -2,6 +2,7 @@
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
+using VRC.Core;
 using VRC.Dynamics;
 using VRC.SDK3.Dynamics.PhysBone.Components;
 using Yueby.Utils;
@@ -32,9 +33,9 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
                 YuebyUtil.HorizontalEGL(() =>
                 {
                     _origin = (Transform)YuebyUtil.ObjectFieldVertical(_origin, "原Armature", typeof(Transform));
-                    YuebyUtil.Line(LineType.Vertical, 2f, 5f, 40f);
+                    YuebyUtil.Line(LineType.Vertical);
                     _current = (Transform)YuebyUtil.ObjectFieldVertical(_current, "现Armature", typeof(Transform));
-                });
+                },GUILayout.MaxHeight(40));
             });
 
             YuebyUtil.VerticalEGLTitled("设置", () =>
@@ -54,7 +55,7 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
             if (originRenderers.Length <= 0) return;
             foreach (var originRenderer in originRenderers)
             {
-                var targetPath = originRenderer.transform.GetHierarchyPath().Replace($"{_origin.name}", $"{_current.name}");
+                var targetPath = VRC.Core.ExtensionMethods.GetHierarchyPath(originRenderer.transform).Replace($"{_origin.name}", $"{_current.name}");
                 var targetGo = GameObject.Find(targetPath);
                 if (!targetGo) continue;
                 var targetRenderer = targetGo.GetComponent<Renderer>();
@@ -81,7 +82,7 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
         {
             var physBone = child.GetComponent<VRCPhysBone>();
             if (physBone == null) return;
-            var targetPath = child.GetHierarchyPath().Replace($"{_origin.name}", $"{_current.name}");
+            var targetPath = VRC.Core.ExtensionMethods.GetHierarchyPath(child).Replace($"{_origin.name}", $"{_current.name}");
             var targetGo = GameObject.Find(targetPath);
             if (targetGo != null)
             {
@@ -100,7 +101,7 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
 
                 if (physBone.rootTransform != null)
                 {
-                    var rootTransGo = GameObject.Find(physBone.rootTransform.GetHierarchyPath().Replace($"{_origin.name}", $"{_current.name}"));
+                    var rootTransGo = GameObject.Find(VRC.Core.ExtensionMethods.GetHierarchyPath(physBone.rootTransform).Replace($"{_origin.name}", $"{_current.name}"));
                     targetPhysBone.rootTransform = rootTransGo.transform;
                 }
                 else
@@ -132,7 +133,7 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
             var list = new List<VRCPhysBoneColliderBase>();
             foreach (var col in colliders)
             {
-                var targetPath = col.transform.GetHierarchyPath().Replace($"{_origin.name}", $"{_current.name}");
+                var targetPath = VRC.Core.ExtensionMethods.GetHierarchyPath(col.transform).Replace($"{_origin.name}", $"{_current.name}");
                 var targetGo = GameObject.Find(targetPath);
 
                 if (targetGo != null)
@@ -151,7 +152,7 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
                 }
                 else
                 {
-                    var parentPath = col.transform.parent.GetHierarchyPath().Replace($"{_origin.name}", $"{_current.name}");
+                    var parentPath = VRC.Core.ExtensionMethods.GetHierarchyPath(col.transform.parent).Replace($"{_origin.name}", $"{_current.name}");
                     var parent = GameObject.Find(parentPath);
 
                     if (parent != null)

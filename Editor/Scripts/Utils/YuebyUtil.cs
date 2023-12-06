@@ -136,6 +136,20 @@ namespace Yueby.Utils
             return foldout;
         }
 
+        public static bool Toggle(bool foldout, string label, float labelWidth = 0)
+        {
+            HorizontalEGL(() =>
+            {
+                foldout = EditorGUILayout.Toggle(foldout, GUILayout.Width(22));
+                if (labelWidth == 0)
+                    EditorGUILayout.LabelField(new GUIContent(label));
+                else
+                    EditorGUILayout.LabelField(new GUIContent(label), GUILayout.Width(labelWidth));
+            });
+
+            return foldout;
+        }
+
         public static bool Radio(bool foldout, string label, GUIStyle style)
         {
             HorizontalEGL(() =>
@@ -178,13 +192,26 @@ namespace Yueby.Utils
 
         public static bool Foldout(bool foldout, string content, UnityAction action, bool isLine = false)
         {
-            foldout = EditorGUILayout.Foldout(foldout, content);
-            if (foldout)
+            var isContentEmpty = string.IsNullOrEmpty(content);
+
+
+            if (isContentEmpty)
             {
                 action?.Invoke();
                 if (isLine)
                     Line();
             }
+            else
+            {
+                foldout = EditorGUILayout.Foldout(foldout, content);
+                if (foldout)
+                {
+                    action?.Invoke();
+                    if (isLine)
+                        Line();
+                }
+            }
+
 
             return foldout;
         }
@@ -936,15 +963,18 @@ namespace Yueby.Utils
                 EditorGUILayout.Space(space);
         }
 
-        public static void VerticalEGLTitled(string title, UnityAction action)
+        public static void VerticalEGLTitled(string title, UnityAction action, params GUILayoutOption[] layout)
         {
-            TitleLabelField(title);
-            VerticalEGL(new GUIStyle("Badge"), () =>
+            VerticalEGL(() =>
             {
-                // Invoke
-                SpaceArea(() => { action?.Invoke(); }, true);
-            });
-            EditorGUILayout.Space(5);
+                TitleLabelField(title);
+                VerticalEGL(new GUIStyle("Badge"), () =>
+                {
+                    // Invoke
+                    SpaceArea(() => { action?.Invoke(); }, true);
+                }, layout);
+                EditorGUILayout.Space(5);
+            }, layout);
         }
 
         #endregion
@@ -959,23 +989,41 @@ namespace Yueby.Utils
             return obj;
         }
 
-        public static void Line(LineType type = LineType.Horizontal, float thickness = 2f, float topDownMargin = 5f, float height = 0, UnityAction onClick = null)
+        // public static void Line(LineType type = LineType.Horizontal, float thickness = 2f, float topDownMargin = 5f, float height = 0, UnityAction onClick = null)
+        // {
+        //     EditorGUILayout.Space(topDownMargin);
+        //
+        //     switch (type)
+        //     {
+        //         case LineType.Horizontal:
+        //             if (GUILayout.Button("", GUILayout.Height(thickness), GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(false)))
+        //                 onClick?.Invoke();
+        //             break;
+        //         case LineType.Vertical:
+        //             if (GUILayout.Button("", GUILayout.Width(thickness), GUILayout.Height(height), GUILayout.ExpandHeight(false), GUILayout.ExpandWidth(false)))
+        //                 onClick?.Invoke();
+        //             break;
+        //     }
+        //
+        //     EditorGUILayout.Space(topDownMargin);
+        // }
+
+        public static void Line(LineType type = LineType.Horizontal, float thickness = 1f, float space = 6)
         {
-            EditorGUILayout.Space(topDownMargin);
-
-            switch (type)
+            if (type == LineType.Horizontal)
             {
-                case LineType.Horizontal:
-                    if (GUILayout.Button("", GUILayout.Height(thickness), GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(false)))
-                        onClick?.Invoke();
-                    break;
-                case LineType.Vertical:
-                    if (GUILayout.Button("", GUILayout.Width(thickness), GUILayout.Height(height), GUILayout.ExpandHeight(false), GUILayout.ExpandWidth(false)))
-                        onClick?.Invoke();
-                    break;
+                GUILayout.Label("", GUILayout.Height(space), GUILayout.ExpandWidth(true));
+                var lastRect = GUILayoutUtility.GetLastRect();
+                GUI.Box(new Rect(lastRect.x, lastRect.y + space / 2, lastRect.width, thickness), "");
+                GUI.Box(new Rect(lastRect.x, lastRect.y + space / 2, lastRect.width, thickness), "");
             }
-
-            EditorGUILayout.Space(topDownMargin);
+            else if (type == LineType.Vertical)
+            {
+                GUILayout.Label("", GUILayout.Width(space), GUILayout.ExpandHeight(true));
+                var lastRect = GUILayoutUtility.GetLastRect();
+                GUI.Box(new Rect(lastRect.x + space / 2, lastRect.y, thickness, lastRect.height), "");
+                GUI.Box(new Rect(lastRect.x + space / 2, lastRect.y, thickness, lastRect.height), "");
+            }
         }
 
         public static object CloneObject(object o)
@@ -1004,19 +1052,25 @@ namespace Yueby.Utils
                 style.alignment = TextAnchor.MiddleCenter;
                 EditorGUILayout.LabelField(label, style, GUILayout.Height(25));
 
-                style.fontStyle = FontStyle.Normal;
-                style.fontSize = 12;
-                EditorGUILayout.LabelField(version + " [Yueby]", style);
-            }, true, 20);
+                // style.fontStyle = FontStyle.Normal;
+                // style.fontSize = 12;
+
+                // EditorGUILayout.LabelField(version + " [Yueby]", style);
+
+                // var rect = GUILayoutUtility.GetLastRect();
+                // rect.y += EditorGUIUtility.singleLineHeight;
+
+                // EditorGUI.LabelField(rect, version, style);
+            }, true, 10);
         }
 
-        public static void TitleLabelField(string label)
+        public static void TitleLabelField(string label, params GUILayoutOption[] options)
         {
             var style = (GUIStyle)CloneObject(GUI.skin.label);
             style.fontStyle = FontStyle.Bold;
             style.fontSize = 12;
             style.alignment = TextAnchor.MiddleLeft;
-            EditorGUILayout.LabelField(label, style);
+            EditorGUILayout.LabelField(label, style, options);
         }
 
         public static Object ObjectFieldVertical(Object target, string label, Type type, bool allowSceneObjects = true)
@@ -1053,11 +1107,11 @@ namespace Yueby.Utils
             //     Debug.Log(AssetDatabase.GUIDToAssetPath(guidPath));
             // }
 
-            if (guidPathArray.Length > 1)
-            {
-                Debug.LogError("有同名文件" + scriptName + "获取路径失败");
-                return null;
-            }
+            // if (guidPathArray.Length > 1)
+            // {
+            //     Debug.LogError("有同名文件" + scriptName + "获取路径失败");
+            //     return null;
+            // }
 
             //将字符串中得脚本名字和后缀统统去除掉
             var result = AssetDatabase.GUIDToAssetPath(guidPathArray[0]).Replace(@"/" + scriptName + ".cs", "");
@@ -1106,6 +1160,41 @@ namespace Yueby.Utils
 
             if (type == 1)
                 EditorGUILayout.Space();
+        }
+
+        public static T AddChildAsset<T>(Object targetAsset, bool isAutoRefresh = true) where T : ScriptableObject
+        {
+            var asset = ScriptableObject.CreateInstance<T>();
+            asset.name = $"{typeof(T).Name}";
+            AssetDatabase.AddObjectToAsset(asset, targetAsset);
+
+            if (isAutoRefresh)
+            {
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+            }
+
+            return asset;
+        }
+
+        public static void SaveAndRefreshAssets()
+        {
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+        }
+
+        public static void RemoveChildAsset(Object item, bool isAutoRefresh = true)
+        {
+            if (item == null) return;
+
+            AssetDatabase.RemoveObjectFromAsset(item);
+            Object.DestroyImmediate(item, true);
+
+            if (isAutoRefresh)
+            {
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+            }
         }
     }
 

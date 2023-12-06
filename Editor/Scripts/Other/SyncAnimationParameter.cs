@@ -107,7 +107,7 @@ namespace Yueby.AvatarTools.Other
 
             if (_animationClip != null)
             {
-                _bsRL.DoLayout("动画片段内参数", 400f);
+                _bsRL.DoLayout("动画片段内参数", new Vector2(-1, 400));
             }
             else
                 EditorGUILayout.LabelField("请选择你想要的动画片段(AnimationClip)!");
@@ -138,7 +138,7 @@ namespace Yueby.AvatarTools.Other
 
                         Undo.RegisterCompleteObjectUndo(_meshRenderer, "Apply BlendShapes");
                         ApplyToMesh();
-                        
+
                         ShowNotification(new GUIContent("已应用形态键！CTRL+Z撤销"));
                     }
                 });

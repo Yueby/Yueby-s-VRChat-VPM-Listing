@@ -18,6 +18,7 @@ namespace Yueby.Utils
         public UnityAction<Rect, int, bool, bool> OnDraw;
         public UnityAction<ReorderableList, Object> OnRemove;
         public UnityAction<Object, int> OnSelected;
+        public ReorderableList List { get; }
 
         public YuebyReorderableList(SerializedObject serializedObject, SerializedProperty serializedProperty, float elementHeight, bool isShowAddButton, bool isShowRemoveButton, bool isPPTR = false)
         {
@@ -30,16 +31,23 @@ namespace Yueby.Utils
                 footerHeight = 0,
                 elementHeight = elementHeight,
                 drawElementCallback = OnListDraw,
-
-                onSelectCallback = reorderableList =>
+                onMouseUpCallback = list =>
                 {
-                    var item = isPPTR ? serializedProperty.GetArrayElementAtIndex(reorderableList.index).objectReferenceValue : null;
-                    OnListSelected(item, reorderableList.index);
+                    var item = isPPTR ? serializedProperty.GetArrayElementAtIndex(list.index).objectReferenceValue : null;
+                    OnListSelected(item, list.index);
                 },
+
+
                 onAddCallback = _ =>
                 {
                     serializedProperty.arraySize++;
                     OnListAdd();
+
+                    if (List.count <= 1)
+                    {
+                        List.index = 0;
+                        List.onMouseUpCallback?.Invoke(List);
+                    }
                 },
                 onRemoveCallback = reorderableList =>
                 {
@@ -47,14 +55,17 @@ namespace Yueby.Utils
                     if (isPPTR)
                         serializedProperty.GetArrayElementAtIndex(reorderableList.index).objectReferenceValue = null;
                     serializedProperty.DeleteArrayElementAtIndex(reorderableList.index);
-                    
-                    Debug.Log(serializedProperty.arraySize);
-                    OnListRemove(reorderableList, item);
 
+                    OnListRemove(reorderableList, item);
                     if (reorderableList.count > 0 && reorderableList.index != 0)
-                        reorderableList.index--;
-                    
-                    
+                    {
+                        if (reorderableList.index == reorderableList.count)
+                        {
+                            reorderableList.index--;
+                        }
+
+                        List.onMouseUpCallback?.Invoke(List);
+                    }
                 },
                 onChangedCallback = list =>
                 {
@@ -68,104 +79,131 @@ namespace Yueby.Utils
             if (serializedProperty.arraySize > 0)
             {
                 List.index = 0;
+                List.onMouseUpCallback?.Invoke(List);
             }
         }
 
-        public ReorderableList List { get; }
 
-        public void DoLayout(string title, float maxHeight, UnityAction titleDraw = null)
+        public void DoLayout(string title, Vector2 area, UnityAction titleDraw = null, bool isNoBorder = false, bool hasFoldout = true)
         {
-            YuebyUtil.SpaceArea(() =>
+            var maxWidth = area.x;
+
+            if (hasFoldout)
             {
                 _isFoldout = YuebyUtil.Foldout(_isFoldout, title, () =>
                 {
-                    EditorGUILayout.Space();
-                    YuebyUtil.VerticalEGL("Badge", () =>
+                    YuebyUtil.VerticalEGL(() =>
                     {
-                        YuebyUtil.SpaceArea(() =>
-                        {
-                            // 绘制标题头
-                            YuebyUtil.HorizontalEGL(() =>
-                            {
-                                YuebyUtil.HorizontalEGL("Badge", () =>
-                                {
-                                    EditorGUILayout.LabelField($"{List.count}", EditorStyles.centeredGreyMiniLabel,
-                                        GUILayout.Width(25), GUILayout.Height(18));
-                                }, GUILayout.Width(25), GUILayout.Height(18));
-
-                                EditorGUILayout.Space();
-                                titleDraw?.Invoke();
-                                if (_isShowAddButton && GUILayout.Button("+", GUILayout.Width(25), GUILayout.Height(18)))
-                                    //添加
-                                    List.onAddCallback?.Invoke(List);
-
-                                EditorGUI.BeginDisabledGroup(List.count == 0 || List.index == -1);
-                                if (_isShowRemoveButton && GUILayout.Button("-", GUILayout.Width(25), GUILayout.Height(18))) List.onRemoveCallback?.Invoke(List);
-
-                                EditorGUI.EndDisabledGroup();
-                            });
-
-                            YuebyUtil.Line(LineType.Horizontal, 2, 0);
-                            // 绘制列表内容
-                            _scrollPos = YuebyUtil.ScrollViewEGL(() =>
-                            {
-                                if (List.count == 0)
-                                    EditorGUILayout.HelpBox("列表为空！", MessageType.Info);
-                                else
-                                    List?.DoLayoutList();
-                            }, _scrollPos);
-                        });
-                    }, option: GUILayout.MaxHeight(maxHeight));
+                        if (isNoBorder)
+                            YuebyUtil.VerticalEGL(() => { DrawContent(titleDraw); }, maxWidth > 0 ? GUILayout.MaxWidth(maxWidth) : GUILayout.ExpandWidth(true));
+                        else
+                            YuebyUtil.VerticalEGL("Badge", () => { DrawContent(titleDraw); }, maxWidth > 0 ? GUILayout.MaxWidth(maxWidth) : GUILayout.ExpandWidth(true));
+                        EditorGUILayout.Space(5);
+                    }, GUILayout.MaxHeight(area.y), maxWidth > 0 ? GUILayout.MaxWidth(maxWidth) : GUILayout.ExpandWidth(true));
                 });
-            });
+            }
+            else
+            {
+                YuebyUtil.VerticalEGL(() =>
+                {
+                    if (!string.IsNullOrEmpty(title))
+                        YuebyUtil.TitleLabelField(title, maxWidth > 0 ? GUILayout.MaxWidth(maxWidth) : GUILayout.ExpandWidth(true));
+
+                    if (isNoBorder)
+                        YuebyUtil.VerticalEGL(() => { DrawContent(titleDraw); }, maxWidth > 0 ? GUILayout.MaxWidth(maxWidth) : GUILayout.ExpandWidth(true));
+                    else
+                        YuebyUtil.VerticalEGL("Badge", () => { DrawContent(titleDraw); }, maxWidth > 0 ? GUILayout.MaxWidth(maxWidth) : GUILayout.ExpandWidth(true));
+                    EditorGUILayout.Space(5);
+                }, GUILayout.MaxHeight(area.y), maxWidth > 0 ? GUILayout.MaxWidth(maxWidth) : GUILayout.ExpandWidth(true));
+            }
         }
 
-        public void DoLayoutHeaderGroup(string title, float maxHeight, UnityAction titleDraw = null)
+        private void DrawContent(UnityAction titleDraw = null)
         {
             YuebyUtil.SpaceArea(() =>
             {
-                _isFoldout = YuebyUtil.FoldoutHeaderGroup(_isFoldout, title, () =>
+                // 绘制标题头
+                YuebyUtil.HorizontalEGL(() =>
                 {
-                    EditorGUILayout.Space();
-                    YuebyUtil.VerticalEGL("Badge", () =>
+                    YuebyUtil.HorizontalEGL("Badge", () =>
                     {
-                        YuebyUtil.SpaceArea(() =>
-                        {
-                            // 绘制标题头
-                            YuebyUtil.HorizontalEGL(() =>
-                            {
-                                YuebyUtil.HorizontalEGL("Badge",
-                                    () =>
-                                    {
-                                        EditorGUILayout.LabelField($"{List.count}", EditorStyles.centeredGreyMiniLabel,
-                                            GUILayout.Width(25), GUILayout.Height(18));
-                                    }, GUILayout.Width(25), GUILayout.Height(18));
+                        EditorGUILayout.LabelField($"{List.count}", EditorStyles.centeredGreyMiniLabel,
+                            GUILayout.Width(25), GUILayout.Height(18));
+                    }, GUILayout.Width(25), GUILayout.Height(18));
 
-                                EditorGUILayout.Space();
-                                titleDraw?.Invoke();
-                                if (GUILayout.Button("+", GUILayout.Width(25), GUILayout.Height(18)))
-                                    //添加
-                                    List.onAddCallback?.Invoke(List);
+                    EditorGUILayout.Space();
+                    titleDraw?.Invoke();
+                    if (_isShowAddButton && GUILayout.Button("+", GUILayout.Width(25), GUILayout.Height(18)))
+                        //添加
+                        List.onAddCallback?.Invoke(List);
 
-                                EditorGUI.BeginDisabledGroup(List.count == 0 || List.index == -1);
-                                if (GUILayout.Button("-", GUILayout.Width(25), GUILayout.Height(18))) List.onRemoveCallback?.Invoke(List);
+                    EditorGUI.BeginDisabledGroup(List.count == 0 || List.index == -1);
+                    if (_isShowRemoveButton && GUILayout.Button("-", GUILayout.Width(25), GUILayout.Height(18))) List.onRemoveCallback?.Invoke(List);
 
-                                EditorGUI.EndDisabledGroup();
-                            });
-
-                            YuebyUtil.Line(LineType.Horizontal, 2, 0);
-                            // 绘制列表内容
-                            _scrollPos = YuebyUtil.ScrollViewEGL(() =>
-                            {
-                                if (List.count == 0)
-                                    EditorGUILayout.HelpBox("列表为空！", MessageType.Info);
-                                else
-                                    List?.DoLayoutList();
-                            }, _scrollPos);
-                        });
-                    }, option: GUILayout.MaxHeight(maxHeight));
+                    EditorGUI.EndDisabledGroup();
                 });
+
+                YuebyUtil.Line(LineType.Horizontal, 2, 0);
+                // 绘制列表内容
+                _scrollPos = YuebyUtil.ScrollViewEGL(() =>
+                {
+                    if (List.count == 0)
+                        EditorGUILayout.HelpBox("列表为空！", MessageType.Info);
+                    else
+                        List?.DoLayoutList();
+                }, _scrollPos);
             });
+        }
+
+        public void DoLayoutHeaderGroup(string title, float maxHeight, UnityAction titleDraw = null, params GUILayoutOption[] options)
+        {
+            YuebyUtil.VerticalEGL(() =>
+            {
+                YuebyUtil.SpaceArea(() =>
+                {
+                    _isFoldout = YuebyUtil.FoldoutHeaderGroup(_isFoldout, title, () =>
+                    {
+                        EditorGUILayout.Space();
+                        YuebyUtil.VerticalEGL("Badge", () =>
+                        {
+                            YuebyUtil.SpaceArea(() =>
+                            {
+                                // 绘制标题头
+                                YuebyUtil.HorizontalEGL(() =>
+                                {
+                                    YuebyUtil.HorizontalEGL("Badge",
+                                        () =>
+                                        {
+                                            EditorGUILayout.LabelField($"{List.count}", EditorStyles.centeredGreyMiniLabel,
+                                                GUILayout.Width(25), GUILayout.Height(18));
+                                        }, GUILayout.Width(25), GUILayout.Height(18));
+
+                                    EditorGUILayout.Space();
+                                    titleDraw?.Invoke();
+                                    if (GUILayout.Button("+", GUILayout.Width(25), GUILayout.Height(18)))
+                                        //添加
+                                        List.onAddCallback?.Invoke(List);
+
+                                    EditorGUI.BeginDisabledGroup(List.count == 0 || List.index == -1);
+                                    if (GUILayout.Button("-", GUILayout.Width(25), GUILayout.Height(18))) List.onRemoveCallback?.Invoke(List);
+
+                                    EditorGUI.EndDisabledGroup();
+                                });
+
+                                YuebyUtil.Line(LineType.Horizontal, 2, 0);
+                                // 绘制列表内容
+                                _scrollPos = YuebyUtil.ScrollViewEGL(() =>
+                                {
+                                    if (List.count == 0)
+                                        EditorGUILayout.HelpBox("列表为空！", MessageType.Info);
+                                    else
+                                        List?.DoLayoutList();
+                                }, _scrollPos);
+                            });
+                        }, option: GUILayout.MaxHeight(maxHeight));
+                    });
+                });
+            }, options);
         }
 
         private void OnListAdd()

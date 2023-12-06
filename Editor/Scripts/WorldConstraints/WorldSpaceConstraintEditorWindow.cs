@@ -36,7 +36,7 @@ namespace Yueby.AvatarTools.WorldConstraints
             DrawOption();
         }
 
-        [MenuItem("Tools/YuebyTools/Avatar/WorldSpaceConstraint")]
+        [MenuItem("Tools/YuebyTools/Avatar/WorldSpaceConstraint", false, 12)]
         public static void OpenWindow()
         {
             if (_window == null)

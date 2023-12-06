@@ -9,13 +9,14 @@ namespace Yueby.Utils
     {
         private readonly bool _isShowAddButton;
         private readonly bool _isShowRemoveButton;
-
+        private readonly SerializedObject _serializedObject;
         private readonly SerializedProperty _serializedProperty;
         private List<SelectionGridButton> _selectionGridButtons;
 
         public event UnityAction OnAdd;
         public event UnityAction<int, Object> OnRemove;
-        public event UnityAction<SerializedProperty> OnChangeSelected;
+        public event UnityAction<SerializedProperty, int> OnChangeSelected;
+        public event UnityAction<Rect, int> OnElementDraw;
 
         private static Vector2 _scrollPos;
         public event UnityAction OnTitleDraw;
@@ -42,16 +43,16 @@ namespace Yueby.Utils
             }
         }
 
-        private readonly float _gridHeight;
 
-        public SelectionGrid(SerializedProperty serializedProperty, float gridMaxHeight, bool isShowAddButton = true, bool isShowRemoveButton = true, bool isPPTR = false)
+        public SelectionGrid(SerializedObject serializedObject, SerializedProperty serializedProperty, UnityAction<SerializedProperty, int> onSelected = null, bool isShowAddButton = true, bool isShowRemoveButton = true, bool isPPTR = false)
         {
+            _serializedObject = serializedObject;
             _serializedProperty = serializedProperty;
             _isShowAddButton = isShowAddButton;
             _isShowRemoveButton = isShowRemoveButton;
             _isPPTR = isPPTR;
-            _gridHeight = gridMaxHeight;
 
+            OnChangeSelected += onSelected;
             GenerateButtons();
         }
 
@@ -103,23 +104,30 @@ namespace Yueby.Utils
             _selectedButton = _selectionGridButtons[index];
             _selectedButton.Select();
 
-            OnChangeSelected?.Invoke(_selectedButton.SerializedProperty);
+            OnChangeSelected?.Invoke(_selectedButton.SerializedProperty, index);
         }
 
         private void Add()
         {
             _serializedProperty.arraySize++;
+            _serializedObject.ApplyModifiedProperties();
             OnAdd?.Invoke();
+
+            GenerateButtons();
         }
 
         private void Remove()
         {
             var item = _isPPTR ? _serializedProperty.GetArrayElementAtIndex(Index).objectReferenceValue : null;
+
+            OnRemove?.Invoke(Index, item);
+
             if (_isPPTR)
                 _serializedProperty.GetArrayElementAtIndex(Index).objectReferenceValue = null;
             _serializedProperty.DeleteArrayElementAtIndex(Index);
 
-            OnRemove?.Invoke(Index, item);
+            _serializedObject.ApplyModifiedProperties();
+
 
             if (_serializedProperty.arraySize > 1)
             {
@@ -127,9 +135,35 @@ namespace Yueby.Utils
                     Index--;
                 Select(Index);
             }
+
+            GenerateButtons();
         }
 
-        public void Draw(UnityAction<Rect, int> onArrayItemDraw, float elementEdgeLength, Vector2 padding)
+        private void MoveLeft()
+        {
+            if (Index > 0)
+            {
+                _serializedProperty.MoveArrayElement(Index, Index - 1);
+                Index--;
+                Select(Index);
+            }
+
+            GenerateButtons();
+        }
+
+        private void MoveRight()
+        {
+            if (Index < _serializedProperty.arraySize - 1)
+            {
+                _serializedProperty.MoveArrayElement(Index, Index + 1);
+                Index++;
+                Select(Index);
+            }
+
+            GenerateButtons();
+        }
+
+        public void Draw(float elementEdgeLength, Vector2 padding, Vector2 area)
         {
             YuebyUtil.VerticalEGL("Badge", () =>
             {
@@ -142,6 +176,17 @@ namespace Yueby.Utils
 
                         EditorGUILayout.Space();
                         OnTitleDraw?.Invoke();
+
+                        if (_selectedButton != null && GUILayout.Button("<", GUILayout.Width(25), GUILayout.Height(18)))
+                        {
+                            MoveLeft();
+                        }
+
+                        if (_selectedButton != null && GUILayout.Button(">", GUILayout.Width(25), GUILayout.Height(18)))
+                        {
+                            MoveRight();
+                        }
+
                         if (_isShowAddButton && GUILayout.Button("+", GUILayout.Width(25), GUILayout.Height(18)))
                         {
                             Add();
@@ -162,36 +207,40 @@ namespace Yueby.Utils
                         // 绘制列表内容
                         _scrollPos = YuebyUtil.ScrollViewEGL(() =>
                         {
-                            var width = Screen.width;
+                            var width = area.x - 30;
                             var count = Mathf.Floor((width - padding.x) / (elementEdgeLength + padding.x));
+
                             var maxHeight = (elementEdgeLength + padding.y) * Mathf.Ceil(_serializedProperty.arraySize / count);
 
-                            var gridRect = GUILayoutUtility.GetRect(elementEdgeLength, width, elementEdgeLength, maxHeight);
-
-                            GUILayout.Label("", GUILayout.Width(0), GUILayout.Height(maxHeight - elementEdgeLength));
-
-                            for (var i = 0; i < _selectionGridButtons.Count; i++)
+                            if (maxHeight > 0)
                             {
-                                var x = gridRect.x + padding.x + (elementEdgeLength + padding.x) * (i % count);
-                                var y = gridRect.y + padding.y + (elementEdgeLength + padding.y) * Mathf.Floor(i / count);
+                                var gridRect = GUILayoutUtility.GetRect(elementEdgeLength, width, elementEdgeLength, maxHeight);
 
-                                var btnRect = new Rect(x, y, elementEdgeLength, elementEdgeLength);
+                                GUILayout.Label("", GUILayout.Width(0), GUILayout.Height(maxHeight - elementEdgeLength));
 
-                                var gridButton = _selectionGridButtons[i];
-                                gridButton.Draw(btnRect, (rect, index) =>
+                                for (var i = 0; i < _selectionGridButtons.Count; i++)
                                 {
-                                    if (index > 0 || _serializedProperty.arraySize != 0)
-                                        onArrayItemDraw?.Invoke(rect, index > _serializedProperty.arraySize - 1 ? 0 : index);
-                                });
+                                    var x = gridRect.x + padding.x + (elementEdgeLength + padding.x) * (i % count);
+                                    var y = gridRect.y + padding.y + (elementEdgeLength + padding.y) * Mathf.Floor(i / count);
+
+                                    var btnRect = new Rect(x, y, elementEdgeLength, elementEdgeLength);
+
+                                    var gridButton = _selectionGridButtons[i];
+                                    gridButton.Draw(btnRect, (rect, index) =>
+                                    {
+                                        if (index > 0 || _serializedProperty.arraySize != 0)
+                                            OnElementDraw?.Invoke(rect, index > _serializedProperty.arraySize - 1 ? 0 : index);
+                                    });
+                                }
                             }
-                        }, _scrollPos);
+                        }, _scrollPos, GUILayout.MaxWidth(area.x - 20));
                     }
                     else
                     {
                         EditorGUILayout.HelpBox("请添加一件物品", MessageType.Info);
                     }
                 });
-            }, option: GUILayout.MaxHeight(_gridHeight));
+            }, GUILayout.MaxWidth(area.x), GUILayout.MaxHeight(area.y));
         }
 
         public class SelectionGridButton
@@ -232,6 +281,7 @@ namespace Yueby.Utils
 
                 if (IsSelected)
                 {
+                    GUI.Box(rect, "");
                     GUI.Box(rect, "");
                 }
             }
