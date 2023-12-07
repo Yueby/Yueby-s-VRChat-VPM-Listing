@@ -808,44 +808,48 @@ namespace Yueby.AvatarTools
                 if (i == index)
                     continue;
                 var clothes = category.Clothes[i];
-                showList = CombineCAPList(showList, clothes.HideParameters);
                 hideList = CombineCAPList(hideList, clothes.ShowParameters);
+                showList = CombineCAPList(showList, clothes.HideParameters);
             }
 
             var currentClothes = category.Clothes[index];
             showList = CombineCAPList(showList, currentClothes.ShowParameters);
             hideList = CombineCAPList(hideList, currentClothes.HideParameters);
-
+            var test = showList.FindAll(c => c.Path == "Brassiere");
+            
             foreach (var showParameter in currentClothes.ShowParameters)
-                hideList.Remove(showParameter);
+            {
+                foreach (var hide in hideList.Where(hide => hide.Path == showParameter.Path))
+                {
+                    hideList.Remove(hide);
+                    break;
+                }
+            }
 
             foreach (var hideParameter in currentClothes.HideParameters)
-                showList.Remove(hideParameter);
+            {
+                foreach (var show in showList.Where(hide => hide.Path == hideParameter.Path))
+                {
+                    showList.Remove(show);
+                    break;
+                }
+            }
 
-            return new Dictionary<string, List<CMClothesData.ClothesAnimParameter>>()
+
+            var dic = new Dictionary<string, List<CMClothesData.ClothesAnimParameter>>()
             {
                 { "Show", showList },
                 { "Hide", hideList }
             };
-        }
+            
 
+            return dic;
+        }
+        
         private List<CMClothesData.ClothesAnimParameter> CombineCAPList(List<CMClothesData.ClothesAnimParameter> list1, List<CMClothesData.ClothesAnimParameter> list2)
         {
-            var list = new List<CMClothesData.ClothesAnimParameter>();
-
-            foreach (var element in list1)
-            {
-                if (!string.IsNullOrEmpty(element.Path) && !list.Exists(x => x.Path == element.Path))
-                    list.Add(element);
-            }
-
-            foreach (var element in list2)
-            {
-                if (!string.IsNullOrEmpty(element.Path) && !list.Exists(x => x.Path == element.Path))
-                    list.Add(element);
-            }
-
-            return list;
+            list1.AddRange(list2);
+            return list1.Union(list2).ToList();
         }
 
         private AnimatorControllerParameterType GetParameterType(string driverName)
@@ -897,6 +901,17 @@ namespace Yueby.AvatarTools
                 var showList = parameters["Show"];
                 var hideList = parameters["Hide"];
 
+                foreach (var parameter in hideList)
+                {
+                    var trans = _descriptor.transform.Find(parameter.Path);
+                    if (trans)
+                    {
+                        Undo.RegisterCompleteObjectUndo(trans.gameObject, "Preview Hide GameObject");
+                        trans.gameObject.SetActive(false);
+
+                        // Debug.Log(parameter.Path);
+                    }
+                }
 
                 foreach (var parameter in showList)
                 {
@@ -905,16 +920,7 @@ namespace Yueby.AvatarTools
                     {
                         Undo.RegisterCompleteObjectUndo(trans.gameObject, "Preview Show GameObject");
                         trans.gameObject.SetActive(true);
-                    }
-                }
-
-                foreach (var parameter in hideList)
-                {
-                    var trans = _descriptor.transform.Find(parameter.Path);
-                    if (trans)
-                    {
-                        Undo.RegisterCompleteObjectUndo(trans.gameObject, "Preview Hide GameObject");
-                        trans.gameObject.SetActive(false);
+                        // Debug.Log(parameter.Path);
                     }
                 }
             }
