@@ -190,9 +190,28 @@ namespace Yueby.AvatarTools
             return "Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Generated";
         }
 
+        /// <summary>
+        /// 获取ID路径
+        /// </summary>
+        /// <returns></returns>
         private string GetIDPath()
         {
-            return GetGeneratedPath() + "/" + _dataReference.ID;
+            var idPath = GetGeneratedPath() + "/" + _dataReference.ID;
+            if (!Directory.Exists(idPath))
+                Directory.CreateDirectory(idPath);
+            return idPath;
+        }
+
+        /// <summary>
+        /// 获取备份路径
+        /// </summary>
+        /// <returns></returns>
+        private string GetBackupsPath()
+        {
+            var timePath = GetIDPath() + "/" + "Backups/" + DateTime.Now.ToString("yyyy'-'MM'-'dd'-'HH'-'mm'-'ss");
+            if (!Directory.Exists(timePath))
+                Directory.CreateDirectory(timePath);
+            return timePath;
         }
 
         /// <summary>
@@ -389,19 +408,21 @@ namespace Yueby.AvatarTools
             }
         }
 
-        private void Apply(VRCAvatarDescriptor descriptor, CMCDataSo data)
+        private void Apply(CMCDataSo data)
         {
-            var expressionParameters = descriptor.expressionParameters;
-            var expressionsMenu = descriptor.expressionsMenu;
+            var backupPath = GetBackupsPath();
+            BackupFile(backupPath, _expressionsMenu);
+            BackupFile(backupPath, _parameters);
+            BackupFile(backupPath, _fxLayer);
 
 
-            if (expressionParameters == null || expressionParameters.parameters == null)
+            if (_parameters == null || _parameters.parameters == null)
             {
                 EditorUtility.DisplayDialog("提示", $"Expression Parameters为空！", "Ok");
                 return;
             }
 
-            var newParameters = expressionParameters.parameters.ToList();
+            var newParameters = _parameters.parameters.ToList();
 
             var removeList = new List<VRCExpressionParameters.Parameter>();
             foreach (var parameterName in _dataReference.Data.Categories.Select(category => $"YCM/{category.Name}/Switch"))
@@ -425,7 +446,7 @@ namespace Yueby.AvatarTools
                 saved = true
             }));
 
-            expressionParameters.parameters = newParameters.ToArray();
+            _parameters.parameters = newParameters.ToArray();
 
             // 配置 ExpressionMenu
             // 删除文件夹重新创建文件
@@ -439,12 +460,11 @@ namespace Yueby.AvatarTools
             var currentCategoryMenu = mainMenu;
             var mainMenuPageIndex = 0;
             var expressionMenuPath = AssetDatabase.GetAssetPath(_expressionsMenu).Replace(_expressionsMenu.name + ".asset", "");
-      
+
             foreach (var category in data.Categories)
             {
                 if (currentCategoryMenu.controls.Count >= 7)
                 {
-                    
                     currentCategoryMenu = CreateSubMenuAssets(expressionMenuPath, currentCategoryMenu, "下一页");
                     currentCategoryMenu.name = $"{_expressionsMenu.name}_Page {++mainMenuPageIndex}";
                 }
@@ -481,13 +501,15 @@ namespace Yueby.AvatarTools
             }
 
 
-            var currentExMenu = expressionsMenu;
-            if (expressionsMenu.controls.Count >= 8)
+            var currentExMenu = _expressionsMenu;
+            if (_expressionsMenu.controls.Count >= 8)
             {
-                currentExMenu = GetLastNextSubMenu(expressionsMenu, expressionMenuPath);
+                currentExMenu = GetLastNextSubMenu(_expressionsMenu, expressionMenuPath);
             }
 
-            bool isFindMenu = false;
+            if (currentExMenu != _expressionsMenu)
+                BackupFile(backupPath, currentExMenu);
+            var isFindMenu = false;
             foreach (var control in currentExMenu.controls)
             {
                 if (control.name != "服装管理") continue;
@@ -510,6 +532,7 @@ namespace Yueby.AvatarTools
                     subMenu = mainMenu
                 });
             }
+
 
             EditorUtility.SetDirty(currentExMenu);
 
@@ -646,16 +669,23 @@ namespace Yueby.AvatarTools
             }
 
             EditorUtility.SetDirty(_fxLayer);
-            EditorUtility.SetDirty(expressionsMenu);
-            EditorUtility.SetDirty(expressionParameters);
+            EditorUtility.SetDirty(_expressionsMenu);
+            EditorUtility.SetDirty(_parameters);
 
-            descriptor.expressionParameters = expressionParameters;
-            descriptor.expressionsMenu = expressionsMenu;
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
             EditorUtility.DisplayDialog("提示", "已成功应用！", "OK");
+        }
+
+        private void BackupFile(string path, Object targetFile)
+        {
+            var sourcePath = AssetDatabase.GetAssetPath(targetFile);
+            var fileInfo = new FileInfo(sourcePath);
+
+            // Debug.Log($"{sourcePath}\n{path + fileInfo.Name}");
+            FileUtil.CopyFileOrDirectory(sourcePath, path + "/" + fileInfo.Name);
         }
 
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEditorInternal;
@@ -63,7 +64,7 @@ namespace Yueby.AvatarTools
         #endregion
 
         // Tools/YuebyTools/Avatar/Coming Soon.../
-        [MenuItem("Tools/YuebyTools/Avatar/Clothes Manager",false,11)]
+        [MenuItem("Tools/YuebyTools/Avatar/Clothes Manager", false, 11)]
         public static void OpenWindow()
         {
             _window = GetWindow<CMEditorWindow>();
@@ -455,7 +456,15 @@ namespace Yueby.AvatarTools
                         YuebyUtil.Line();
                         if (GUILayout.Button("应用"))
                         {
-                            Apply(_descriptor, _dataReference.Data);
+                            Apply(_dataReference.Data);
+                        }
+
+                        var backupPath = GetIDPath() + "/Backups";
+                        if (Directory.Exists(backupPath) && GUILayout.Button("打开备份路径"))
+                        {
+                            EditorUtility.FocusProjectWindow();
+                            var obj = AssetDatabase.LoadAssetAtPath<Object>(backupPath);
+                            Selection.activeObject = obj;
                         }
                     });
                 });
@@ -478,10 +487,7 @@ namespace Yueby.AvatarTools
                         _clothes.DeleteInList(parameter, ref _clothes.HideParameters);
                 }, objs);
 
-                YuebyUtil.WaitToDo(20,"WaitToPreview", () =>
-                {
-                    PreviewCurrentClothes(true,false);
-                });
+                YuebyUtil.WaitToDo(20, "WaitToPreview", () => { PreviewCurrentClothes(true, false); });
             }, Repaint);
 
             _clothesHideRl.DoLayoutList("隐藏", new Vector2(width, 320), false, true, true, objs =>
@@ -493,10 +499,7 @@ namespace Yueby.AvatarTools
                         _clothes.DeleteInList(parameter, ref _clothes.ShowParameters);
                 }, objs);
 
-                YuebyUtil.WaitToDo(20,"WaitToPreview", () =>
-                {
-                    PreviewCurrentClothes(true,false);
-                });
+                YuebyUtil.WaitToDo(20, "WaitToPreview", () => { PreviewCurrentClothes(true, false); });
             }, Repaint);
 
             _clothesBlendShapeRL.DoLayoutList("形态键", new Vector2(width, 320), false, true, true, obj =>
