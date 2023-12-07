@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
+using VRC.Core;
 using VRC.SDK3.Avatars.Components;
 using VRC.SDK3.Avatars.ScriptableObjects;
 using VRC.SDKBase;
@@ -32,6 +32,7 @@ namespace Yueby.AvatarTools
         private VRCExpressionsMenu _expressionsMenu;
         private VRCExpressionParameters _parameters;
 
+
         // Serialized Objects
         private SerializedObject _serializedObject;
         private SerializedProperty _categoriesProperty;
@@ -56,10 +57,10 @@ namespace Yueby.AvatarTools
         private TabBarElement _clothesDriverBar;
 
         private VRC_AvatarParameterDriver.Parameter _currentDriverParameter;
-        private bool _isPreview = true;
+        private bool _isClothesPreview = true;
 
 
-        private const float ConfigurePageHeight = 400;
+        private const float ConfigurePageHeight = 420;
 
         #endregion
 
@@ -69,12 +70,12 @@ namespace Yueby.AvatarTools
         {
             _window = GetWindow<CMEditorWindow>();
             _window.titleContent = new GUIContent("服装管理");
-            _window.minSize = new Vector2(720, 600);
+            _window.minSize = new Vector2(770, 600);
         }
 
         private void OnEnable()
         {
-            _categoryBar = new TabBarElement("分类", () => { _categoriesRl.DoLayout("分类", new Vector2(150, ConfigurePageHeight), null, false, false); });
+            _categoryBar = new TabBarElement("分类", () => { _categoriesRl.DoLayout("分类", new Vector2(150, ConfigurePageHeight + 20), null, false, false); });
             _clothesBar = new TabBarElement("服装", () => { YuebyUtil.VerticalEGL(DrawSelectedCategory, GUILayout.MaxWidth(200), GUILayout.MaxHeight(ConfigurePageHeight), GUILayout.ExpandHeight(true)); });
             _clothesParameterBar = new TabBarElement("动画参数", DrawClothesAnimParameter, true, 5f)
             {
@@ -94,10 +95,16 @@ namespace Yueby.AvatarTools
             InitSerializedObjects();
         }
 
+
         private void OnDisable()
         {
-            if (!_isPreview)
+            if (!_isClothesPreview)
                 ResetAvatarState();
+
+            if (_isStartCapture)
+            {
+                StopCapture(true);
+            }
         }
 
 
@@ -166,7 +173,12 @@ namespace Yueby.AvatarTools
             var nameRect = new Rect(rect.x + iconRect.width + 1, nameLabelRect.y + nameLabelRect.height + 1, rect.width - iconRect.width - 1, EditorGUIUtility.singleLineHeight);
             EditorGUI.LabelField(nameLabelRect, "分类名");
 
+            EditorGUI.BeginChangeCheck();
             categoryName.stringValue = EditorGUI.TextField(nameRect, categoryName.stringValue);
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RegisterCompleteObjectUndo(categorySo.targetObject, "Category Undo Register");
+            }
 
             if (categorySo.ApplyModifiedProperties())
             {
@@ -236,10 +248,21 @@ namespace Yueby.AvatarTools
 
             if (isGridInit)
                 isGridInit = false;
-            // if (!_clothesParameterBar.IsDraw)
-            //     _clothesParameterBar.ChangeDrawState(true);
+
+            if (_isStartCapture)
+            {
+                _isStartCapture = false;
+                StopCapture();
+
+                YuebyUtil.WaitToDo(20, "Wait to setup capture", () =>
+                {
+                    _isStartCapture = true;
+                    SetupCapture();
+                });
+            }
         }
 
+        private Mesh _renderMesh;
 
         private void InitClothData()
         {
@@ -368,6 +391,8 @@ namespace Yueby.AvatarTools
             var cloth = _clothesList[_clothesList.Count - 1];
             cloth.Clear();
             cloth.Name = _currentClothesCategory.Name + " " + (_clothesList.Count - 1);
+
+            YuebyUtil.WaitToDo(20, "Wait To Select Grid Added", () => { _clothesGrid.Select(_clothesGrid.Count - 1); });
         }
 
         private void DrawClothesGridElement(Rect rect, int i)
@@ -378,6 +403,12 @@ namespace Yueby.AvatarTools
 
             if (currentCloth.Icon != null)
                 GUI.Box(rect, currentCloth.Icon);
+
+            if (_currentClothesCategory && _currentClothesCategory.Default == i)
+            {
+                var defaultIconRect = new Rect(rect.x + 2, rect.y + 1, 20, 20);
+                EditorGUI.LabelField(defaultIconRect, "*");
+            }
 
             var labelRect = new Rect(rect.x, rect.y + rect.height / 2, rect.width, EditorGUIUtility.singleLineHeight);
             EditorGUI.LabelField(labelRect, currentCloth.Name);
@@ -429,19 +460,20 @@ namespace Yueby.AvatarTools
                     {
                         _clothesParameterBar.Draw();
                         _clothesDriverBar.Draw();
-                    }, GUILayout.MaxWidth(width));
+                    }, GUILayout.MinWidth(width));
 
+                    if (_categoryBar.IsDraw) return;
                     YuebyUtil.Line(LineType.Vertical);
 
                     YuebyUtil.VerticalEGL(() =>
                     {
                         var bkgColor = GUI.backgroundColor;
-                        if (_isPreview)
+                        if (_isClothesPreview)
                             GUI.backgroundColor = Color.green;
                         if (GUILayout.Button("预览"))
                         {
-                            _isPreview = !_isPreview;
-                            if (!_isPreview)
+                            _isClothesPreview = !_isClothesPreview;
+                            if (!_isClothesPreview)
                             {
                                 ResetAvatarState();
                             }
@@ -453,7 +485,31 @@ namespace Yueby.AvatarTools
 
                         GUI.backgroundColor = bkgColor;
 
+                        var isCurrentDefault = _currentClothesCategory.Default == _clothesIndex;
+
+                        EditorGUI.BeginDisabledGroup(isCurrentDefault);
+                        if (GUILayout.Button(isCurrentDefault ? "已为默认" : "设为默认"))
+                        {
+                            _currentClothesCategory.Default = _clothesIndex;
+                        }
+
+                        EditorGUI.EndDisabledGroup();
+
                         YuebyUtil.Line();
+
+                        EditorGUILayout.LabelField("父菜单", GUILayout.Width(40));
+                        EditorGUI.BeginChangeCheck();
+                        _dataReference.ParentMenu = (VRCExpressionsMenu)EditorGUILayout.ObjectField(_dataReference.ParentMenu, typeof(VRCExpressionsMenu), false);
+                        if (EditorGUI.EndChangeCheck())
+                        {
+                            Undo.RegisterCompleteObjectUndo(_dataReference, "RegisterDataReference");
+                        }
+
+                        if (_dataReference.ParentMenu == null)
+                        {
+                            EditorGUILayout.HelpBox("如果父菜单为空的话，会将Avatar的默认菜单作为父菜单智能创建子菜单。", MessageType.Warning);
+                        }
+
                         if (GUILayout.Button("应用"))
                         {
                             Apply(_dataReference.Data);
@@ -466,6 +522,45 @@ namespace Yueby.AvatarTools
                             var obj = AssetDatabase.LoadAssetAtPath<Object>(backupPath);
                             Selection.activeObject = obj;
                         }
+
+                        YuebyUtil.Line();
+
+                        if (!_isStartCapture && GUILayout.Button("开启截图"))
+                        {
+                            _isStartCapture = true;
+                            SetupCapture();
+                        }
+
+                        if (_isStartCapture)
+                        {
+                            GUILayout.Box("", GUILayout.Width(160), GUILayout.Height(160));
+
+                            var rect = GUILayoutUtility.GetLastRect();
+                            EditorGUI.DrawTextureTransparent(rect, _previewRT);
+
+                            YuebyUtil.HorizontalEGL(() =>
+                            {
+                                if (GUILayout.Button("截取"))
+                                {
+                                    GetClothesCapture();
+                                }
+
+                                if (GUILayout.Button("取消"))
+                                {
+                                    _isStartCapture = false;
+                                    StopCapture(true);
+                                }
+                            });
+
+                            if (!GetWindow<SceneView>().drawGizmos)
+                            {
+                                EditorGUILayout.HelpBox("请将场景视图的\"Gizmos\"按钮打开以让截图工具正常工作！", MessageType.Warning);
+                            }
+                            else
+                            {
+                                EditorGUILayout.HelpBox("拖动场景视图可以调整截图！", MessageType.Info);
+                            }
+                        }
                     });
                 });
 
@@ -474,6 +569,134 @@ namespace Yueby.AvatarTools
             }
         }
 
+
+        private RenderTexture _previewRT;
+        private bool _isStartCapture;
+        private GameObject _captureGo;
+        private GameObject _captureCameraGo;
+        private Camera _captureCamera;
+
+        private void SetupCapture()
+        {
+            _captureCameraGo = new GameObject("ClothesManager_CaptureCamera");
+            var follow = _captureCameraGo.AddComponent<CMCaptureCameraFollow>();
+            follow.OnPositionUpdate += Repaint;
+
+            _captureCamera = _captureCameraGo.AddComponent<Camera>();
+            _captureCamera.clearFlags = CameraClearFlags.SolidColor;
+            _captureCamera.backgroundColor = Color.clear;
+            _captureCamera.fieldOfView = 45;
+            _captureCamera.targetTexture = _previewRT;
+            _captureCamera.orthographic = true;
+            _captureCamera.orthographicSize = 0.5f;
+
+            _captureGo = Instantiate(_descriptor.gameObject);
+            _captureGo.name = "ClothesManager_" + _clothes.Name + "_CaptureAvatar";
+
+            foreach (var component in _captureGo.GetComponents<Component>())
+            {
+                if (component is Transform) continue;
+                DestroyImmediate(component);
+            }
+
+            var showList = GetClothesParameters(_currentClothesCategory, _clothesIndex)["Show"];
+
+            var hideRenderers = new List<GameObject>();
+            foreach (var renderer in _captureGo.GetComponentsInChildren<Renderer>())
+            {
+                hideRenderers.Add(renderer.gameObject);
+            }
+
+            foreach (var show in showList)
+            {
+                var trans = _captureGo.transform.Find(show.Path);
+                if (!trans) continue;
+                var childRenderers = trans.GetComponentsInChildren<Renderer>();
+                foreach (var childRender in childRenderers)
+                {
+                    if (hideRenderers.Contains(childRender.gameObject))
+                        hideRenderers.Remove(childRender.gameObject);
+                }
+
+                trans.gameObject.SetActive(true);
+            }
+
+            foreach (var hide in hideRenderers)
+            {
+                hide.SetActive(false);
+            }
+
+            var capturePos = new Vector3(1000, 0, 100);
+            _captureGo.transform.position = capturePos;
+            YuebyUtil.FocusTarget(_captureGo);
+        }
+
+
+        private Texture2D SaveRTToFile(string path)
+        {
+            var mRt = new RenderTexture(_previewRT.width, _previewRT.height, _previewRT.depth, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB)
+            {
+                antiAliasing = _previewRT.antiAliasing
+            };
+
+            var tex = new Texture2D(mRt.width, mRt.height, TextureFormat.ARGB32, false);
+            _captureCamera.targetTexture = mRt;
+            _captureCamera.Render();
+            RenderTexture.active = mRt;
+
+            tex.ReadPixels(new Rect(0, 0, mRt.width, mRt.height), 0, 0);
+            tex.Apply();
+
+
+            if (File.Exists(path))
+                File.Delete(path);
+            File.WriteAllBytes(path, tex.EncodeToPNG());
+
+
+            DestroyImmediate(tex);
+
+            _captureCamera.targetTexture = _previewRT;
+            _captureCamera.Render();
+            RenderTexture.active = _previewRT;
+            DestroyImmediate(mRt);
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            var t2d = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            if (EditorUtility.DisplayDialog("提示", $"保存成功，是否跳转查看？", "是", "否"))
+            {
+                EditorUtility.FocusProjectWindow();
+                Selection.activeObject = t2d;
+            }
+
+            return t2d;
+        }
+
+
+        private void GetClothesCapture()
+        {
+            var categoryPath = GetCapturePath() + "/" + _currentClothesCategory.Name + "/";
+            if (!Directory.Exists(categoryPath))
+                Directory.CreateDirectory(categoryPath);
+
+            var icon = SaveRTToFile(categoryPath + _clothes.Name + ".png");
+            if (_clothes != null)
+                _clothes.Icon = icon;
+        }
+
+        private void StopCapture(bool needBack = false)
+        {
+            if (_captureCameraGo)
+                DestroyImmediate(_captureCameraGo);
+
+            if (_captureGo)
+                DestroyImmediate(_captureGo);
+            if (needBack)
+            {
+                YuebyUtil.FocusTarget(_descriptor.gameObject);
+            }
+        }
 
         private void DrawClothesAnimParameter()
         {
@@ -729,7 +952,11 @@ namespace Yueby.AvatarTools
                             YuebyUtil.HorizontalEGL(() =>
                             {
                                 _clothes.Icon = (Texture2D)EditorGUILayout.ObjectField(_clothes.Icon, typeof(Texture2D), false, GUILayout.Width(40), GUILayout.Height(40));
+
+                                EditorGUI.BeginChangeCheck();
                                 _clothes.Name = YuebyUtil.TextFieldVertical("衣服名", _clothes.Name, 60);
+                                if (EditorGUI.EndChangeCheck())
+                                    Undo.RegisterCompleteObjectUndo(_currentClothesCategory, "Category Undo Register");
                             });
                         }
                         else
@@ -737,12 +964,13 @@ namespace Yueby.AvatarTools
                             EditorGUILayout.HelpBox("请选择或添加一个衣服配置", MessageType.Info);
                         }
                     }, GUILayout.Width(200));
-                    _clothesGrid.Draw(50, new Vector2(5, 5), new Vector2(200, 350 - 20));
+                    _clothesGrid.Draw(50, new Vector2(5, 5), new Vector2(200, ConfigurePageHeight - 20));
                 });
 
 
                 // Debug.Log("1");
                 _categorySerializedObject.ApplyModifiedProperties();
+
                 EditorUtility.SetDirty(_categorySerializedObject.targetObject);
             }
         }

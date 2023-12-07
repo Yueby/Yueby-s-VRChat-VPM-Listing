@@ -9,8 +9,8 @@ namespace Yueby.AvatarTools
 {
     public class CMClothesCategorySo : ScriptableObject
     {
-       
         public int Selected;
+        public int Default;
         public string Name;
         public Texture2D Icon;
         public List<CMClothesData> Clothes = new List<CMClothesData>();

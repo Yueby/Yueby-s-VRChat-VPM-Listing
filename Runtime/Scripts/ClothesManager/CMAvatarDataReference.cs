@@ -1,13 +1,18 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Serialization;
+﻿using UnityEngine;
+using VRC.SDK3.Avatars.ScriptableObjects;
+using VRC.SDKBase;
 
 namespace Yueby.AvatarTools
 {
-    public class CMAvatarDataReference : MonoBehaviour
+#if VRC_SDK_VRCSDK3
+
+    public class CMAvatarDataReference : MonoBehaviour, IEditorOnly
+#else
+   public class CMAvatarDataReference : MonoBehaviour
+#endif
     {
         public string ID;
         public CMCDataSo Data;
+        public VRCExpressionsMenu ParentMenu;
     }
 }
