@@ -133,10 +133,10 @@ namespace Yueby.AvatarTools
 
             if (_isEnterListArea)
             {
-                var label = "拖动对象到这里来！";
+                var label = "→";
                 if (_dropRect.Contains(Event.current.mousePosition))
                 {
-                    label = "松开鼠标按键以获取对象";
+                    label = "↓";
                 }
 
                 GUI.Box(_dropRect, label);
@@ -189,7 +189,7 @@ namespace Yueby.AvatarTools
                 _scrollPos = YuebyUtil.ScrollViewEGL(() =>
                 {
                     if (List.count == 0)
-                        EditorGUILayout.HelpBox("列表为空！", MessageType.Info);
+                        EditorGUILayout.HelpBox("List is null!", MessageType.Info);
                     else
                         List?.DoLayoutList();
                 }, _scrollPos);

@@ -13,13 +13,15 @@ using AnimatorController = UnityEditor.Animations.AnimatorController;
 using AnimatorControllerParameterType = UnityEngine.AnimatorControllerParameterType;
 using Object = UnityEngine.Object;
 
-namespace Yueby.AvatarTools
+namespace Yueby.AvatarTools.ClothesManager
 {
     public partial class CMEditorWindow : EditorWindow
     {
         #region Variables
 
         private static CMEditorWindow _window;
+
+        private static readonly CMLocalization Localization = new CMLocalization();
 
         // Init
         private VRCAvatarDescriptor _descriptor;
@@ -59,8 +61,12 @@ namespace Yueby.AvatarTools
         private VRC_AvatarParameterDriver.Parameter _currentDriverParameter;
         private bool _isClothesPreview = true;
 
-
         private const float ConfigurePageHeight = 420;
+
+        private readonly Texture2D[] _categoryIcons = new Texture2D[2];
+        private readonly Texture2D[] _clothesIcons = new Texture2D[2];
+        private readonly Texture2D[] _objectIcons = new Texture2D[2];
+        private readonly Texture2D[] _listIcons = new Texture2D[2];
 
         #endregion
 
@@ -69,20 +75,23 @@ namespace Yueby.AvatarTools
         public static void OpenWindow()
         {
             _window = GetWindow<CMEditorWindow>();
-            _window.titleContent = new GUIContent("服装管理");
+
+            _window.titleContent = new GUIContent(Localization.Get("window_title"));
             _window.minSize = new Vector2(770, 600);
         }
 
         private void OnEnable()
         {
-            _categoryBar = new TabBarElement("分类", () => { _categoriesRl.DoLayout("分类", new Vector2(150, ConfigurePageHeight + 20), null, false, false); });
-            _clothesBar = new TabBarElement("服装", () => { YuebyUtil.VerticalEGL(DrawSelectedCategory, GUILayout.MaxWidth(200), GUILayout.MaxHeight(ConfigurePageHeight), GUILayout.ExpandHeight(true)); });
-            _clothesParameterBar = new TabBarElement("动画参数", DrawClothesAnimParameter, true, 5f)
+            GetIcons();
+
+            _categoryBar = new TabBarElement(_categoryIcons, () => { _categoriesRl.DoLayout(Localization.Get("category"), new Vector2(150, ConfigurePageHeight + 20), null, false, false); });
+            _clothesBar = new TabBarElement(_clothesIcons, () => { YuebyUtil.VerticalEGL(DrawSelectedCategory, GUILayout.MaxWidth(200), GUILayout.MaxHeight(ConfigurePageHeight), GUILayout.ExpandHeight(true)); });
+            _clothesParameterBar = new TabBarElement(_objectIcons, DrawClothesAnimParameter, true, 5f)
             {
                 IsVisible = false,
             };
 
-            _clothesDriverBar = new TabBarElement("参数驱动", DrawClothesParameterDriver, false)
+            _clothesDriverBar = new TabBarElement(_listIcons, DrawClothesParameterDriver, false)
             {
                 IsVisible = false,
             };
@@ -93,6 +102,21 @@ namespace Yueby.AvatarTools
             _configureTabBarGroup = new TabBarGroup(new List<TabBarElement> { _categoryBar, _clothesBar, _clothesParameterBar, _clothesDriverBar });
             GetDescriptorOnEnable();
             InitSerializedObjects();
+        }
+
+        private void GetIcons()
+        {
+            _objectIcons[0] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/DarkMode/object.png");
+            _objectIcons[1] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/LightMode/object.png");
+
+            _listIcons[0] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/DarkMode/list.png");
+            _listIcons[1] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/LightMode/list.png");
+
+            _clothesIcons[0] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/DarkMode/clothes.png");
+            _clothesIcons[1] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/LightMode/clothes.png");
+
+            _categoryIcons[0] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/DarkMode/category.png");
+            _categoryIcons[1] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/LightMode/category.png");
         }
 
 
@@ -111,10 +135,25 @@ namespace Yueby.AvatarTools
         private void OnGUI()
         {
             wantsMouseMove = true;
-            YuebyUtil.DrawEditorTitle("服装管理");
 
-            DrawInit();
-            DrawConfigure();
+            if (_window == null)
+                _window = GetWindow<CMEditorWindow>();
+            _window.titleContent = new GUIContent(Localization.Get("window_title"));
+
+            YuebyUtil.DrawEditorTitle(Localization.Get("window_title"));
+            Localization.DrawLanguageUI();
+
+            if (!Application.isPlaying)
+            {
+                DrawInit();
+
+                if (_descriptor != null && _dataReference != null)
+                    DrawConfigure();
+            }
+            else
+            {
+                EditorGUILayout.HelpBox(Localization.Get("in_playing_mode_tip"), MessageType.Warning);
+            }
         }
 
 
@@ -171,7 +210,7 @@ namespace Yueby.AvatarTools
 
             var nameLabelRect = new Rect(rect.x + iconRect.width + 1, iconRect.y, rect.width - iconRect.width - 1, EditorGUIUtility.singleLineHeight);
             var nameRect = new Rect(rect.x + iconRect.width + 1, nameLabelRect.y + nameLabelRect.height + 1, rect.width - iconRect.width - 1, EditorGUIUtility.singleLineHeight);
-            EditorGUI.LabelField(nameLabelRect, "分类名");
+            EditorGUI.LabelField(nameLabelRect, Localization.Get("category_name"));
 
             EditorGUI.BeginChangeCheck();
             categoryName.stringValue = EditorGUI.TextField(nameRect, categoryName.stringValue);
@@ -199,7 +238,7 @@ namespace Yueby.AvatarTools
         {
             var categorySo = YuebyUtil.AddChildAsset<CMClothesCategorySo>(_serializedObject.targetObject);
             categorySo.Clear();
-            categorySo.Name = "新类型 " + (_categoriesProperty.arraySize - 1);
+            categorySo.Name = $"{Localization.Get("new_category_name")} " + (_categoriesProperty.arraySize - 1);
             categorySo.name = categorySo.Name;
 
             _categoriesProperty.GetArrayElementAtIndex(_categoriesProperty.arraySize - 1).objectReferenceValue = categorySo;
@@ -341,8 +380,8 @@ namespace Yueby.AvatarTools
             _enterDriverRl.OnSelected += index => { _currentDriverParameter = _clothes.EnterParameter.Parameters[index]; };
             _exitDriverRl.OnSelected += index => { _currentDriverParameter = _clothes.ExitParameter.Parameters[index]; };
 
-            _enterDriverRl.OnDrawTitle += () => { _clothes.EnterParameter.IsLocal = YuebyUtil.Toggle(_clothes.EnterParameter.IsLocal, "是否本地触发", 80); };
-            _exitDriverRl.OnDrawTitle += () => { _clothes.ExitParameter.IsLocal = YuebyUtil.Toggle(_clothes.ExitParameter.IsLocal, "是否本地触发", 80); };
+            _enterDriverRl.OnDrawTitle += () => { _clothes.EnterParameter.IsLocal = YuebyUtil.Toggle(_clothes.EnterParameter.IsLocal, Localization.Get("driver_is_local"), 80); };
+            _exitDriverRl.OnDrawTitle += () => { _clothes.ExitParameter.IsLocal = YuebyUtil.Toggle(_clothes.ExitParameter.IsLocal, Localization.Get("driver_is_local"), 80); };
 
             _enterDriverRl.OnDraw += (rect, index, active, focused) => { DrawParameterDriverElement(ref _clothes.EnterParameter.Parameters, rect, index, active, focused); };
             _exitDriverRl.OnDraw += (rect, index, active, focused) => { DrawParameterDriverElement(ref _clothes.ExitParameter.Parameters, rect, index, active, focused); };
@@ -436,9 +475,9 @@ namespace Yueby.AvatarTools
 
                     string titleLabel;
                     if (_clothes != null)
-                        titleLabel = _clothesBar.IsDraw ? "配置" : $"配置 : {_currentClothesCategory.Name} | {_clothes.Name}";
+                        titleLabel = _clothesBar.IsDraw ? Localization.Get("clothes_configure") : $"{Localization.Get("clothes_configure")} : {_currentClothesCategory.Name} | {_clothes.Name}";
                     else
-                        titleLabel = _clothesBar.IsDraw ? "配置" : $"配置 : {_currentClothesCategory.Name} | 无选中衣服";
+                        titleLabel = _clothesBar.IsDraw ? Localization.Get("clothes_configure") : $"{Localization.Get("clothes_configure")} : {_currentClothesCategory.Name} | {Localization.Get("clothes_configure_none_clothes")}";
 
                     YuebyUtil.VerticalEGLTitled(titleLabel, DrawClothConfigArea, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
                 }, GUILayout.MaxHeight(ConfigurePageHeight));
@@ -470,7 +509,7 @@ namespace Yueby.AvatarTools
                         var bkgColor = GUI.backgroundColor;
                         if (_isClothesPreview)
                             GUI.backgroundColor = Color.green;
-                        if (GUILayout.Button("预览"))
+                        if (GUILayout.Button(Localization.Get("clothes_preview")))
                         {
                             _isClothesPreview = !_isClothesPreview;
                             if (!_isClothesPreview)
@@ -488,7 +527,7 @@ namespace Yueby.AvatarTools
                         var isCurrentDefault = _currentClothesCategory.Default == _clothesIndex;
 
                         EditorGUI.BeginDisabledGroup(isCurrentDefault);
-                        if (GUILayout.Button(isCurrentDefault ? "已为默认" : "设为默认"))
+                        if (GUILayout.Button(isCurrentDefault ? Localization.Get("clothes_set_to_default") : Localization.Get("clothes_already_default")))
                         {
                             _currentClothesCategory.Default = _clothesIndex;
                         }
@@ -497,7 +536,7 @@ namespace Yueby.AvatarTools
 
                         YuebyUtil.Line();
 
-                        EditorGUILayout.LabelField("父菜单", GUILayout.Width(40));
+                        EditorGUILayout.LabelField(Localization.Get("parent_menu"), GUILayout.Width(40));
                         EditorGUI.BeginChangeCheck();
                         _dataReference.ParentMenu = (VRCExpressionsMenu)EditorGUILayout.ObjectField(_dataReference.ParentMenu, typeof(VRCExpressionsMenu), false);
                         if (EditorGUI.EndChangeCheck())
@@ -507,16 +546,16 @@ namespace Yueby.AvatarTools
 
                         if (_dataReference.ParentMenu == null)
                         {
-                            EditorGUILayout.HelpBox("如果父菜单为空的话，会将Avatar的默认菜单作为父菜单智能创建子菜单。", MessageType.Warning);
+                            EditorGUILayout.HelpBox(Localization.Get("parent_menu_tip"), MessageType.Warning);
                         }
 
-                        if (GUILayout.Button("应用"))
+                        if (GUILayout.Button(Localization.Get("apply")))
                         {
                             Apply(_dataReference.Data);
                         }
 
                         var backupPath = GetIDPath() + "/Backups";
-                        if (Directory.Exists(backupPath) && GUILayout.Button("打开备份路径"))
+                        if (Directory.Exists(backupPath) && GUILayout.Button(Localization.Get("open_backup_path")))
                         {
                             EditorUtility.FocusProjectWindow();
                             var obj = AssetDatabase.LoadAssetAtPath<Object>(backupPath);
@@ -525,7 +564,7 @@ namespace Yueby.AvatarTools
 
                         YuebyUtil.Line();
 
-                        if (!_isStartCapture && GUILayout.Button("开启截图"))
+                        if (!_isStartCapture && GUILayout.Button(Localization.Get("capture_start")))
                         {
                             _isStartCapture = true;
                             SetupCapture();
@@ -540,12 +579,12 @@ namespace Yueby.AvatarTools
 
                             YuebyUtil.HorizontalEGL(() =>
                             {
-                                if (GUILayout.Button("截取"))
+                                if (GUILayout.Button(Localization.Get("capture")))
                                 {
                                     GetClothesCapture();
                                 }
 
-                                if (GUILayout.Button("取消"))
+                                if (GUILayout.Button(Localization.Get("cancel")))
                                 {
                                     _isStartCapture = false;
                                     StopCapture(true);
@@ -554,11 +593,11 @@ namespace Yueby.AvatarTools
 
                             if (!GetWindow<SceneView>().drawGizmos)
                             {
-                                EditorGUILayout.HelpBox("请将场景视图的\"Gizmos\"按钮打开以让截图工具正常工作！", MessageType.Warning);
+                                EditorGUILayout.HelpBox(Localization.Get("capture_tip_warning"), MessageType.Warning);
                             }
                             else
                             {
-                                EditorGUILayout.HelpBox("拖动场景视图可以调整截图！", MessageType.Info);
+                                EditorGUILayout.HelpBox(Localization.Get("capture_tip_info"), MessageType.Info);
                             }
                         }
                     });
@@ -578,7 +617,7 @@ namespace Yueby.AvatarTools
 
         private void SetupCapture()
         {
-            _captureCameraGo = new GameObject("ClothesManager_CaptureCamera");
+            _captureCameraGo = new GameObject(Localization.Get("capture_obj_camera"));
             var follow = _captureCameraGo.AddComponent<CMCaptureCameraFollow>();
             follow.OnPositionUpdate += Repaint;
 
@@ -591,7 +630,7 @@ namespace Yueby.AvatarTools
             _captureCamera.orthographicSize = 0.5f;
 
             _captureGo = Instantiate(_descriptor.gameObject);
-            _captureGo.name = "ClothesManager_" + _clothes.Name + "_CaptureAvatar";
+            _captureGo.name = Localization.Get("capture_obj_avatar") + _clothes.Name;
 
             foreach (var component in _captureGo.GetComponentsInChildren<Component>(true))
             {
@@ -675,7 +714,7 @@ namespace Yueby.AvatarTools
             AssetDatabase.Refresh();
 
             var t2d = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-            if (EditorUtility.DisplayDialog("提示", $"保存成功，是否跳转查看？", "是", "否"))
+            if (EditorUtility.DisplayDialog(Localization.Get("tips"), Localization.Get("tip_success_save"), Localization.Get("yes"), Localization.Get("no")))
             {
                 EditorUtility.FocusProjectWindow();
                 Selection.activeObject = t2d;
@@ -712,7 +751,7 @@ namespace Yueby.AvatarTools
         private void DrawClothesAnimParameter()
         {
             const float width = 320f;
-            _clothesShowRl.DoLayoutList("显示", new Vector2(width, 320), false, true, true, objs =>
+            _clothesShowRl.DoLayoutList(Localization.Get("show"), new Vector2(width, 320), false, true, true, objs =>
             {
                 // Show Paths
                 ListenToDrop(typeof(GameObject), ref _clothes.ShowParameters, parameter =>
@@ -724,7 +763,7 @@ namespace Yueby.AvatarTools
                 YuebyUtil.WaitToDo(20, "WaitToPreview", () => { PreviewCurrentClothes(true, false); });
             }, Repaint);
 
-            _clothesHideRl.DoLayoutList("隐藏", new Vector2(width, 320), false, true, true, objs =>
+            _clothesHideRl.DoLayoutList(Localization.Get("hide"), new Vector2(width, 320), false, true, true, objs =>
             {
                 // Hide Paths
                 ListenToDrop(typeof(GameObject), ref _clothes.HideParameters, parameter =>
@@ -736,7 +775,7 @@ namespace Yueby.AvatarTools
                 YuebyUtil.WaitToDo(20, "WaitToPreview", () => { PreviewCurrentClothes(true, false); });
             }, Repaint);
 
-            _clothesBlendShapeRL.DoLayoutList("形态键", new Vector2(width, 320), false, true, true, obj =>
+            _clothesBlendShapeRL.DoLayoutList(Localization.Get("blend_shapes"), new Vector2(width, 320), false, true, true, obj =>
             {
                 // BlendShapes
                 ListenToDrop(typeof(SkinnedMeshRenderer), ref _clothes.BlendShapeParameters, null, obj);
@@ -746,11 +785,11 @@ namespace Yueby.AvatarTools
         private void DrawClothesParameterDriver()
         {
             const float width = 320f;
-            _clothes.HasParameterDriver = YuebyUtil.Toggle(_clothes.HasParameterDriver, "是否使用参数驱动");
+            _clothes.HasParameterDriver = YuebyUtil.Toggle(_clothes.HasParameterDriver, Localization.Get("driver_is_using"));
             if (_clothes.HasParameterDriver)
             {
-                _enterDriverRl.DoLayoutList("进入时", new Vector2(width, 320), false, true, false, null, Repaint);
-                _exitDriverRl.DoLayoutList("退出时", new Vector2(width, 320), false, true, false, null, Repaint);
+                _enterDriverRl.DoLayoutList(Localization.Get("driver_enter"), new Vector2(width, 320), false, true, false, null, Repaint);
+                _exitDriverRl.DoLayoutList(Localization.Get("driver_exit"), new Vector2(width, 320), false, true, false, null, Repaint);
 
                 YuebyUtil.Line();
 
@@ -759,7 +798,7 @@ namespace Yueby.AvatarTools
                     EditorGUILayout.Space();
                     if (_currentDriverParameter == null)
                     {
-                        EditorGUILayout.HelpBox("请选择一个", MessageType.Info);
+                        EditorGUILayout.HelpBox(Localization.Get("driver_select_tip"), MessageType.Info);
                         return;
                     }
 
@@ -803,7 +842,7 @@ namespace Yueby.AvatarTools
             {
                 YuebyUtil.HorizontalEGL(() =>
                 {
-                    EditorGUILayout.LabelField("目标值", GUILayout.Width(60));
+                    EditorGUILayout.LabelField(Localization.Get("driver_dest_value"), GUILayout.Width(60));
 
                     switch (type)
                     {
@@ -821,7 +860,7 @@ namespace Yueby.AvatarTools
                         case AnimatorControllerParameterType.Trigger:
                             break;
                         default:
-                            EditorGUILayout.HelpBox($"{_currentDriverParameter.name}是{type}类型参数，不支持{_currentDriverParameter.type}操作", MessageType.Warning);
+                            EditorGUILayout.HelpBox(string.Format(Localization.Get("driver_not_suit_warning"), _currentDriverParameter.name, type, _currentDriverParameter.type), MessageType.Warning);
                             break;
                     }
                 });
@@ -834,15 +873,15 @@ namespace Yueby.AvatarTools
                     switch (type)
                     {
                         case AnimatorControllerParameterType.Int:
-                            EditorGUILayout.LabelField("目标值", GUILayout.Width(60));
+                            EditorGUILayout.LabelField(Localization.Get("driver_dest_value"), GUILayout.Width(60));
                             _currentDriverParameter.value = EditorGUILayout.IntField((int)_currentDriverParameter.value);
                             break;
                         case AnimatorControllerParameterType.Float:
-                            EditorGUILayout.LabelField("目标值", GUILayout.Width(60));
+                            EditorGUILayout.LabelField(Localization.Get("driver_dest_value"), GUILayout.Width(60));
                             _currentDriverParameter.value = EditorGUILayout.FloatField(_currentDriverParameter.value);
                             break;
                         default:
-                            EditorGUILayout.HelpBox($"{_currentDriverParameter.name}是{type}类型参数，不支持{_currentDriverParameter.type}操作", MessageType.Warning);
+                            EditorGUILayout.HelpBox(string.Format(Localization.Get("driver_not_suit_warning"), _currentDriverParameter.name, type, _currentDriverParameter.type), MessageType.Warning);
                             break;
                     }
                 });
@@ -856,20 +895,20 @@ namespace Yueby.AvatarTools
                     {
                         case AnimatorControllerParameterType.Trigger:
                         case AnimatorControllerParameterType.Bool:
-                            EditorGUILayout.LabelField("概率", GUILayout.Width(40));
+                            EditorGUILayout.LabelField(Localization.Get("driver_chance"), GUILayout.Width(60));
                             _currentDriverParameter.chance = EditorGUILayout.Slider(_currentDriverParameter.chance, 0, 1f);
 
                             break;
                         case AnimatorControllerParameterType.Int:
-                            EditorGUILayout.LabelField("最小值", GUILayout.Width(60));
+                            EditorGUILayout.LabelField(Localization.Get("driver_min_value"), GUILayout.Width(60));
                             _currentDriverParameter.valueMin = EditorGUILayout.IntField((int)_currentDriverParameter.valueMin);
-                            EditorGUILayout.LabelField("最达值", GUILayout.Width(60));
+                            EditorGUILayout.LabelField(Localization.Get("driver_max_value"), GUILayout.Width(60));
                             _currentDriverParameter.valueMax = EditorGUILayout.IntField((int)_currentDriverParameter.valueMax);
                             break;
                         case AnimatorControllerParameterType.Float:
-                            EditorGUILayout.LabelField("最小值", GUILayout.Width(60));
+                            EditorGUILayout.LabelField(Localization.Get("driver_min_value"), GUILayout.Width(60));
                             _currentDriverParameter.valueMin = EditorGUILayout.FloatField(_currentDriverParameter.valueMin);
-                            EditorGUILayout.LabelField("最达值", GUILayout.Width(60));
+                            EditorGUILayout.LabelField(Localization.Get("driver_max_value"), GUILayout.Width(60));
                             _currentDriverParameter.valueMax = EditorGUILayout.FloatField(_currentDriverParameter.valueMax);
                             break;
                     }
@@ -885,11 +924,11 @@ namespace Yueby.AvatarTools
 
                 YuebyUtil.HorizontalEGL(() =>
                 {
-                    EditorGUILayout.LabelField("源", GUILayout.Width(60));
+                    EditorGUILayout.LabelField(Localization.Get("driver_source"), GUILayout.Width(50));
                     sourceIndex = EditorGUILayout.Popup(sourceIndex, names);
                     _currentDriverParameter.name = EditorGUILayout.TextField(_currentDriverParameter.name);
                     if (type == AnimatorControllerParameterType.Bool)
-                        _currentDriverParameter.convertRange = YuebyUtil.Toggle(_currentDriverParameter.convertRange, "转换范围", 60);
+                        _currentDriverParameter.convertRange = YuebyUtil.Toggle(_currentDriverParameter.convertRange, Localization.Get("driver_convert_range"), 60);
                 });
 
                 _currentDriverParameter.source = sourceIndex == -1 ? "" : names[sourceIndex];
@@ -904,9 +943,9 @@ namespace Yueby.AvatarTools
                         if (sourceIndex >= 0)
                         {
                             if (sourceValueType == AnimatorControllerParameterType.Trigger)
-                                EditorGUILayout.HelpBox("源参数不可以是Trigger类型", MessageType.Warning);
+                                EditorGUILayout.HelpBox(Localization.Get("driver_tip_not_allow_trigger"), MessageType.Warning);
                             else if (sourceValueType != type)
-                                EditorGUILayout.HelpBox($"值将会从{sourceValueType}类型转换为{type}类型。", MessageType.Info);
+                                EditorGUILayout.HelpBox(string.Format(Localization.Get("driver_tip_convert"), sourceValueType, type), MessageType.Info);
                         }
 
                         if (_currentDriverParameter.convertRange)
@@ -914,21 +953,21 @@ namespace Yueby.AvatarTools
                             EditorGUI.indentLevel += 1;
                             YuebyUtil.HorizontalEGL(() =>
                             {
-                                EditorGUILayout.LabelField("源", GUILayout.Width(40));
+                                EditorGUILayout.LabelField(Localization.Get("driver_source"), GUILayout.Width(50));
                                 EditorGUILayout.Space();
-                                EditorGUILayout.LabelField("最小值", GUILayout.Width(60));
+                                EditorGUILayout.LabelField(Localization.Get("driver_min_value"), GUILayout.Width(40));
                                 _currentDriverParameter.sourceMin = EditorGUILayout.FloatField(_currentDriverParameter.sourceMin);
-                                EditorGUILayout.LabelField("最大值", GUILayout.Width(60));
+                                EditorGUILayout.LabelField(Localization.Get("driver_max_value"), GUILayout.Width(40));
                                 _currentDriverParameter.sourceMax = EditorGUILayout.FloatField(_currentDriverParameter.sourceMax);
                             });
 
                             YuebyUtil.HorizontalEGL(() =>
                             {
-                                EditorGUILayout.LabelField("目标", GUILayout.Width(40));
+                                EditorGUILayout.LabelField(Localization.Get("driver_destination"), GUILayout.Width(50));
                                 EditorGUILayout.Space();
-                                EditorGUILayout.LabelField("最小值", GUILayout.Width(60));
+                                EditorGUILayout.LabelField(Localization.Get("driver_min_value"), GUILayout.Width(40));
                                 _currentDriverParameter.destMin = EditorGUILayout.FloatField(_currentDriverParameter.destMin);
-                                EditorGUILayout.LabelField("最大值", GUILayout.Width(60));
+                                EditorGUILayout.LabelField(Localization.Get("driver_max_value"), GUILayout.Width(40));
                                 _currentDriverParameter.destMax = EditorGUILayout.FloatField(_currentDriverParameter.destMax);
                             });
                             EditorGUI.indentLevel -= 1;
@@ -939,7 +978,7 @@ namespace Yueby.AvatarTools
                     case AnimatorControllerParameterType.Trigger:
                         break;
                     default:
-                        EditorGUILayout.HelpBox($"{_currentDriverParameter.name}是{type}类型参数，不支持{_currentDriverParameter.type}操作", MessageType.Warning);
+                        EditorGUILayout.HelpBox(string.Format(Localization.Get("driver_not_suit_warning"), _currentDriverParameter.name, type, _currentDriverParameter.type), MessageType.Warning);
                         break;
                 }
             }
@@ -954,7 +993,8 @@ namespace Yueby.AvatarTools
 
                 YuebyUtil.VerticalEGL(() =>
                 {
-                    var titleLabel = _categoryBar.IsDraw ? "服装数据" : $"服装数据 : {_currentClothesCategory.Name}";
+                    var clothesLabel = Localization.Get("clothes");
+                    var titleLabel = _categoryBar.IsDraw ? clothesLabel : $"{clothesLabel} : {_currentClothesCategory.Name}";
                     YuebyUtil.TitleLabelField(titleLabel);
                     YuebyUtil.VerticalEGL("Badge", () =>
                     {
@@ -965,14 +1005,14 @@ namespace Yueby.AvatarTools
                                 _clothes.Icon = (Texture2D)EditorGUILayout.ObjectField(_clothes.Icon, typeof(Texture2D), false, GUILayout.Width(40), GUILayout.Height(40));
 
                                 EditorGUI.BeginChangeCheck();
-                                _clothes.Name = YuebyUtil.TextFieldVertical("衣服名", _clothes.Name, 60);
+                                _clothes.Name = YuebyUtil.TextFieldVertical(Localization.Get("clothes_name"), _clothes.Name, 60);
                                 if (EditorGUI.EndChangeCheck())
                                     Undo.RegisterCompleteObjectUndo(_currentClothesCategory, "Category Undo Register");
                             });
                         }
                         else
                         {
-                            EditorGUILayout.HelpBox("请选择或添加一个衣服配置", MessageType.Info);
+                            EditorGUILayout.HelpBox(Localization.Get("clothes_select_tip"), MessageType.Info);
                         }
                     }, GUILayout.Width(200));
                     _clothesGrid.Draw(50, new Vector2(5, 5), new Vector2(200, ConfigurePageHeight - 20));
@@ -992,12 +1032,12 @@ namespace Yueby.AvatarTools
         /// </summary>
         private void DrawInit()
         {
-            YuebyUtil.VerticalEGLTitled("初始设置", () =>
+            YuebyUtil.VerticalEGLTitled(Localization.Get("tool_init_label"), () =>
             {
                 YuebyUtil.HorizontalEGL(() =>
                 {
                     EditorGUI.BeginChangeCheck();
-                    _descriptor = (VRCAvatarDescriptor)YuebyUtil.ObjectFieldVertical(_descriptor, "Avatar", typeof(VRCAvatarDescriptor));
+                    _descriptor = (VRCAvatarDescriptor)YuebyUtil.ObjectFieldVertical(_descriptor, Localization.Get("tool_init_avatar"), typeof(VRCAvatarDescriptor));
                     if (EditorGUI.EndChangeCheck())
                         OnDescriptorValueChanged();
 
@@ -1007,8 +1047,8 @@ namespace Yueby.AvatarTools
                         YuebyUtil.Line(LineType.Vertical);
                         if (_dataReference == null)
                         {
-                            EditorGUILayout.HelpBox("未找到配置，可创建一个", MessageType.Info);
-                            if (GUILayout.Button("创建", GUILayout.Height(EditorGUIUtility.singleLineHeight * 2)))
+                            EditorGUILayout.HelpBox(Localization.Get("tool_init_none_data_tip"), MessageType.Info);
+                            if (GUILayout.Button(Localization.Get("tool_init_create_btn"), GUILayout.Height(EditorGUIUtility.singleLineHeight * 2)))
                             {
                                 CreatePersistantData();
                             }
@@ -1016,11 +1056,11 @@ namespace Yueby.AvatarTools
                         else
                         {
                             EditorGUI.BeginDisabledGroup(true);
-                            _dataReference = (CMAvatarDataReference)YuebyUtil.ObjectFieldVertical(_dataReference, "数据", typeof(CMAvatarDataReference), false);
+                            _dataReference = (CMAvatarDataReference)YuebyUtil.ObjectFieldVertical(_dataReference, Localization.Get("tool_init_data"), typeof(CMAvatarDataReference), false);
                             EditorGUI.EndDisabledGroup();
-                            if (GUILayout.Button("删除", GUILayout.Height(40)) && _dataReference.Data != null)
+                            if (GUILayout.Button(Localization.Get("tool_init_delete_btn"), GUILayout.Height(40)) && _dataReference.Data != null)
                             {
-                                var isOk = EditorUtility.DisplayDialog("警告", "你确定要删除该配置文件吗？删除后将不会得到撤回！", "Ok", "Cancel");
+                                var isOk = EditorUtility.DisplayDialog(Localization.Get("warning"), Localization.Get("tool_init_tip_delete_warning"), Localization.Get("ok"), "Cancel");
                                 if (isOk)
                                     DeletePersistantData();
                             }
@@ -1030,7 +1070,7 @@ namespace Yueby.AvatarTools
 
                 if (_descriptor != null)
                 {
-                    _isFoldoutVrcConfigure = YuebyUtil.Foldout(_isFoldoutVrcConfigure, "隐藏选项", () =>
+                    _isFoldoutVrcConfigure = YuebyUtil.Foldout(_isFoldoutVrcConfigure, Localization.Get("tool_init_hide_options"), () =>
                     {
                         EditorGUI.BeginDisabledGroup(true);
 

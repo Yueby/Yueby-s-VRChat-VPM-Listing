@@ -2,7 +2,7 @@
 using VRC.SDK3.Avatars.ScriptableObjects;
 using VRC.SDKBase;
 
-namespace Yueby.AvatarTools
+namespace Yueby.AvatarTools.ClothesManager
 {
 #if VRC_SDK_VRCSDK3
 

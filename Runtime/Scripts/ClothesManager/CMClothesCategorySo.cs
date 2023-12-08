@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEngine;
 using VRC.SDKBase;
 
-namespace Yueby.AvatarTools
+namespace Yueby.AvatarTools.ClothesManager
 {
     public class CMClothesCategorySo : ScriptableObject
     {

@@ -42,23 +42,44 @@ namespace Yueby.AvatarTools
                     foreach (var element in _tabBarElements)
                     {
                         if (!element.IsVisible) continue;
-
-
                         var label = element.IsDraw ? "◀" : "▶";
-
-
-                        var currentHeight = (element.Title.Length + 1) * EditorGUIUtility.singleLineHeight;
-                        var btnRect = new Rect(rect.x, rect.y + elementHeight + element.Space, rect.width, currentHeight);
-
-                        var result = "";
-                        foreach (var c in element.Title)
+                        float currentHeight;
+                        if (!string.IsNullOrEmpty(element.Title))
                         {
-                            result += c + "\n";
+                            currentHeight = (element.Title.Length + 1) * EditorGUIUtility.singleLineHeight;
+                            var btnRect = new Rect(rect.x, rect.y + elementHeight + element.Space, rect.width, currentHeight);
+
+                            var result = "";
+                            foreach (var c in element.Title)
+                                result += c + "\n";
+
+                            if (GUI.Button(btnRect, result + label))
+                                element.ChangeDrawState(!element.IsDraw);
                         }
-
-                        if (GUI.Button(btnRect, result + label))
+                        else
                         {
-                            element.ChangeDrawState(!element.IsDraw);
+                            var icon = element.Icons[1];
+                            if (EditorGUIUtility.isProSkin)
+                                icon = element.Icons[0];
+
+                            currentHeight = rect.width + EditorGUIUtility.singleLineHeight + 5;
+                            var btnRect = new Rect(rect.x, rect.y + elementHeight + element.Space, rect.width, currentHeight);
+
+                            if (GUI.Button(btnRect, ""))
+                                element.ChangeDrawState(!element.IsDraw);
+
+                            var texHeight = btnRect.width - 4;
+                            var texRect = new Rect(btnRect.x + 2, btnRect.y + btnRect.height / 2 - texHeight / 2, btnRect.width - 4, texHeight);
+                            // var labelRect = new Rect(texRect.x, texRect.y + texRect.height, texRect.width, EditorGUIUtility.singleLineHeight);
+
+                            if (element.IsDraw)
+                            {
+                                GUI.Box(btnRect, "");
+                                GUI.Box(btnRect, "");
+                            }
+
+                            GUI.DrawTexture(texRect, icon);
+                            // GUI.Label(labelRect, label);
                         }
 
                         elementHeight += currentHeight + element.Space;

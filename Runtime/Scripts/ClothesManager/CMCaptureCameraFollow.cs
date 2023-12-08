@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Yueby.AvatarTools
+namespace Yueby.AvatarTools.ClothesManager
 {
     [ExecuteAlways]
     public class CMCaptureCameraFollow : MonoBehaviour

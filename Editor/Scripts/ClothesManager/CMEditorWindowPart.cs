@@ -14,7 +14,7 @@ using Yueby.Utils;
 using Object = UnityEngine.Object;
 using SkinnedMeshRenderer = UnityEngine.SkinnedMeshRenderer;
 
-namespace Yueby.AvatarTools
+namespace Yueby.AvatarTools.ClothesManager
 {
     public partial class CMEditorWindow
     {
@@ -73,20 +73,8 @@ namespace Yueby.AvatarTools
                     if (_descriptor != null)
                     {
                         GetTargetParameter();
-                        _dataReference = _descriptor.GetComponent<CMAvatarDataReference>();
-                        if (_dataReference != null)
-                        {
-                            if (_dataReference.Data == null)
-                            {
-                                _dataReference.Data = AssetDatabase.LoadAssetAtPath<CMCDataSo>(GetIDPath() + "/" + "CMData.asset");
-                            }
-                        }
                     }
                 }
-
-                RecordAvatarState();
-
-                _previewRT = AssetDatabase.LoadAssetAtPath<RenderTexture>(GetPreviewPath());
             }
         }
 
@@ -107,7 +95,7 @@ namespace Yueby.AvatarTools
             AssetDatabase.CreateAsset(asset, path);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-       
+
             OnEnable();
         }
 
@@ -256,6 +244,19 @@ namespace Yueby.AvatarTools
             _expressionsMenu = _descriptor.expressionsMenu;
             _parameters = _descriptor.expressionParameters;
             _fxLayer = _descriptor.baseAnimationLayers[4].animatorController as AnimatorController;
+
+
+            _dataReference = _descriptor.GetComponent<CMAvatarDataReference>();
+            if (_dataReference != null)
+            {
+                if (_dataReference.Data == null)
+                {
+                    _dataReference.Data = AssetDatabase.LoadAssetAtPath<CMCDataSo>(GetIDPath() + "/" + "CMData.asset");
+                }
+            }
+
+            RecordAvatarState();
+            _previewRT = AssetDatabase.LoadAssetAtPath<RenderTexture>(GetPreviewPath());
         }
 
         private void ListenToDrop(Type allowType, ref List<CMClothesData.ClothesAnimParameter> parameters, UnityAction<CMClothesData.ClothesAnimParameter> handler, Object[] objects)
@@ -305,7 +306,7 @@ namespace Yueby.AvatarTools
                         var sm = gameObject.GetComponent<SkinnedMeshRenderer>();
                         if (sm == null)
                         {
-                            EditorUtility.DisplayDialog("提示", $"{obj.name}:无形态键组件,自动排除！", "Ok");
+                            EditorUtility.DisplayDialog(Localization.Get("tips"), string.Format(Localization.Get("clothes_none_bs_tip"), obj.name), Localization.Get("ok"));
                             return;
                         }
 
@@ -316,7 +317,8 @@ namespace Yueby.AvatarTools
                     {
                         if (skinnedMeshRenderer.sharedMesh.blendShapeCount == 0)
                         {
-                            EditorUtility.DisplayDialog("提示", $"{nameof(SkinnedMeshRenderer)}:{skinnedMeshRenderer.name}无形态键,自动排除！", "Ok");
+                            var message = string.Format(Localization.Get("clothes_none_bs_tip"), $"{nameof(SkinnedMeshRenderer)}:{skinnedMeshRenderer.name}");
+                            EditorUtility.DisplayDialog(Localization.Get("tips"), message, Localization.Get("ok"));
                             continue;
                         }
 
@@ -381,7 +383,7 @@ namespace Yueby.AvatarTools
                         var count = animParameters.Count(animParameter => animParameter.Type == nameof(SkinnedMeshRenderer) && animParameter.Path == path);
                         if (count == skinnedMeshRenderer.sharedMesh.blendShapeCount)
                         {
-                            if (EditorUtility.DisplayDialog("提示", $"{path}上形态键已全部添加，无法再次添加新的形态键！", "Ok"))
+                            if (EditorUtility.DisplayDialog(Localization.Get("tips"), Localization.Get("clothes_all_bs_tip"), Localization.Get("ok")))
                             {
                                 return;
                             }
@@ -450,7 +452,7 @@ namespace Yueby.AvatarTools
             BackupFile(backupPath, _expressionsMenu);
             BackupFile(backupPath, _parameters);
             BackupFile(backupPath, _fxLayer);
-            PrefabUtility.SaveAsPrefabAsset(_descriptor.gameObject, backupPath+"/"+_descriptor.name+".prefab");
+            PrefabUtility.SaveAsPrefabAsset(_descriptor.gameObject, backupPath + "/" + _descriptor.name + ".prefab");
 
 
             if (_parameters == null || _parameters.parameters == null)
@@ -747,7 +749,7 @@ namespace Yueby.AvatarTools
 
             current.controls.Remove(control);
 
-            var currentExMenu = CreateSubMenuAssets(createPath, current, "下一页");
+            var currentExMenu = CreateSubMenuAssets(createPath, current, Localization.Get("apply_next_page"));
             currentExMenu.controls.Add(control);
             return currentExMenu;
         }
@@ -964,6 +966,7 @@ namespace Yueby.AvatarTools
                 if (!skinnedMeshRenderer) continue;
                 Undo.RegisterCompleteObjectUndo(skinnedMeshRenderer, "Preview BlendShapes");
                 // trans.gameObject.SetActive(true);
+                if (parameter.BlendShapeIndex < 0) continue;
                 skinnedMeshRenderer.SetBlendShapeWeight(parameter.BlendShapeIndex, parameter.BlendShapeValue);
             }
 
@@ -1006,7 +1009,10 @@ namespace Yueby.AvatarTools
 
             var skinnedMeshRenderers = gameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
             foreach (var renderer in skinnedMeshRenderers)
+            {
+                if (renderer == null) continue;
                 _blendShapesStates.Add(new CMAvatarBlendShapesState(renderer));
+            }
         }
 
         public void Reset()
@@ -1046,7 +1052,7 @@ namespace Yueby.AvatarTools
                 _skinnedMeshRenderer = skinnedMeshRenderer;
                 if (skinnedMeshRenderer == null || skinnedMeshRenderer.sharedMesh == null)
                 {
-                    Debug.Log("SkinnedMeshRenderer为空？");
+                    Debug.Log("ClothesManager: SkinnedMeshRenderer is null？");
                     return;
                 }
 

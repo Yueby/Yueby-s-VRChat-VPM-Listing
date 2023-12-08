@@ -399,18 +399,15 @@ namespace Yueby.AvatarTools.DressingTools
                     {
                         //
                         _descriptor = (VRCAvatarDescriptor)YuebyUtil.ObjectFieldVertical(_descriptor, _localization.Get("configure_avatar_label"), typeof(VRCAvatarDescriptor));
-                    }, () =>
-                    {
-                        //
-                        OnDescriptorChanged();
-                    });
+                    }, OnDescriptorChanged);
 
                     if (_descriptor != null)
                     {
                         YuebyUtil.Line(LineType.Vertical);
                         EditorGUI.BeginChangeCheck();
                         _clothes = (GameObject)YuebyUtil.ObjectFieldVertical(_clothes, _localization.Get("configure_clothes_label"), typeof(GameObject));
-                        if (EditorGUI.EndChangeCheck()) OnClothesChanged();
+                        if (EditorGUI.EndChangeCheck()) 
+                            OnClothesChanged();
                     }
                 }, GUILayout.MaxHeight(40));
                 if (_descriptor == null)
