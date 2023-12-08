@@ -593,13 +593,15 @@ namespace Yueby.AvatarTools
             _captureGo = Instantiate(_descriptor.gameObject);
             _captureGo.name = "ClothesManager_" + _clothes.Name + "_CaptureAvatar";
 
-            foreach (var component in _captureGo.GetComponents<Component>())
+            foreach (var component in _captureGo.GetComponentsInChildren<Component>(true))
             {
-                if (component is Transform) continue;
+                if (component.GetType() == typeof(Transform) || component.GetType() == typeof(SkinnedMeshRenderer)) continue;
                 DestroyImmediate(component);
             }
 
-            var showList = GetClothesParameters(_currentClothesCategory, _clothesIndex)["Show"];
+            var map = GetClothesParameters(_currentClothesCategory, _clothesIndex);
+            var showList = map["Show"];
+            var hideList = map["Hide"];
 
             var hideRenderers = new List<GameObject>();
             foreach (var renderer in _captureGo.GetComponentsInChildren<Renderer>())
@@ -618,12 +620,21 @@ namespace Yueby.AvatarTools
                         hideRenderers.Remove(childRender.gameObject);
                 }
 
+
                 trans.gameObject.SetActive(true);
             }
 
             foreach (var hide in hideRenderers)
             {
-                hide.SetActive(false);
+                // hide.SetActive(false);
+                DestroyImmediate(hide);
+            }
+
+            foreach (var hide in hideList)
+            {
+                var trans = _captureGo.transform.Find(hide.Path);
+                if (!trans) continue;
+                DestroyImmediate(trans.gameObject);
             }
 
             var capturePos = new Vector3(1000, 0, 100);
