@@ -220,8 +220,11 @@ namespace Yueby.Utils
 
                                 for (var i = 0; i < _selectionGridButtons.Count; i++)
                                 {
-                                    var x = gridRect.x + padding.x + (elementEdgeLength + padding.x) * (i % count);
-                                    var y = gridRect.y + padding.y + (elementEdgeLength + padding.y) * Mathf.Floor(i / count);
+                                    var xLine = i % (int)count;
+                                    var yLine = i / (int)count;
+                                    var x = gridRect.x + padding.x + (elementEdgeLength + padding.x) * xLine;
+                                    var y = gridRect.y + padding.y + (elementEdgeLength + padding.y) * yLine;
+
 
                                     var btnRect = new Rect(x, y, elementEdgeLength, elementEdgeLength);
 
@@ -255,36 +258,21 @@ namespace Yueby.Utils
             {
                 SerializedProperty = serializedProperty;
                 Index = index;
-
-                var texture = new Texture2D(50, 50, TextureFormat.ARGB32, false);
-                for (var y = 0; y < texture.height; y++)
-                {
-                    for (var x = 0; x < texture.width; x++)
-                    {
-                        var color = new Color(1, 1, 1, 0.1f);
-                        texture.SetPixel(x, y, color);
-                    }
-                }
-
-                texture.alphaIsTransparency = true;
-                texture.Apply();
             }
 
             public void Draw(Rect rect, UnityAction<Rect, int> onArrayItemDraw)
             {
-                if (GUI.Button(rect, ""))
+                EditorGUI.BeginChangeCheck();
+                GUI.Toolbar(rect, IsSelected ? 0 : -1, new[] { "" });
+                if (EditorGUI.EndChangeCheck())
                 {
                     OnClick?.Invoke(Index);
                 }
 
-                onArrayItemDraw?.Invoke(rect, Index);
 
-                if (IsSelected)
-                {
-                    GUI.Box(rect, "");
-                    GUI.Box(rect, "");
-                }
+                onArrayItemDraw?.Invoke(rect, Index);
             }
+
 
             public void Select()
             {

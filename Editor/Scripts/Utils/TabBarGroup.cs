@@ -20,11 +20,12 @@ namespace Yueby.AvatarTools
                 _tabBarElements.Add(element);
         }
 
-        public void Remove(TabBarElement element) 
+        public void Remove(TabBarElement element)
         {
             if (_tabBarElements.Contains(element))
                 _tabBarElements.Remove(element);
         }
+
 
         public void Draw(float height)
         {
@@ -61,23 +62,16 @@ namespace Yueby.AvatarTools
                                 icon = element.Icons[0];
 
                             currentHeight = rect.width + EditorGUIUtility.singleLineHeight + 5;
-                            var btnRect = new Rect(rect.x, rect.y + elementHeight + element.Space, rect.width, currentHeight);
+                            var btnRect = new Rect(rect.x - 2, rect.y + elementHeight + element.Space, rect.width, currentHeight);
 
-                            if (GUI.Button(btnRect, ""))
-                                element.ChangeDrawState(!element.IsDraw);
-
+                      
+                             var toggleStyle = GUI.skin.FindStyle("buttonright");
+                             element.ChangeDrawState(GUI.Toggle(btnRect, element.IsDraw, "", toggleStyle));
                             var texHeight = btnRect.width - 4;
                             var texRect = new Rect(btnRect.x + 2, btnRect.y + btnRect.height / 2 - texHeight / 2, btnRect.width - 4, texHeight);
-                            // var labelRect = new Rect(texRect.x, texRect.y + texRect.height, texRect.width, EditorGUIUtility.singleLineHeight);
-
-                            if (element.IsDraw)
-                            {
-                                GUI.Box(btnRect, "");
-                                GUI.Box(btnRect, "");
-                            }
-
+                     
+             
                             GUI.DrawTexture(texRect, icon);
-                            // GUI.Label(labelRect, label);
                         }
 
                         elementHeight += currentHeight + element.Space;
