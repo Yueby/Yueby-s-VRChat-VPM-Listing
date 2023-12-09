@@ -73,6 +73,7 @@ namespace Yueby.AvatarTools.ClothesManager
                         { "in_playing_mode_tip", "当前为播放模式，编辑器不可用，请回到编辑模式在进行操作！" },
                         { "clothes_none_bs_tip", "{0}：无SkinnedMeshRenderer组件,自动排除！" },
                         { "clothes_all_bs_tip", "{0}上形态键已全部添加，无法再次添加新的形态键！" },
+                        { "clothes_menu_find_tip", "找到 “{0}” 菜单，是否将它作为工具用主菜单？这将会替换掉原来的内容！" },
                     }
                 },
                 {
@@ -137,6 +138,7 @@ namespace Yueby.AvatarTools.ClothesManager
                         { "in_playing_mode_tip", "Current in playing mode, editor will disable, please back to edit mode." },
                         { "clothes_none_bs_tip", "{0}:\n Could not found SkinnedMeshRenderer component, removed！" },
                         { "clothes_all_bs_tip", "All blendShapes on {0} has already added, you can't add new blendShape key on here!" },
+                        { "clothes_menu_find_tip", "Found “{0}” menu，do you want to use it as a tool main menu? This will replace the original content!" },
                     }
                 },
             };

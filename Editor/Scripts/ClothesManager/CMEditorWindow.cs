@@ -527,7 +527,7 @@ namespace Yueby.AvatarTools.ClothesManager
                         var isCurrentDefault = _currentClothesCategory.Default == _clothesIndex;
 
                         EditorGUI.BeginDisabledGroup(isCurrentDefault);
-                        if (GUILayout.Button(isCurrentDefault ? Localization.Get("clothes_set_to_default") : Localization.Get("clothes_already_default")))
+                        if (GUILayout.Button(isCurrentDefault ? Localization.Get("clothes_already_default") : Localization.Get("clothes_set_to_default")))
                         {
                             _currentClothesCategory.Default = _clothesIndex;
                         }

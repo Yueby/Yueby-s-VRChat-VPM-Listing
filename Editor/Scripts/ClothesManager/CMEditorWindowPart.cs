@@ -146,7 +146,7 @@ namespace Yueby.AvatarTools.ClothesManager
                 currentExMenu = GetLastNextSubMenu(currentExMenu, $"{menuDir}/");
             }
 
-            var control = currentExMenu.controls.FirstOrDefault(c => c.name == "服装管理");
+            var control = currentExMenu.controls.FirstOrDefault(c => c.name == Localization.Get("window_title"));
             if (control != null)
                 currentExMenu.controls.Remove(control);
 
@@ -550,10 +550,10 @@ namespace Yueby.AvatarTools.ClothesManager
             var isFindMenu = false;
             foreach (var control in currentExMenu.controls)
             {
-                if (control.name != "服装管理") continue;
+                if (control.name != Localization.Get("window_title")) continue;
 
                 isFindMenu = true;
-                if (EditorUtility.DisplayDialog("提示", "找到“服装管理”菜单，是否将它作为工具用主菜单？这将会替换掉原来的内容！", "是", "否"))
+                if (EditorUtility.DisplayDialog(Localization.Get("tips"), string.Format(Localization.Get("clothes_menu_find_tip"),Localization.Get("window_title")), Localization.Get("yes"), Localization.Get("no")))
                 {
                     control.subMenu = mainMenu;
                 }
@@ -565,7 +565,7 @@ namespace Yueby.AvatarTools.ClothesManager
             {
                 currentExMenu.controls.Add(new VRCExpressionsMenu.Control()
                 {
-                    name = "服装管理",
+                    name = Localization.Get("window_title"),
                     type = VRCExpressionsMenu.Control.ControlType.SubMenu,
                     subMenu = mainMenu
                 });

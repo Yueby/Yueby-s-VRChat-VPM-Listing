@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
-using UnityEditor.Experimental.Networking.PlayerConnection;
 using UnityEngine;
 using Yueby.Utils;
-using EditorGUILayout = UnityEditor.EditorGUILayout;
 using EditorGUIUtility = UnityEditor.EditorGUIUtility;
 
 namespace Yueby.AvatarTools
@@ -22,7 +20,7 @@ namespace Yueby.AvatarTools
                 _tabBarElements.Add(element);
         }
 
-        public void Remove(TabBarElement element)
+        public void Remove(TabBarElement element) 
         {
             if (_tabBarElements.Contains(element))
                 _tabBarElements.Remove(element);
