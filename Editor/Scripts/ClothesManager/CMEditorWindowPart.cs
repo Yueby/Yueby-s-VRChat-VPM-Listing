@@ -553,7 +553,7 @@ namespace Yueby.AvatarTools.ClothesManager
                 if (control.name != Localization.Get("window_title")) continue;
 
                 isFindMenu = true;
-                if (EditorUtility.DisplayDialog(Localization.Get("tips"), string.Format(Localization.Get("clothes_menu_find_tip"),Localization.Get("window_title")), Localization.Get("yes"), Localization.Get("no")))
+                if (EditorUtility.DisplayDialog(Localization.Get("tips"), string.Format(Localization.Get("apply_menu_find_tip"),Localization.Get("window_title")), Localization.Get("yes"), Localization.Get("no")))
                 {
                     control.subMenu = mainMenu;
                 }
@@ -715,7 +715,7 @@ namespace Yueby.AvatarTools.ClothesManager
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            EditorUtility.DisplayDialog("提示", "已成功应用！", "OK");
+            EditorUtility.DisplayDialog(Localization.Get("tips"), Localization.Get("apply_success_tip"), Localization.Get("ok"));
         }
 
         private void BackupFile(string path, Object targetFile)
@@ -738,7 +738,7 @@ namespace Yueby.AvatarTools.ClothesManager
             if (control.type == VRCExpressionsMenu.Control.ControlType.SubMenu)
             {
                 VRCExpressionsMenu subMenu = null;
-                if (control.name == "下一页" || control.name == "下一个" || control.name == "Next" || control.name == "Next Page")
+                if (control.name is "下一页" or "下一个" || control.name == "Next" || control.name == "Next Page")
                     subMenu = control.subMenu;
 
                 if (subMenu != null)
