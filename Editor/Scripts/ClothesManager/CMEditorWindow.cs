@@ -247,12 +247,12 @@ namespace Yueby.AvatarTools.ClothesManager
 
         #region Clothes Grid Events
 
-        private bool isGridInit;
+        private bool _isGridInit;
 
         private void GetSelectedClothesData()
         {
             _clothesProperty = _categorySerializedObject.FindProperty(nameof(CMClothesCategorySo.Clothes));
-            isGridInit = true;
+            _isGridInit = true;
             _clothesGrid = new SelectionGrid(_categorySerializedObject, _clothesProperty, OnClothesGridChangeSelected);
             _clothesGrid.OnAdd += OnClothesGridAdd;
             _clothesGrid.OnRemove += OnClothesGridRemove;
@@ -268,7 +268,7 @@ namespace Yueby.AvatarTools.ClothesManager
             _clothes = _clothesList[i];
 
 
-            if (!isGridInit)
+            if (!_isGridInit)
                 _currentClothesCategory.Selected = i;
 
 
@@ -280,24 +280,10 @@ namespace Yueby.AvatarTools.ClothesManager
 
             _currentDriverParameter = null;
 
+            PreviewCurrentClothes(true, false);
 
-            if (!isGridInit)
-                PreviewCurrentClothes();
-
-            if (isGridInit)
-                isGridInit = false;
-
-            if (_isStartCapture)
-            {
-                _isStartCapture = false;
-                StopCapture();
-
-                YuebyUtil.WaitToDo(20, "Wait to setup capture", () =>
-                {
-                    _isStartCapture = true;
-                    SetupCapture();
-                });
-            }
+            if (_isGridInit)
+                _isGridInit = false;
         }
 
         private Mesh _renderMesh;
@@ -586,7 +572,16 @@ namespace Yueby.AvatarTools.ClothesManager
                                 if (GUILayout.Button(Localization.Get("cancel")))
                                 {
                                     _isStartCapture = false;
-                                    StopCapture(true);
+                                    StopCapture(true, true);
+                                }
+
+
+                                if (GUILayout.Button(EditorGUIUtility.IconContent("d_SceneViewCamera"), GUILayout.Height(EditorGUIUtility.singleLineHeight - 1)))
+                                {
+                                    if (_captureCamera)
+                                    {
+                                        _captureCamera.orthographic = !_captureCamera.orthographic;
+                                    }
                                 }
                             });
 
@@ -614,19 +609,22 @@ namespace Yueby.AvatarTools.ClothesManager
         private GameObject _captureCameraGo;
         private Camera _captureCamera;
 
-        private void SetupCapture()
+        private void SetupCapture(bool needFocus = true)
         {
-            _captureCameraGo = new GameObject(Localization.Get("capture_obj_camera"));
-            var follow = _captureCameraGo.AddComponent<CMCaptureCameraFollow>();
-            follow.OnPositionUpdate += Repaint;
+            if (!_captureCameraGo)
+            {
+                _captureCameraGo = new GameObject(Localization.Get("capture_obj_camera"));
+                var follow = _captureCameraGo.AddComponent<CMCaptureCameraFollow>();
+                follow.OnPositionUpdate += Repaint;
 
-            _captureCamera = _captureCameraGo.AddComponent<Camera>();
-            _captureCamera.clearFlags = CameraClearFlags.SolidColor;
-            _captureCamera.backgroundColor = Color.clear;
-            _captureCamera.fieldOfView = 45;
-            _captureCamera.targetTexture = _previewRT;
-            _captureCamera.orthographic = true;
-            _captureCamera.orthographicSize = 0.5f;
+                _captureCamera = _captureCameraGo.AddComponent<Camera>();
+                _captureCamera.clearFlags = CameraClearFlags.SolidColor;
+                _captureCamera.backgroundColor = Color.clear;
+                _captureCamera.fieldOfView = 45;
+                _captureCamera.targetTexture = _previewRT;
+                _captureCamera.orthographic = true;
+                _captureCamera.orthographicSize = 0.5f;
+            }
 
             _captureGo = Instantiate(_descriptor.gameObject);
             _captureGo.name = Localization.Get("capture_obj_avatar") + _clothes.Name;
@@ -677,7 +675,9 @@ namespace Yueby.AvatarTools.ClothesManager
 
             var capturePos = new Vector3(1000, 0, 100);
             _captureGo.transform.position = capturePos;
-            YuebyUtil.FocusTarget(_captureGo);
+
+            if (needFocus)
+                YuebyUtil.FocusTarget(_captureGo);
         }
 
 
@@ -688,6 +688,8 @@ namespace Yueby.AvatarTools.ClothesManager
                 antiAliasing = _previewRT.antiAliasing
             };
 
+            mRt.Create();
+
             var tex = new Texture2D(mRt.width, mRt.height, TextureFormat.ARGB32, false);
             _captureCamera.targetTexture = mRt;
             _captureCamera.Render();
@@ -696,18 +698,19 @@ namespace Yueby.AvatarTools.ClothesManager
             tex.ReadPixels(new Rect(0, 0, mRt.width, mRt.height), 0, 0);
             tex.Apply();
 
+            RenderTexture.active = null;
+            mRt.Release();
+
 
             if (File.Exists(path))
                 File.Delete(path);
             File.WriteAllBytes(path, tex.EncodeToPNG());
 
-
             DestroyImmediate(tex);
 
             _captureCamera.targetTexture = _previewRT;
             _captureCamera.Render();
-            RenderTexture.active = _previewRT;
-            DestroyImmediate(mRt);
+
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -734,13 +737,14 @@ namespace Yueby.AvatarTools.ClothesManager
                 _clothes.Icon = icon;
         }
 
-        private void StopCapture(bool needBack = false)
+        private void StopCapture(bool destroyCam = true, bool needBack = false)
         {
-            if (_captureCameraGo)
+            if (destroyCam && _captureCameraGo)
                 DestroyImmediate(_captureCameraGo);
 
             if (_captureGo)
                 DestroyImmediate(_captureGo);
+
             if (needBack)
             {
                 YuebyUtil.FocusTarget(_descriptor.gameObject);

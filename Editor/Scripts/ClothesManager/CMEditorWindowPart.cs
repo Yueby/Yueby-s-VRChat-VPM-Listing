@@ -553,7 +553,7 @@ namespace Yueby.AvatarTools.ClothesManager
                 if (control.name != Localization.Get("window_title")) continue;
 
                 isFindMenu = true;
-                if (EditorUtility.DisplayDialog(Localization.Get("tips"), string.Format(Localization.Get("apply_menu_find_tip"),Localization.Get("window_title")), Localization.Get("yes"), Localization.Get("no")))
+                if (EditorUtility.DisplayDialog(Localization.Get("tips"), string.Format(Localization.Get("apply_menu_find_tip"), Localization.Get("window_title")), Localization.Get("yes"), Localization.Get("no")))
                 {
                     control.subMenu = mainMenu;
                 }
@@ -935,50 +935,54 @@ namespace Yueby.AvatarTools.ClothesManager
             if (needReset)
                 ResetAvatarState();
 
-            if (needGameObject)
+
+            foreach (var category in _dataReference.Data.Categories)
             {
-                var parameters = GetClothesParameters(_currentClothesCategory, _clothesIndex);
-                var showList = parameters["Show"];
-                var hideList = parameters["Hide"];
-
-                Undo.RegisterFullObjectHierarchyUndo(_descriptor.gameObject, "Record Descriptor GameObjects State");
-                foreach (var trans in hideList.Select(parameter => _descriptor.transform.Find(parameter.Path)).Where(trans => trans))
+                if (needGameObject)
                 {
-                    // Undo.RegisterCompleteObjectUndo(trans.gameObject, "Preview Hide GameObject");
-                    trans.gameObject.SetActive(false);
+                    var parameters = GetClothesParameters(category, category.Selected);
+                    var showList = parameters["Show"];
+                    var hideList = parameters["Hide"];
 
-                    // Debug.Log(parameter.Path);
+                    Undo.RegisterFullObjectHierarchyUndo(_descriptor.gameObject, "Record Descriptor GameObjects State");
+                    foreach (var trans in hideList.Select(parameter => _descriptor.transform.Find(parameter.Path)).Where(trans => trans))
+                    {
+                        // Undo.RegisterCompleteObjectUndo(trans.gameObject, "Preview Hide GameObject");
+                        trans.gameObject.SetActive(false);
+
+                        // Debug.Log(parameter.Path);
+                    }
+
+                    foreach (var trans in showList.Select(parameter => _descriptor.transform.Find(parameter.Path)).Where(trans => trans))
+                    {
+                        // Undo.RegisterCompleteObjectUndo(trans.gameObject, "Preview Show GameObject");
+                        trans.gameObject.SetActive(true);
+                    }
                 }
 
-                foreach (var trans in showList.Select(parameter => _descriptor.transform.Find(parameter.Path)).Where(trans => trans))
+                var blendShapeList = _clothes.BlendShapeParameters;
+                foreach (var parameter in blendShapeList)
                 {
-                    // Undo.RegisterCompleteObjectUndo(trans.gameObject, "Preview Show GameObject");
-                    trans.gameObject.SetActive(true);
+                    var trans = _descriptor.transform.Find(parameter.Path);
+                    if (!trans) continue;
+                    var skinnedMeshRenderer = trans.GetComponent<SkinnedMeshRenderer>();
+                    if (!skinnedMeshRenderer) continue;
+                    Undo.RegisterCompleteObjectUndo(skinnedMeshRenderer, "Preview BlendShapes");
+                    // trans.gameObject.SetActive(true);
+                    if (parameter.BlendShapeIndex < 0) continue;
+                    skinnedMeshRenderer.SetBlendShapeWeight(parameter.BlendShapeIndex, parameter.BlendShapeValue);
                 }
-            }
-
-            var blendShapeList = _clothes.BlendShapeParameters;
-            foreach (var parameter in blendShapeList)
-            {
-                var trans = _descriptor.transform.Find(parameter.Path);
-                if (!trans) continue;
-                var skinnedMeshRenderer = trans.GetComponent<SkinnedMeshRenderer>();
-                if (!skinnedMeshRenderer) continue;
-                Undo.RegisterCompleteObjectUndo(skinnedMeshRenderer, "Preview BlendShapes");
-                // trans.gameObject.SetActive(true);
-                if (parameter.BlendShapeIndex < 0) continue;
-                skinnedMeshRenderer.SetBlendShapeWeight(parameter.BlendShapeIndex, parameter.BlendShapeValue);
             }
 
             if (_isStartCapture)
             {
                 _isStartCapture = false;
-                StopCapture();
+                StopCapture(false);
 
                 YuebyUtil.WaitToDo(20, "Wait to setup capture", () =>
                 {
                     _isStartCapture = true;
-                    SetupCapture();
+                    SetupCapture(false);
                 });
             }
         }
@@ -1038,7 +1042,7 @@ namespace Yueby.AvatarTools.ClothesManager
 
             public void Reset()
             {
-                _gameObject.SetActive(_isActive);
+                _gameObject?.SetActive(_isActive);
             }
         }
 
