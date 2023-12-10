@@ -521,30 +521,45 @@ namespace Yueby.AvatarTools.ClothesManager
 
                         YuebyUtil.Line();
 
-                        EditorGUILayout.LabelField(Localization.Get("parent_menu"), GUILayout.Width(40));
-                        EditorGUI.BeginChangeCheck();
-                        _dataReference.ParentMenu = (VRCExpressionsMenu)EditorGUILayout.ObjectField(_dataReference.ParentMenu, typeof(VRCExpressionsMenu), false);
-                        if (EditorGUI.EndChangeCheck())
+                        YuebyUtil.HorizontalEGL(() =>
                         {
-                            Undo.RegisterCompleteObjectUndo(_dataReference, "RegisterDataReference");
-                        }
+                            EditorGUILayout.LabelField(Localization.Get("parent_menu"), GUILayout.Width(40));
+                            EditorGUI.BeginChangeCheck();
+                            _dataReference.ParentMenu = (VRCExpressionsMenu)EditorGUILayout.ObjectField(_dataReference.ParentMenu, typeof(VRCExpressionsMenu), false);
+                            if (EditorGUI.EndChangeCheck())
+                            {
+                                Undo.RegisterCompleteObjectUndo(_dataReference, "RegisterDataReference");
+                            }
+                        });
+
 
                         if (_dataReference.ParentMenu == null)
                         {
                             EditorGUILayout.HelpBox(Localization.Get("parent_menu_tip"), MessageType.Warning);
                         }
 
-                        if (GUILayout.Button(Localization.Get("apply")))
+                        YuebyUtil.HorizontalEGL(() =>
                         {
-                            Apply(_dataReference.Data);
-                        }
+                            if (GUILayout.Button(Localization.Get("tool_save_path_change"), GUILayout.Width(80)))
+                            {
+                                MoveFile();
+                            }
+
+                            EditorGUI.BeginDisabledGroup(true);
+                            EditorGUILayout.TextField(_dataReference.SavePath);
+                            EditorGUI.EndDisabledGroup();
+                        });
+
 
                         var backupPath = GetIDPath() + "/Backups";
                         if (Directory.Exists(backupPath) && GUILayout.Button(Localization.Get("open_backup_path")))
                         {
-                            EditorUtility.FocusProjectWindow();
-                            var obj = AssetDatabase.LoadAssetAtPath<Object>(backupPath);
-                            Selection.activeObject = obj;
+                            YuebyUtil.PingProject(backupPath);
+                        }
+
+                        if (GUILayout.Button(Localization.Get("apply")))
+                        {
+                            Apply(_dataReference.Data);
                         }
 
                         YuebyUtil.Line();
@@ -718,8 +733,7 @@ namespace Yueby.AvatarTools.ClothesManager
             var t2d = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
             if (EditorUtility.DisplayDialog(Localization.Get("tips"), Localization.Get("tip_success_save"), Localization.Get("yes"), Localization.Get("no")))
             {
-                EditorUtility.FocusProjectWindow();
-                Selection.activeObject = t2d;
+                YuebyUtil.PingProject(t2d);
             }
 
             return t2d;

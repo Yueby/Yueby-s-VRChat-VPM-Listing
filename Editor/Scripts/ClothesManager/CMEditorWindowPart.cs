@@ -176,8 +176,7 @@ namespace Yueby.AvatarTools.ClothesManager
 
         private string GetGeneratedPath()
         {
-            // var path = YuebyUtil.GetParentDirectory(YuebyUtil.GetScriptDirectory(nameof(CMEditorWindow)));
-            var path = "Assets/ClothesManager/Generated";
+            var path = _dataReference.SavePath + "/Generated";
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
             return path;
@@ -997,6 +996,40 @@ namespace Yueby.AvatarTools.ClothesManager
         private void ResetAvatarState()
         {
             _avatarState?.Reset();
+        }
+
+        private void MoveFile()
+        {
+            var path = EditorUtility.OpenFolderPanel("选择保存路径", _dataReference.SavePath, "");
+            if (string.IsNullOrEmpty(path) || path == _dataReference.SavePath) return;
+
+            var targetPath = FileUtil.GetProjectRelativePath(path) + "/ClothesManager";
+            if (targetPath != _dataReference.SavePath && !targetPath.Contains(_dataReference.SavePath))
+            {
+                var lastPath = _dataReference.SavePath;
+                if (!Directory.Exists(lastPath))
+                    return;
+
+                if (Directory.Exists(targetPath))
+                {
+                    if (Directory.GetFiles(targetPath).Length > 0)
+                        Debug.Log("Target Directory:" + targetPath + " Not Empty!");
+                    else
+                        Directory.Delete(targetPath, true);
+                }
+
+                FileUtil.MoveFileOrDirectory(lastPath, targetPath);
+
+                if (File.Exists(lastPath + ".meta"))
+                    File.Delete(lastPath + ".meta");
+
+                _dataReference.SavePath = targetPath;
+
+                AssetDatabase.Refresh();
+
+                EditorUtility.DisplayDialog(Localization.Get("tips"), Localization.Get("tool_save_path_change_success"), Localization.Get("ok"));
+                YuebyUtil.PingProject(targetPath);
+            }
         }
     }
 

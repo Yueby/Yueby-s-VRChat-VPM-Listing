@@ -14,5 +14,6 @@ namespace Yueby.AvatarTools.ClothesManager
         public string ID;
         public CMCDataSo Data;
         public VRCExpressionsMenu ParentMenu;
+        public string SavePath = "Assets/ClothesManager";
     }
 }

@@ -73,6 +73,8 @@ namespace Yueby.AvatarTools.ClothesManager
                         { "clothes_all_bs_tip", "{0}上形态键已全部添加，无法再次添加新的形态键！" },
                         { "apply_menu_find_tip", "找到 “{0}” 菜单，是否将它作为工具用主菜单？这将会替换掉原来的内容！" },
                         { "apply_success_tip", "已成功应用！" },
+                        { "tool_save_path_change", "更改保存路径" },
+                        { "tool_save_path_change_success", "更改保存路径成功！" },
                     }
                 },
                 {
@@ -139,6 +141,8 @@ namespace Yueby.AvatarTools.ClothesManager
                         { "clothes_all_bs_tip", "All blendShapes on {0} has already added, you can't add new blendShape key on here!" },
                         { "apply_menu_find_tip", "Found “{0}” menu，do you want to use it as a tool main menu? This will replace the original content!" },
                         { "apply_success_tip", "Apply success!" },
+                        { "tool_save_path_change", "Save Path" },
+                        { "tool_save_path_change_success", "Success to change save path！" },
                     }
                 },
             };

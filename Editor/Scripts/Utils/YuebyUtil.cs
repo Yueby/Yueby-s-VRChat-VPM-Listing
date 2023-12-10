@@ -287,6 +287,19 @@ namespace Yueby.Utils
             return foldout;
         }
 
+        public static void PingProject(string path)
+        {
+            EditorUtility.FocusProjectWindow();
+            var obj = AssetDatabase.LoadAssetAtPath<Object>(path);
+            Selection.activeObject = obj;
+        }
+
+        public static void PingProject(Object obj)
+        {
+            EditorUtility.FocusProjectWindow();
+            Selection.activeObject = obj;
+        }
+
         public static async void PingObjectAndBack(GameObject target, GameObject current, int millionSeconds)
         {
             PingObject(target);
