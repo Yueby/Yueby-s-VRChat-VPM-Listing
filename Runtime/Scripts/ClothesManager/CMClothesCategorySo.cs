@@ -60,6 +60,18 @@ namespace Yueby.AvatarTools.ClothesManager
             BlendShapeParameters = new List<ClothesAnimParameter>();
         }
 
+        public List<ClothesAnimParameter> GetNotEmptyParameters(List<ClothesAnimParameter> parameters)
+        {
+            var list = new List<ClothesAnimParameter>();
+            foreach (var pa in parameters)
+            {
+                if (string.IsNullOrEmpty(pa.Path)) continue;
+                list.Add(pa);
+            }
+
+            return list;
+        }
+
         public bool HasRealParameterDriver()
         {
             return HasParameterDriver && (EnterParameter.Parameters.Count > 0 || ExitParameter.Parameters.Count > 0);

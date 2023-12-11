@@ -66,6 +66,7 @@ namespace Yueby.AvatarTools.ClothesManager
         private readonly Texture2D[] _clothesIcons = new Texture2D[2];
         private readonly Texture2D[] _objectIcons = new Texture2D[2];
         private readonly Texture2D[] _listIcons = new Texture2D[2];
+        private Texture2D _nextIcon;
 
         #endregion
 
@@ -116,6 +117,7 @@ namespace Yueby.AvatarTools.ClothesManager
 
             _categoryIcons[0] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/DarkMode/category.png");
             _categoryIcons[1] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/LightMode/category.png");
+            _nextIcon = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/next.png");
         }
 
 
