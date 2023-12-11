@@ -128,7 +128,8 @@ namespace Yueby.AvatarTools.ClothesManager
 
             if (_isStartCapture)
             {
-                StopCapture(true);
+                _isStartCapture = false;
+                StopCapture(true, true);
             }
         }
 
@@ -302,14 +303,14 @@ namespace Yueby.AvatarTools.ClothesManager
 
             _clothesShowRl.AnimBool.target = true;
 
-            _clothesShowRl.OnAdd += list =>
+            _clothesShowRl.OnAdd += _ =>
             {
                 _clothes.ShowParameters.Add(new CMClothesData.ClothesAnimParameter()
                 {
                     Type = nameof(GameObject)
                 });
             };
-            _clothesHideRl.OnAdd += list =>
+            _clothesHideRl.OnAdd += _ =>
             {
                 _clothes.HideParameters.Add(new CMClothesData.ClothesAnimParameter()
                 {
@@ -317,7 +318,7 @@ namespace Yueby.AvatarTools.ClothesManager
                 });
             };
 
-            _clothesBlendShapeRL.OnAdd += list =>
+            _clothesBlendShapeRL.OnAdd += _ =>
             {
                 _clothes.BlendShapeParameters.Add(new CMClothesData.ClothesAnimParameter()
                 {
@@ -325,14 +326,14 @@ namespace Yueby.AvatarTools.ClothesManager
                 });
             };
 
-            _clothesShowRl.OnRemove += list => { PreviewCurrentClothes(); };
-            _clothesHideRl.OnRemove += list => { PreviewCurrentClothes(); };
-            _clothesBlendShapeRL.OnRemove += list => { PreviewCurrentClothes(); };
+            _clothesShowRl.OnRemove += _ => { PreviewCurrentClothes(); };
+            _clothesHideRl.OnRemove += _ => { PreviewCurrentClothes(); };
+            _clothesBlendShapeRL.OnRemove += _ => { PreviewCurrentClothes(); };
 
 
-            _clothesShowRl.OnDraw += (rect, index, active, focused) => { RegisterClothPathListPanel(rect, index, ref _clothes.ShowParameters); };
-            _clothesHideRl.OnDraw += (rect, index, active, focused) => { RegisterClothPathListPanel(rect, index, ref _clothes.HideParameters); };
-            _clothesBlendShapeRL.OnDraw += (rect, index, active, focused) => { RegisterClothPathListPanel(rect, index, ref _clothes.BlendShapeParameters); };
+            _clothesShowRl.OnDraw += (rect, index, _, _) => { RegisterClothPathListPanel(rect, index, ref _clothes.ShowParameters); };
+            _clothesHideRl.OnDraw += (rect, index, _, _) => { RegisterClothPathListPanel(rect, index, ref _clothes.HideParameters); };
+            _clothesBlendShapeRL.OnDraw += (rect, index, _, _) => { RegisterClothPathListPanel(rect, index, ref _clothes.BlendShapeParameters); };
 
 
             // Parameter Driver ReorderableList Init
@@ -348,7 +349,7 @@ namespace Yueby.AvatarTools.ClothesManager
             _enterDriverRl.InverseRlList.Add(_exitDriverRl);
             _exitDriverRl.InverseRlList.Add(_enterDriverRl);
 
-            _enterDriverRl.OnAdd += list =>
+            _enterDriverRl.OnAdd += _ =>
             {
                 _clothes.EnterParameter.Parameters.Add(new VRC_AvatarParameterDriver.Parameter
                 {
@@ -356,7 +357,7 @@ namespace Yueby.AvatarTools.ClothesManager
                 });
             };
 
-            _exitDriverRl.OnAdd += list =>
+            _exitDriverRl.OnAdd += _ =>
             {
                 _clothes.ExitParameter.Parameters.Add(new VRC_AvatarParameterDriver.Parameter
                 {
