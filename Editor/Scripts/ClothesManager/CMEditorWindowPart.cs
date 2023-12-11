@@ -545,7 +545,8 @@ namespace Yueby.AvatarTools.ClothesManager
                 currentExMenu = GetLastNextSubMenu(_expressionsMenu, expressionMenuPath);
             }
 
-            BackupFile(backupPath, currentExMenu);
+            if (currentExMenu != _expressionsMenu)
+                BackupFile(backupPath, currentExMenu);
             var isFindMenu = false;
             foreach (var control in currentExMenu.controls)
             {
@@ -723,7 +724,9 @@ namespace Yueby.AvatarTools.ClothesManager
             var fileInfo = new FileInfo(sourcePath);
 
             // Debug.Log($"{sourcePath}\n{path + fileInfo.Name}");
-            FileUtil.CopyFileOrDirectory(sourcePath, path + "/" + fileInfo.Name);
+            var destPath = path + "/" + fileInfo.Name;
+            if (!File.Exists(destPath))
+                FileUtil.CopyFileOrDirectory(sourcePath, destPath);
         }
 
 
