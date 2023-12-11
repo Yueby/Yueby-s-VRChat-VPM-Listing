@@ -1027,7 +1027,7 @@ namespace Yueby.AvatarTools.ClothesManager
             if (string.IsNullOrEmpty(path) || path == _dataReference.SavePath) return;
 
             var targetPath = FileUtil.GetProjectRelativePath(path) + "/ClothesManager";
-            if (targetPath != _dataReference.SavePath && !targetPath.Contains(_dataReference.SavePath))
+            if (targetPath != _dataReference.SavePath)
             {
                 var lastPath = _dataReference.SavePath;
                 if (!Directory.Exists(lastPath))
