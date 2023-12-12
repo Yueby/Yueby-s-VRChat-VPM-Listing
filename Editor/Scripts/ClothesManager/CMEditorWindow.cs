@@ -323,19 +323,18 @@ namespace Yueby.AvatarTools.ClothesManager
                 _isGridInit = false;
         }
 
-        private Mesh _renderMesh;
 
         private void InitClothData()
         {
             _clothesShowRl = new ReorderableListDroppable(_clothes.ShowParameters, typeof(GameObject), EditorGUIUtility.singleLineHeight + 5, Repaint);
             _clothesHideRl = new ReorderableListDroppable(_clothes.HideParameters, typeof(GameObject), EditorGUIUtility.singleLineHeight + 5, Repaint);
             _clothesSmrRL = new ReorderableListDroppable(_clothes.SMRParameters, typeof(SkinnedMeshRenderer), EditorGUIUtility.singleLineHeight * 2 + 5, Repaint);
+            _clothesShowRl.AnimBool.target = true;
+
 
             _clothesShowRl.InverseRlList.AddRange(new[] { _clothesHideRl, _clothesSmrRL });
             _clothesHideRl.InverseRlList.AddRange(new[] { _clothesShowRl, _clothesSmrRL });
             _clothesSmrRL.InverseRlList.AddRange(new[] { _clothesHideRl, _clothesShowRl });
-
-            _clothesShowRl.AnimBool.target = true;
 
             _clothesShowRl.OnAdd += _ =>
             {
@@ -371,14 +370,10 @@ namespace Yueby.AvatarTools.ClothesManager
 
 
             // Parameter Driver ReorderableList Init
-            _enterDriverRl = new ReorderableListDroppable(_clothes.EnterParameter.Parameters, typeof(VRC_AvatarParameterDriver.Parameter), EditorGUIUtility.singleLineHeight + 5, Repaint)
-            {
-                AnimBool =
-                {
-                    target = true
-                }
-            };
+            _enterDriverRl = new ReorderableListDroppable(_clothes.EnterParameter.Parameters, typeof(VRC_AvatarParameterDriver.Parameter), EditorGUIUtility.singleLineHeight + 5, Repaint);
             _exitDriverRl = new ReorderableListDroppable(_clothes.ExitParameter.Parameters, typeof(VRC_AvatarParameterDriver.Parameter), EditorGUIUtility.singleLineHeight + 5, Repaint);
+
+            _enterDriverRl.AnimBool.target = true;
 
             _enterDriverRl.InverseRlList.Add(_exitDriverRl);
             _exitDriverRl.InverseRlList.Add(_enterDriverRl);
@@ -829,11 +824,7 @@ namespace Yueby.AvatarTools.ClothesManager
                 YuebyUtil.WaitToDo(20, "WaitToPreview", PreviewGameObject);
             }, Repaint);
 
-            _clothesSmrRL.DoLayoutList(Localization.Get("blend_shapes"), new Vector2(width, 320), false, true, true, obj =>
-            {
-                // BlendShapes
-                ListenToDrop(typeof(SkinnedMeshRenderer), ref _clothes.SMRParameters, null, obj);
-            }, Repaint);
+            _clothesSmrRL.DoLayoutList(Localization.Get("skinned_mesh_renderer"), new Vector2(width, 320), false, true, true, obj => { ListenToDrop(typeof(SkinnedMeshRenderer), ref _clothes.SMRParameters, null, obj); }, Repaint);
         }
 
         private void DrawClothesParameterDriver()

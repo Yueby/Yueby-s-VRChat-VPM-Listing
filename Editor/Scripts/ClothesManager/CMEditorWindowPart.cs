@@ -419,29 +419,27 @@ namespace Yueby.AvatarTools.ClothesManager
                             if (EditorGUI.EndChangeCheck())
                             {
                                 if (_clothes.ContainsInList(target, animParameters))
+                                {
                                     target.SmrParameter.Index = -1;
-
-                                if (target.SmrParameter.Index == -1)
                                     target.SmrParameter.BlendShapeValue = 0;
+                                }
+                                else
+                                    target.SmrParameter.BlendShapeValue = skinnedMeshRenderer.GetBlendShapeWeight(target.SmrParameter.Index);
                             }
 
-                            if (target.SmrParameter.Index != -1)
+                            if (target.SmrParameter.Index >= 0)
                             {
-                                if (target.SmrParameter.Index >= 0)
+                                EditorGUI.BeginChangeCheck();
+                                target.SmrParameter.BlendShapeValue = EditorGUI.Slider(secondRect, target.SmrParameter.BlendShapeValue, 0, 100f);
+                                if (EditorGUI.EndChangeCheck())
                                 {
-                                    EditorGUI.BeginChangeCheck();
-                                    target.SmrParameter.BlendShapeValue = EditorGUI.Slider(secondRect, target.SmrParameter.BlendShapeValue, 0, 100f);
-                                    if (EditorGUI.EndChangeCheck())
-                                    {
-                                        Undo.RegisterCompleteObjectUndo(_currentClothesCategory, "Category SliderValueChanged");
-                                        PreviewSMR(_clothes);
-                                    }
+                                    Undo.RegisterCompleteObjectUndo(_currentClothesCategory, "Category SliderValueChanged");
+                                    PreviewSMR(_clothes);
                                 }
                             }
 
                             break;
                         case CMClothesData.ClothesAnimParameter.SMRParameter.SMRType.Material:
-
                             var count = skinnedMeshRenderer.sharedMaterials.Length;
                             var popups = new string[count];
                             for (var i = 0; i < count; i++)
@@ -455,8 +453,11 @@ namespace Yueby.AvatarTools.ClothesManager
                                 {
                                     target.SmrParameter.Index = -1;
                                     target.SmrParameter.Type = CMClothesData.ClothesAnimParameter.SMRParameter.SMRType.ShapeKey;
+                                    target.SmrParameter.BlendShapeName = "";
                                     return;
                                 }
+
+                                target.SmrParameter.Material = skinnedMeshRenderer.sharedMaterials[target.SmrParameter.Index];
                             }
 
                             if (target.SmrParameter.Index >= 0)
