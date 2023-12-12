@@ -1224,9 +1224,9 @@ namespace Yueby.AvatarTools.ClothesManager
 
             public void Reset()
             {
+                if (!_skinnedMeshRenderer) return;
                 foreach (var item in _blendShapes)
                     _skinnedMeshRenderer.SetBlendShapeWeight(item.Key, item.Value);
-
                 _skinnedMeshRenderer.sharedMaterials = _materials;
             }
         }

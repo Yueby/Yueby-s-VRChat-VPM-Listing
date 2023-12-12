@@ -96,7 +96,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
             var offset = -28;
             var syncedRect = new Rect(_syncedRect.x + offset + 3, rect.y, _savedRect.width, rect.height);
             var savedRect = new Rect(_savedRect.x + offset + 3, rect.y, _savedRect.width, rect.height);
-            var defaultRect = new Rect(_defaultRect.x + offset, rect.y, _defaultRect.width, rect.height);
+            var defaultRect = new Rect(_defaultRect.x + offset + 3, rect.y, _defaultRect.width-3, rect.height);
             var typeRect = new Rect(_typeRect.x + offset, rect.y, _typeRect.width, rect.height);
             var nameRect = new Rect(_nameRect.x + offset, rect.y, _nameRect.width, rect.height);
 
@@ -106,7 +106,6 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
 
             if (valueType.intValue == (int)ExpressionParameters.ValueType.Bool)
             {
-                defaultRect.x += 3;
                 var value = EditorGUI.Toggle(defaultRect, defaultValue.floatValue > 0f);
                 defaultValue.floatValue = value ? 1f : 0f;
             }
