@@ -286,66 +286,69 @@ namespace Yueby.AvatarTools.ClothesManager
 
 
             var paths = new List<CMClothesData.ClothesAnimParameter>();
-            foreach (var objReference in objects)
+            if (objects != null)
             {
-                var obj = objReference;
-                var path = string.Empty;
-                var type = string.Empty;
-
-                if (allowType == typeof(GameObject))
+                foreach (var objReference in objects)
                 {
-                    if (obj is GameObject gameObject)
+                    var obj = objReference;
+                    var path = string.Empty;
+                    var type = string.Empty;
+
+                    if (allowType == typeof(GameObject))
                     {
-                        path = VRC.Core.ExtensionMethods.GetHierarchyPath(gameObject.transform).Replace(_descriptor.name + "/", "");
-                        type = nameof(GameObject);
+                        if (obj is GameObject gameObject)
+                        {
+                            path = VRC.Core.ExtensionMethods.GetHierarchyPath(gameObject.transform).Replace(_descriptor.name + "/", "");
+                            type = nameof(GameObject);
+                        }
                     }
+                    else if (allowType == typeof(SkinnedMeshRenderer))
+                    {
+                        if (obj is GameObject gameObject)
+                        {
+                            var sm = gameObject.GetComponent<SkinnedMeshRenderer>();
+                            if (sm == null)
+                            {
+                                EditorUtility.DisplayDialog(Localization.Get("tips"), string.Format(Localization.Get("clothes_none_bs_tip"), obj.name), Localization.Get("ok"));
+                                return;
+                            }
+
+                            obj = sm;
+                        }
+
+                        if (obj is SkinnedMeshRenderer skinnedMeshRenderer)
+                        {
+                            if (skinnedMeshRenderer.sharedMesh.blendShapeCount == 0)
+                            {
+                                var message = string.Format(Localization.Get("clothes_none_bs_tip"), $"{nameof(SkinnedMeshRenderer)}:{skinnedMeshRenderer.name}");
+                                EditorUtility.DisplayDialog(Localization.Get("tips"), message, Localization.Get("ok"));
+                                continue;
+                            }
+
+                            path = VRC.Core.ExtensionMethods.GetHierarchyPath(skinnedMeshRenderer.transform).Replace(_descriptor.name + "/", "");
+                            type = nameof(SkinnedMeshRenderer);
+
+                            var count = parameters.Count(animParameter => animParameter.Type == nameof(SkinnedMeshRenderer) && animParameter.Path == path);
+
+                            if (count == skinnedMeshRenderer.sharedMesh.blendShapeCount)
+                            {
+                                EditorUtility.DisplayDialog(Localization.Get("tips"), string.Format(Localization.Get("clothes_all_bs_tip"), path), Localization.Get("ok"));
+                                continue;
+                            }
+                        }
+                    }
+
+                    var parameter = new CMClothesData.ClothesAnimParameter()
+                    {
+                        Path = path,
+                        Type = type
+                    };
+
+                    handler?.Invoke(parameter);
+
+                    if (!_clothes.ContainsInList(parameter, parameters))
+                        paths.Add(parameter);
                 }
-                else if (allowType == typeof(SkinnedMeshRenderer))
-                {
-                    if (obj is GameObject gameObject)
-                    {
-                        var sm = gameObject.GetComponent<SkinnedMeshRenderer>();
-                        if (sm == null)
-                        {
-                            EditorUtility.DisplayDialog(Localization.Get("tips"), string.Format(Localization.Get("clothes_none_bs_tip"), obj.name), Localization.Get("ok"));
-                            return;
-                        }
-
-                        obj = sm;
-                    }
-
-                    if (obj is SkinnedMeshRenderer skinnedMeshRenderer)
-                    {
-                        if (skinnedMeshRenderer.sharedMesh.blendShapeCount == 0)
-                        {
-                            var message = string.Format(Localization.Get("clothes_none_bs_tip"), $"{nameof(SkinnedMeshRenderer)}:{skinnedMeshRenderer.name}");
-                            EditorUtility.DisplayDialog(Localization.Get("tips"), message, Localization.Get("ok"));
-                            continue;
-                        }
-
-                        path = VRC.Core.ExtensionMethods.GetHierarchyPath(skinnedMeshRenderer.transform).Replace(_descriptor.name + "/", "");
-                        type = nameof(SkinnedMeshRenderer);
-
-                        var count = parameters.Count(animParameter => animParameter.Type == nameof(SkinnedMeshRenderer) && animParameter.Path == path);
-
-                        if (count == skinnedMeshRenderer.sharedMesh.blendShapeCount)
-                        {
-                            EditorUtility.DisplayDialog(Localization.Get("tips"), string.Format(Localization.Get("clothes_all_bs_tip"), path), Localization.Get("ok"));
-                            continue;
-                        }
-                    }
-                }
-
-                var parameter = new CMClothesData.ClothesAnimParameter()
-                {
-                    Path = path,
-                    Type = type
-                };
-
-                handler?.Invoke(parameter);
-
-                if (!_clothes.ContainsInList(parameter, parameters))
-                    paths.Add(parameter);
             }
 
             parameters.AddRange(paths);
@@ -786,7 +789,7 @@ namespace Yueby.AvatarTools.ClothesManager
             if (control.type == VRCExpressionsMenu.Control.ControlType.SubMenu)
             {
                 VRCExpressionsMenu subMenu = null;
-                if (control.name is "下一页" or "下一个" || control.name == "Next" || control.name == "Next Page")
+                if (control.name == "下一页" || control.name == "下一个" || control.name == "Next" || control.name == "Next Page")
                     subMenu = control.subMenu;
 
                 if (subMenu != null)
@@ -893,10 +896,8 @@ namespace Yueby.AvatarTools.ClothesManager
                             type = typeof(SkinnedMeshRenderer),
                         };
                         AnimationUtility.SetEditorCurve(clip, bind, curve);
-                        Debug.Log("enter");
                         break;
                     case CMClothesData.ClothesAnimParameter.SMRParameter.SMRType.Material:
-
                         var objCurve = new ObjectReferenceKeyframe { time = 0, value = smr.SmrParameter.Material };
 
                         bind = EditorCurveBinding.PPtrCurve(smr.Path, typeof(SkinnedMeshRenderer), $"m_Materials.Array.data[{smr.SmrParameter.Index}]");
@@ -1143,8 +1144,8 @@ namespace Yueby.AvatarTools.ClothesManager
 
     public class CMAvatarState
     {
-        private readonly List<CMAvatarGameObjectState> _gameObjectStates = new();
-        private readonly List<CMAvatarSMRState> _smrStates = new();
+        private readonly List<CMAvatarGameObjectState> _gameObjectStates = new List<CMAvatarGameObjectState>();
+        private readonly List<CMAvatarSMRState> _smrStates = new List<CMAvatarSMRState>();
 
         public CMAvatarState(GameObject gameObject)
         {

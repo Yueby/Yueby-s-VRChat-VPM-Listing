@@ -399,6 +399,14 @@ namespace Yueby.Utils
             return position;
         }
 
+        public static Vector2 ScrollViewEGL(UnityAction action, Vector2 position, GUIStyle hStyle, GUIStyle vStyle, params GUILayoutOption[] options)
+        {
+            position = EditorGUILayout.BeginScrollView(position, hStyle, vStyle, options);
+            action?.Invoke();
+            EditorGUILayout.EndScrollView();
+            return position;
+        }
+
         public static void DisableGroupEGL(bool disabled, UnityAction action)
         {
             EditorGUI.BeginDisabledGroup(true);

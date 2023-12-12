@@ -1,10 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
-using UnityEditor.Build;
 using UnityEditor.Compilation;
-using UnityEditor.Graphs;
 using UnityEngine;
 
 namespace Yueby.AvatarTools.VRCEditorOptimize
@@ -18,7 +14,11 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
         [MenuItem(Path, priority = 10)]
         public static void Execute()
         {
+#if UNITY_2019
+            var symbols = PlayerSettings.GetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone);
+#elif Unity_2022
             var symbols = PlayerSettings.GetScriptingDefineSymbols(NamedBuildTarget.Standalone);
+#endif
             var list = symbols.Split(';').ToList();
             var result = "";
             if (_isEnabled)
@@ -34,7 +34,12 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
 
             foreach (var item in list)
                 result += item + ";";
-            PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.Standalone, result);
+
+#if UNITY_2019
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone, result);
+#elif Unity_2022
+             PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.Standalone, result);
+#endif
 
             EditorUtility.DisplayDialog("Tips", "Waiting for editor recompile scripts.\n请等待编辑器重新编译脚本。", "Ok");
             CompilationPipeline.RequestScriptCompilation();
@@ -50,7 +55,11 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
 
         private static bool GetEnable()
         {
+#if UNITY_2019
+            var symbols = PlayerSettings.GetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone);
+#elif Unity_2022
             var symbols = PlayerSettings.GetScriptingDefineSymbols(NamedBuildTarget.Standalone);
+#endif
             var list = symbols.Split(';').ToList();
             return list.Contains(StyleSymbol);
         }

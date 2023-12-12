@@ -1,6 +1,4 @@
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using Yueby.Utils;
 
 public class VRCExParameterLocalization : Localization

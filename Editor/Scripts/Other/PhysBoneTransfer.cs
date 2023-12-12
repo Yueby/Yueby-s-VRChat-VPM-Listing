@@ -2,7 +2,6 @@
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
-using VRC.Core;
 using VRC.Dynamics;
 using VRC.SDK3.Dynamics.PhysBone.Components;
 using Yueby.Utils;
@@ -88,8 +87,9 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
             {
                 ComponentUtility.CopyComponent(physBone);
 
-                targetGo.transform.localPosition = child.transform.localPosition;
-                targetGo.transform.localRotation = child.transform.localRotation;
+                var transform = child.transform;
+                targetGo.transform.localPosition = transform.localPosition;
+                targetGo.transform.localRotation = transform.localRotation;
 
 
                 if (targetGo.GetComponent<VRCPhysBone>() != null)
@@ -140,8 +140,9 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
                 {
                     ComponentUtility.CopyComponent(col);
 
-                    targetGo.transform.localPosition = col.transform.localPosition;
-                    targetGo.transform.localRotation = col.transform.localRotation;
+                    var transform = col.transform;
+                    targetGo.transform.localPosition = transform.localPosition;
+                    targetGo.transform.localRotation = transform.localRotation;
 
                     if (targetGo.GetComponent<VRCPhysBoneColliderBase>() != null)
                         ComponentUtility.PasteComponentValues(targetGo.GetComponent<VRCPhysBoneColliderBase>());
@@ -157,13 +158,14 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
 
                     if (parent != null)
                     {
+                        var transform = col.transform;
                         targetGo = new GameObject(col.name)
                         {
                             transform =
                             {
                                 parent = parent.transform,
-                                localPosition = col.transform.localPosition,
-                                localRotation = col.transform.localRotation
+                                localPosition = transform.localPosition,
+                                localRotation = transform.localRotation
                             }
                         };
                         Undo.RegisterCreatedObjectUndo(targetGo, "CreateNewCollider");

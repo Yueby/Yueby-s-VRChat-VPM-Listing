@@ -365,9 +365,9 @@ namespace Yueby.AvatarTools.ClothesManager
             _clothesSmrRL.OnRemove += _ => { PreviewAll(); };
 
 
-            _clothesShowRl.OnDraw += (rect, index, _, _) => { RegisterClothPathListPanel(rect, index, ref _clothes.ShowParameters); };
-            _clothesHideRl.OnDraw += (rect, index, _, _) => { RegisterClothPathListPanel(rect, index, ref _clothes.HideParameters); };
-            _clothesSmrRL.OnDraw += (rect, index, _, _) => { RegisterClothPathListPanel(rect, index, ref _clothes.SMRParameters); };
+            _clothesShowRl.OnDraw += (rect, index, a, b) => { RegisterClothPathListPanel(rect, index, ref _clothes.ShowParameters); };
+            _clothesHideRl.OnDraw += (rect, index, a, b) => { RegisterClothPathListPanel(rect, index, ref _clothes.HideParameters); };
+            _clothesSmrRL.OnDraw += (rect, index, a, b) => { RegisterClothPathListPanel(rect, index, ref _clothes.SMRParameters); };
 
 
             // Parameter Driver ReorderableList Init
@@ -405,11 +405,11 @@ namespace Yueby.AvatarTools.ClothesManager
             _enterDriverRl.OnDrawTitle += () => { _clothes.EnterParameter.IsLocal = YuebyUtil.Toggle(_clothes.EnterParameter.IsLocal, Localization.Get("driver_is_local"), 80); };
             _exitDriverRl.OnDrawTitle += () => { _clothes.ExitParameter.IsLocal = YuebyUtil.Toggle(_clothes.ExitParameter.IsLocal, Localization.Get("driver_is_local"), 80); };
 
-            _enterDriverRl.OnDraw += (rect, index, active, focused) => { DrawParameterDriverElement(ref _clothes.EnterParameter.Parameters, rect, index, active, focused); };
-            _exitDriverRl.OnDraw += (rect, index, active, focused) => { DrawParameterDriverElement(ref _clothes.ExitParameter.Parameters, rect, index, active, focused); };
+            _enterDriverRl.OnDraw += (rect, index, active, focused) => { DrawParameterDriverElement(ref _clothes.EnterParameter.Parameters, rect, index); };
+            _exitDriverRl.OnDraw += (rect, index, active, focused) => { DrawParameterDriverElement(ref _clothes.ExitParameter.Parameters, rect, index); };
         }
 
-        private void DrawParameterDriverElement(ref List<VRC_AvatarParameterDriver.Parameter> drivers, Rect rect, int index, bool active, bool focused)
+        private void DrawParameterDriverElement(ref List<VRC_AvatarParameterDriver.Parameter> drivers, Rect rect, int index)
         {
             var typeRect = new Rect(rect.x, rect.y + 2, 70, rect.height);
             var driver = drivers[index];

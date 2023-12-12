@@ -10,11 +10,8 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
     [CustomEditor(typeof(VRC.SDK3.Avatars.ScriptableObjects.VRCExpressionParameters))]
     public class VRCExpressionParametersEditor : Editor
     {
-        GUIStyle boxNormal;
-        GUIStyle boxSelected;
-
         private YuebyReorderableList _paramRl;
-        private SerializedProperty parameters;
+        private SerializedProperty _parametersProperty;
 
         private static readonly VRCExParameterLocalization Localization = new VRCExParameterLocalization();
         private static Vector2 _scrollPos;
@@ -28,8 +25,8 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
         public void OnEnable()
         {
             // Init Reorderable List
-            parameters = serializedObject.FindProperty("parameters");
-            _paramRl = new YuebyReorderableList(serializedObject, parameters, EditorGUIUtility.singleLineHeight + 5, true, true);
+            _parametersProperty = serializedObject.FindProperty("parameters");
+            _paramRl = new YuebyReorderableList(serializedObject, _parametersProperty, EditorGUIUtility.singleLineHeight + 5, true, true);
             _paramRl.OnDraw += OnListDraw;
             _paramRl.OnHeaderBottomDraw += OnListHeaderBottomDraw;
             _paramRl.OnTitleDraw += OnTitleDraw;
@@ -58,20 +55,23 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
 
         private void OnListHeaderBottomDraw()
         {
-            YuebyUtil.HorizontalEGL("Badge", () =>
+            var style = new GUIStyle("Badge");
+            style.clipping = TextClipping.Overflow;
+
+            YuebyUtil.HorizontalEGL(style, () =>
             {
                 // EditorGUILayout.Space(30);
                 GUILayout.Space(20);
 
-                EditorGUILayout.LabelField(Localization.Get("parameters_name"), GUILayout.MinWidth(100), GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
+                EditorGUILayout.LabelField(Localization.Get("parameters_name"), GUILayout.MinWidth(100), GUILayout.MinWidth(10), GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
                 _nameRect = GUILayoutUtility.GetLastRect();
-                EditorGUILayout.LabelField(Localization.Get("parameters_type"), GUILayout.MaxWidth(100), GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
+                EditorGUILayout.LabelField(Localization.Get("parameters_type"), GUILayout.MaxWidth(100), GUILayout.MinWidth(10), GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
                 _typeRect = GUILayoutUtility.GetLastRect();
-                EditorGUILayout.LabelField(Localization.Get("parameters_default"), GUILayout.MaxWidth(64), GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
+                EditorGUILayout.LabelField(Localization.Get("parameters_default"), GUILayout.MaxWidth(58), GUILayout.MinWidth(10), GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
                 _defaultRect = GUILayoutUtility.GetLastRect();
-                EditorGUILayout.LabelField(Localization.Get("parameters_saved"), GUILayout.MaxWidth(64), GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
+                EditorGUILayout.LabelField(Localization.Get("parameters_saved"), GUILayout.MaxWidth(58), GUILayout.MinWidth(10), GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
                 _savedRect = GUILayoutUtility.GetLastRect();
-                EditorGUILayout.LabelField(Localization.Get("parameters_synced"), GUILayout.MaxWidth(64), GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
+                EditorGUILayout.LabelField(Localization.Get("parameters_synced"), GUILayout.MaxWidth(58), GUILayout.MinWidth(10), GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
                 _syncedRect = GUILayoutUtility.GetLastRect();
             }, space: 0f);
         }
@@ -79,9 +79,9 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
 
         private void OnListDraw(Rect rect, int index, bool arg2, bool arg3)
         {
-            if (parameters.arraySize < index + 1)
-                parameters.InsertArrayElementAtIndex(index);
-            var item = parameters.GetArrayElementAtIndex(index);
+            if (_parametersProperty.arraySize < index + 1)
+                _parametersProperty.InsertArrayElementAtIndex(index);
+            var item = _parametersProperty.GetArrayElementAtIndex(index);
 
             var itemName = item.FindPropertyRelative("name");
             var valueType = item.FindPropertyRelative("valueType");
