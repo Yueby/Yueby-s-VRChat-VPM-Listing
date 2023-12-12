@@ -1,6 +1,10 @@
 using System.Linq;
 using UnityEditor;
+#if UNITY_2022
+using UnityEditor.Build;
+#endif
 using UnityEditor.Compilation;
+
 using UnityEngine;
 
 namespace Yueby.AvatarTools.VRCEditorOptimize
@@ -16,7 +20,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
         {
 #if UNITY_2019
             var symbols = PlayerSettings.GetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone);
-#elif Unity_2022
+#elif UNITY_2022
             var symbols = PlayerSettings.GetScriptingDefineSymbols(NamedBuildTarget.Standalone);
 #endif
             var list = symbols.Split(';').ToList();
@@ -37,7 +41,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
 
 #if UNITY_2019
             PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone, result);
-#elif Unity_2022
+#elif UNITY_2022
              PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.Standalone, result);
 #endif
 
@@ -57,7 +61,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
         {
 #if UNITY_2019
             var symbols = PlayerSettings.GetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone);
-#elif Unity_2022
+#elif UNITY_2022
             var symbols = PlayerSettings.GetScriptingDefineSymbols(NamedBuildTarget.Standalone);
 #endif
             var list = symbols.Split(';').ToList();

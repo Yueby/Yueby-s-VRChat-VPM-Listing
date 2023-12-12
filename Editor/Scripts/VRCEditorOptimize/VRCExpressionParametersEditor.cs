@@ -1,4 +1,5 @@
 ﻿#if YUEBY_AVATAR_STYLE
+using System;
 using UnityEngine;
 using UnityEditor;
 using ExpressionParameters = VRC.SDK3.Avatars.ScriptableObjects.VRCExpressionParameters;
@@ -65,13 +66,13 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
 
                 EditorGUILayout.LabelField(Localization.Get("parameters_name"), GUILayout.MinWidth(100), GUILayout.MinWidth(10), GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
                 _nameRect = GUILayoutUtility.GetLastRect();
-                EditorGUILayout.LabelField(Localization.Get("parameters_type"), GUILayout.MaxWidth(100), GUILayout.MinWidth(10), GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
+                EditorGUILayout.LabelField(Localization.Get("parameters_type"), GUILayout.MaxWidth(70), GUILayout.MinWidth(10), GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
                 _typeRect = GUILayoutUtility.GetLastRect();
-                EditorGUILayout.LabelField(Localization.Get("parameters_default"), GUILayout.MaxWidth(58), GUILayout.MinWidth(10), GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
+                EditorGUILayout.LabelField(Localization.Get("parameters_default"), GUILayout.MaxWidth(60), GUILayout.MinWidth(10), GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
                 _defaultRect = GUILayoutUtility.GetLastRect();
-                EditorGUILayout.LabelField(Localization.Get("parameters_saved"), GUILayout.MaxWidth(58), GUILayout.MinWidth(10), GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
+                EditorGUILayout.LabelField(Localization.Get("parameters_saved"), GUILayout.MaxWidth(60), GUILayout.MinWidth(10), GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
                 _savedRect = GUILayoutUtility.GetLastRect();
-                EditorGUILayout.LabelField(Localization.Get("parameters_synced"), GUILayout.MaxWidth(58), GUILayout.MinWidth(10), GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
+                EditorGUILayout.LabelField(Localization.Get("parameters_synced"), GUILayout.MaxWidth(60), GUILayout.MinWidth(10), GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
                 _syncedRect = GUILayoutUtility.GetLastRect();
             }, space: 0f);
         }
@@ -92,16 +93,30 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
             rect.y += 2;
             rect.height -= 4;
 
-            var offset = -30;
-            var syncedRect = new Rect(_syncedRect.x + offset, rect.y, _savedRect.width, rect.height);
-            var savedRect = new Rect(_savedRect.x + offset, rect.y, _savedRect.width, rect.height);
+            var offset = -28;
+            var syncedRect = new Rect(_syncedRect.x + offset + 3, rect.y, _savedRect.width, rect.height);
+            var savedRect = new Rect(_savedRect.x + offset + 3, rect.y, _savedRect.width, rect.height);
             var defaultRect = new Rect(_defaultRect.x + offset, rect.y, _defaultRect.width, rect.height);
             var typeRect = new Rect(_typeRect.x + offset, rect.y, _typeRect.width, rect.height);
             var nameRect = new Rect(_nameRect.x + offset, rect.y, _nameRect.width, rect.height);
 
             EditorGUI.PropertyField(syncedRect, synced, new GUIContent(""));
             EditorGUI.PropertyField(savedRect, saved, new GUIContent(""));
-            EditorGUI.PropertyField(defaultRect, defaultValue, new GUIContent(""));
+
+
+            if (valueType.intValue == (int)ExpressionParameters.ValueType.Bool)
+            {
+                defaultRect.x += 3;
+                var value = EditorGUI.Toggle(defaultRect, defaultValue.floatValue > 0f);
+                defaultValue.floatValue = value ? 1f : 0f;
+            }
+            else if (valueType.intValue == (int)ExpressionParameters.ValueType.Int)
+            {
+                defaultValue.floatValue = EditorGUI.IntField(defaultRect, (int)defaultValue.floatValue);
+            }
+            else
+                EditorGUI.PropertyField(defaultRect, defaultValue, new GUIContent(""));
+
             EditorGUI.PropertyField(typeRect, valueType, new GUIContent(""));
             EditorGUI.PropertyField(nameRect, itemName, new GUIContent(""));
         }
@@ -146,6 +161,8 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
                                 {
                                     InitExpressionParameters(false);
                                 }
+
+                                GUIUtility.ExitGUI();
                             }
 
                             if (GUILayout.Button(Localization.Get("parameters_to_default")))
@@ -154,6 +171,8 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
                                 {
                                     InitExpressionParameters(true);
                                 }
+
+                                GUIUtility.ExitGUI();
                             }
                         });
                     }, true, 2, true);
