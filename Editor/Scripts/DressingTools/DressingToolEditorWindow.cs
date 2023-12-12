@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEditorInternal;
@@ -89,7 +90,32 @@ namespace Yueby.AvatarTools.DressingTools
             _isAutoCombinePb = false;
             _isSplitCombine = true;
 
-            _runtimeAnimatorController = AssetDatabase.LoadMainAssetAtPath("Packages/com.yueby.avatartools/Editor/Assets/DressingTools/Animation/AvatarTest/AvatarTest.controller") as RuntimeAnimatorController;
+            GetAssetsDressingToolsFolder();
+            _runtimeAnimatorController = AssetDatabase.LoadMainAssetAtPath($"{_path}/AvatarTest.controller") as RuntimeAnimatorController;
+        }
+
+        private static string _path = "Packages/com.yueby.avatartools/Editor/Assets/DressingTools/Animation/AvatarTest";
+
+        private string GetDressingToolsAssetsPath()
+        {
+            return _path.Replace("/Animation/AvatarTest", "");
+        }
+
+        private void GetAssetsDressingToolsFolder()
+        {
+            var assets = AssetDatabase.FindAssets("AvatarTest");
+            foreach (var asset in assets)
+            {
+                var path = AssetDatabase.GUIDToAssetPath(asset);
+                if (AssetDatabase.IsValidFolder(path))
+                {
+                    if (path.StartsWith("Assets"))
+                    {
+                        _path = path;
+                        return;
+                    }
+                }
+            }
         }
 
         private void OnDestroy()
@@ -123,7 +149,7 @@ namespace Yueby.AvatarTools.DressingTools
             FocusAvatarWhenGetDescriptor();
         }
 
-        [MenuItem("Tools/YuebyTools/Avatar/DressingTool",false,10)]
+        [MenuItem("Tools/YuebyTools/Avatar/DressingTool", false, 10)]
         public static void OpenWindow()
         {
             _window = GetWindow<DressingToolEditorWindow>();
@@ -316,6 +342,25 @@ namespace Yueby.AvatarTools.DressingTools
             {
                 YuebyUtil.VerticalEGLTitled(_localization.Get("title_setup_label"), () =>
                 {
+                    YuebyUtil.HorizontalEGL(() =>
+                    {
+                        if (GUILayout.Button(_localization.Get("option_test_change_path"), GUILayout.Width(100)))
+                        {
+                            var dressingToolsPath = GetDressingToolsAssetsPath();
+                            YuebyUtil.MoveFolderFromPath(ref dressingToolsPath, "DressingTools");
+
+                            _path = $"{dressingToolsPath}/Animation/AvatarTest";
+                        }
+
+                        if (GUILayout.Button(_localization.Get("option_test_jump_path"), GUILayout.Width(100)))
+                        {
+                            YuebyUtil.PingProject(_path);
+                        }
+
+                        EditorGUI.BeginDisabledGroup(true);
+                        EditorGUILayout.TextField(_path);
+                        EditorGUI.EndDisabledGroup();
+                    });
                     if (GUILayout.Button(_localization.Get("option_test_button")))
                         //Test
                         TestAvatar();
@@ -379,7 +424,8 @@ namespace Yueby.AvatarTools.DressingTools
                     EditorGUILayout.Space(5);
                     YuebyUtil.HorizontalEGL(() =>
                     {
-                        if (GUILayout.Button(_localization.Get("option_dress_button"))) Dress();
+                        if (GUILayout.Button(_localization.Get("option_dress_button")))
+                            Dress();
 
                         if (GUILayout.Button(_localization.Get("option_test_button")))
                             //Test
@@ -406,7 +452,7 @@ namespace Yueby.AvatarTools.DressingTools
                         YuebyUtil.Line(LineType.Vertical);
                         EditorGUI.BeginChangeCheck();
                         _clothes = (GameObject)YuebyUtil.ObjectFieldVertical(_clothes, _localization.Get("configure_clothes_label"), typeof(GameObject));
-                        if (EditorGUI.EndChangeCheck()) 
+                        if (EditorGUI.EndChangeCheck())
                             OnClothesChanged();
                     }
                 }, GUILayout.MaxHeight(40));

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using UnityEditor;
@@ -1215,6 +1216,40 @@ namespace Yueby.Utils
             {
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
+            }
+        }
+
+        public static void MoveFolderFromPath(ref string folderPath, string folderName)
+        {
+            var path = EditorUtility.OpenFolderPanel("选择保存路径", folderPath, "");
+            if (string.IsNullOrEmpty(path) || path == folderPath) return;
+
+            var targetPath = FileUtil.GetProjectRelativePath(path) + "/" + folderName;
+            if (targetPath != folderPath)
+            {
+                var lastPath = folderPath;
+                if (!Directory.Exists(lastPath))
+                    return;
+
+                if (Directory.Exists(targetPath))
+                {
+                    if (Directory.GetFiles(targetPath).Length > 0)
+                        Debug.Log("Target Directory:" + targetPath + " Not Empty!");
+                    else
+                        Directory.Delete(targetPath, true);
+                }
+
+                FileUtil.MoveFileOrDirectory(lastPath, targetPath);
+
+                if (File.Exists(lastPath + ".meta"))
+                    File.Delete(lastPath + ".meta");
+
+                folderPath = targetPath;
+
+                AssetDatabase.Refresh();
+
+
+                PingProject(targetPath);
             }
         }
     }

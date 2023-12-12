@@ -1107,40 +1107,6 @@ namespace Yueby.AvatarTools.ClothesManager
         {
             _avatarState?.ResetSMRs();
         }
-
-        private void MoveFile()
-        {
-            var path = EditorUtility.OpenFolderPanel("选择保存路径", _dataReference.SavePath, "");
-            if (string.IsNullOrEmpty(path) || path == _dataReference.SavePath) return;
-
-            var targetPath = FileUtil.GetProjectRelativePath(path) + "/ClothesManager";
-            if (targetPath != _dataReference.SavePath)
-            {
-                var lastPath = _dataReference.SavePath;
-                if (!Directory.Exists(lastPath))
-                    return;
-
-                if (Directory.Exists(targetPath))
-                {
-                    if (Directory.GetFiles(targetPath).Length > 0)
-                        Debug.Log("Target Directory:" + targetPath + " Not Empty!");
-                    else
-                        Directory.Delete(targetPath, true);
-                }
-
-                FileUtil.MoveFileOrDirectory(lastPath, targetPath);
-
-                if (File.Exists(lastPath + ".meta"))
-                    File.Delete(lastPath + ".meta");
-
-                _dataReference.SavePath = targetPath;
-
-                AssetDatabase.Refresh();
-
-                EditorUtility.DisplayDialog(Localization.Get("tips"), Localization.Get("tool_save_path_change_success"), Localization.Get("ok"));
-                YuebyUtil.PingProject(targetPath);
-            }
-        }
     }
 
     public class CMAvatarState

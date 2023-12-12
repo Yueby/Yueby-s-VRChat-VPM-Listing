@@ -574,7 +574,8 @@ namespace Yueby.AvatarTools.ClothesManager
                         {
                             if (GUILayout.Button(Localization.Get("tool_save_path_change"), GUILayout.Width(80)))
                             {
-                                MoveFile();
+                                YuebyUtil.MoveFolderFromPath(ref _dataReference.SavePath, "ClothesManager");
+                                EditorUtility.DisplayDialog(Localization.Get("tips"), Localization.Get("tool_save_path_change_success"), Localization.Get("ok"));
                             }
 
                             EditorGUI.BeginDisabledGroup(true);
