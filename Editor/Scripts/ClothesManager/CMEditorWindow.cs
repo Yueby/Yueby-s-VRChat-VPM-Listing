@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -49,7 +50,7 @@ namespace Yueby.AvatarTools.ClothesManager
         private CMClothesData _clothes;
         private int _clothesIndex = -1;
 
-        private ReorderableListDroppable _clothesShowRl, _clothesHideRl, _clothesBlendShapeRL;
+        private ReorderableListDroppable _clothesShowRl, _clothesHideRl, _clothesSmrRL;
         private ReorderableListDroppable _enterDriverRl, _exitDriverRl;
 
         private TabBarGroup _configureTabBarGroup;
@@ -84,7 +85,7 @@ namespace Yueby.AvatarTools.ClothesManager
         {
             GetIcons();
 
-            _categoryBar = new TabBarElement(_categoryIcons, () => { _categoriesRl.DoLayout(Localization.Get("category"), new Vector2(150, ConfigurePageHeight + 20), null, false, false); });
+            _categoryBar = new TabBarElement(_categoryIcons, () => { _categoriesRl.DoLayout(Localization.Get("category"), new Vector2(150, ConfigurePageHeight + 20), false, false); });
             _clothesBar = new TabBarElement(_clothesIcons, () => { YuebyUtil.VerticalEGL(DrawSelectedCategory, GUILayout.MaxWidth(200), GUILayout.MaxHeight(ConfigurePageHeight), GUILayout.ExpandHeight(true)); });
             _clothesParameterBar = new TabBarElement(_objectIcons, DrawClothesAnimParameter, true, 5f)
             {
@@ -233,6 +234,38 @@ namespace Yueby.AvatarTools.ClothesManager
 
         private void OnCategoriesRemove(ReorderableList list, Object obj)
         {
+            var categorySo = obj as CMClothesCategorySo;
+            if (categorySo != null)
+            {
+                var parameterName = $"YCM/{categorySo.Name}/Switch";
+                for (var i = 0; i < _fxLayer.parameters.Length; i++)
+                {
+                    if (_fxLayer.parameters[i].name != parameterName) continue;
+                    _fxLayer.RemoveParameter(i);
+                    i--;
+                }
+
+                for (var i = 0; i < _fxLayer.layers.Length; i++)
+                {
+                    if (_fxLayer.layers[i].name != parameterName && _fxLayer.layers[i].name != parameterName + "_ParameterDriver") continue;
+                    _fxLayer.RemoveLayer(i);
+                    i--;
+                }
+
+                var newParameters = _parameters.parameters.ToList();
+
+                var removeList = new List<VRCExpressionParameters.Parameter>();
+                foreach (var par in newParameters.Where(par => par.name == parameterName))
+                {
+                    removeList.Add(par);
+                    break;
+                }
+
+                foreach (var remove in removeList)
+                    newParameters.Remove(remove);
+                _parameters.parameters = newParameters.ToArray();
+            }
+
             YuebyUtil.RemoveChildAsset(obj);
         }
 
@@ -283,7 +316,8 @@ namespace Yueby.AvatarTools.ClothesManager
 
             _currentDriverParameter = null;
 
-            PreviewCurrentClothes(true, false);
+            ResetAvatarState();
+            PreviewAll();
 
             if (_isGridInit)
                 _isGridInit = false;
@@ -295,11 +329,11 @@ namespace Yueby.AvatarTools.ClothesManager
         {
             _clothesShowRl = new ReorderableListDroppable(_clothes.ShowParameters, typeof(GameObject), EditorGUIUtility.singleLineHeight + 5, Repaint);
             _clothesHideRl = new ReorderableListDroppable(_clothes.HideParameters, typeof(GameObject), EditorGUIUtility.singleLineHeight + 5, Repaint);
-            _clothesBlendShapeRL = new ReorderableListDroppable(_clothes.BlendShapeParameters, typeof(SkinnedMeshRenderer), EditorGUIUtility.singleLineHeight + 5, Repaint);
+            _clothesSmrRL = new ReorderableListDroppable(_clothes.SMRParameters, typeof(SkinnedMeshRenderer), EditorGUIUtility.singleLineHeight * 2 + 5, Repaint);
 
-            _clothesShowRl.InverseRlList.AddRange(new[] { _clothesHideRl, _clothesBlendShapeRL });
-            _clothesHideRl.InverseRlList.AddRange(new[] { _clothesShowRl, _clothesBlendShapeRL });
-            _clothesBlendShapeRL.InverseRlList.AddRange(new[] { _clothesHideRl, _clothesShowRl });
+            _clothesShowRl.InverseRlList.AddRange(new[] { _clothesHideRl, _clothesSmrRL });
+            _clothesHideRl.InverseRlList.AddRange(new[] { _clothesShowRl, _clothesSmrRL });
+            _clothesSmrRL.InverseRlList.AddRange(new[] { _clothesHideRl, _clothesShowRl });
 
             _clothesShowRl.AnimBool.target = true;
 
@@ -318,22 +352,22 @@ namespace Yueby.AvatarTools.ClothesManager
                 });
             };
 
-            _clothesBlendShapeRL.OnAdd += _ =>
+            _clothesSmrRL.OnAdd += _ =>
             {
-                _clothes.BlendShapeParameters.Add(new CMClothesData.ClothesAnimParameter()
+                _clothes.SMRParameters.Add(new CMClothesData.ClothesAnimParameter()
                 {
                     Type = nameof(SkinnedMeshRenderer)
                 });
             };
 
-            _clothesShowRl.OnRemove += _ => { PreviewCurrentClothes(); };
-            _clothesHideRl.OnRemove += _ => { PreviewCurrentClothes(); };
-            _clothesBlendShapeRL.OnRemove += _ => { PreviewCurrentClothes(); };
+            _clothesShowRl.OnRemove += _ => { PreviewAll(); };
+            _clothesHideRl.OnRemove += _ => { PreviewAll(); };
+            _clothesSmrRL.OnRemove += _ => { PreviewAll(); };
 
 
             _clothesShowRl.OnDraw += (rect, index, _, _) => { RegisterClothPathListPanel(rect, index, ref _clothes.ShowParameters); };
             _clothesHideRl.OnDraw += (rect, index, _, _) => { RegisterClothPathListPanel(rect, index, ref _clothes.HideParameters); };
-            _clothesBlendShapeRL.OnDraw += (rect, index, _, _) => { RegisterClothPathListPanel(rect, index, ref _clothes.BlendShapeParameters); };
+            _clothesSmrRL.OnDraw += (rect, index, _, _) => { RegisterClothPathListPanel(rect, index, ref _clothes.SMRParameters); };
 
 
             // Parameter Driver ReorderableList Init
@@ -506,7 +540,7 @@ namespace Yueby.AvatarTools.ClothesManager
                             }
                             else
                             {
-                                PreviewCurrentClothes();
+                                PreviewAll();
                             }
                         }
 
@@ -780,7 +814,7 @@ namespace Yueby.AvatarTools.ClothesManager
                         _clothes.DeleteInList(parameter, ref _clothes.HideParameters);
                 }, objs);
 
-                YuebyUtil.WaitToDo(20, "WaitToPreview", () => { PreviewCurrentClothes(true, false); });
+                YuebyUtil.WaitToDo(20, "WaitToPreview", PreviewGameObject);
             }, Repaint);
 
             _clothesHideRl.DoLayoutList(Localization.Get("hide"), new Vector2(width, 320), false, true, true, objs =>
@@ -792,13 +826,13 @@ namespace Yueby.AvatarTools.ClothesManager
                         _clothes.DeleteInList(parameter, ref _clothes.ShowParameters);
                 }, objs);
 
-                YuebyUtil.WaitToDo(20, "WaitToPreview", () => { PreviewCurrentClothes(true, false); });
+                YuebyUtil.WaitToDo(20, "WaitToPreview", PreviewGameObject);
             }, Repaint);
 
-            _clothesBlendShapeRL.DoLayoutList(Localization.Get("blend_shapes"), new Vector2(width, 320), false, true, true, obj =>
+            _clothesSmrRL.DoLayoutList(Localization.Get("blend_shapes"), new Vector2(width, 320), false, true, true, obj =>
             {
                 // BlendShapes
-                ListenToDrop(typeof(SkinnedMeshRenderer), ref _clothes.BlendShapeParameters, null, obj);
+                ListenToDrop(typeof(SkinnedMeshRenderer), ref _clothes.SMRParameters, null, obj);
             }, Repaint);
         }
 

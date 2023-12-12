@@ -18,7 +18,7 @@ namespace Yueby.Utils
             return current.TryGetValue(label, out var value) ? value : string.Empty;
         }
 
-        public void DrawLanguageUI()
+        public void DrawLanguageUI(float x = 10f, float y = 10f)
         {
             if (Languages == null || Languages.Count == 0) return;
 
@@ -27,7 +27,7 @@ namespace Yueby.Utils
             if (!_lightLanguageIcon)
                 _lightLanguageIcon = AssetDatabase.LoadMainAssetAtPath("Packages/com.yueby.avatartools/Editor/Assets/Sprites/LanguageIconLight.png") as Texture2D;
 
-            var rect = new Rect(10, 10, 18, 18);
+            var rect = new Rect(x, y, 18, 18);
 
             GUI.DrawTexture(rect, EditorGUIUtility.isProSkin ? _darkLanguageIcon : _lightLanguageIcon);
             rect.x += rect.width + 5;

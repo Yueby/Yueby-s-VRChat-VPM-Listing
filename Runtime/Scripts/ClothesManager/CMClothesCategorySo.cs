@@ -44,7 +44,7 @@ namespace Yueby.AvatarTools.ClothesManager
 
         public List<ClothesAnimParameter> ShowParameters = new List<ClothesAnimParameter>();
         public List<ClothesAnimParameter> HideParameters = new List<ClothesAnimParameter>();
-        public List<ClothesAnimParameter> BlendShapeParameters = new List<ClothesAnimParameter>();
+        public List<ClothesAnimParameter> SMRParameters = new List<ClothesAnimParameter>();
 
         public bool HasParameterDriver;
         public ParameterDriver EnterParameter = new ParameterDriver();
@@ -57,7 +57,7 @@ namespace Yueby.AvatarTools.ClothesManager
 
             ShowParameters = new List<ClothesAnimParameter>();
             HideParameters = new List<ClothesAnimParameter>();
-            BlendShapeParameters = new List<ClothesAnimParameter>();
+            SMRParameters = new List<ClothesAnimParameter>();
         }
 
         public List<ClothesAnimParameter> GetNotEmptyParameters(List<ClothesAnimParameter> parameters)
@@ -83,12 +83,8 @@ namespace Yueby.AvatarTools.ClothesManager
             {
                 if (parameter.Type != clothesAnimParameter.Type || parameter.Path != clothesAnimParameter.Path) continue;
                 if (parameter == clothesAnimParameter) continue;
-                switch (clothesAnimParameter.Type)
-                {
-                    case nameof(GameObject):
-                    case nameof(SkinnedMeshRenderer) when parameter.BlendShapeIndex == clothesAnimParameter.BlendShapeIndex:
-                        return true;
-                }
+                if (clothesAnimParameter.Type == nameof(GameObject) || (clothesAnimParameter.Type == nameof(SkinnedMeshRenderer) && (parameter.SmrParameter.Index == clothesAnimParameter.SmrParameter.Index) && (parameter.SmrParameter.Type == clothesAnimParameter.SmrParameter.Type)))
+                    return true;
             }
 
             return false;
@@ -108,7 +104,7 @@ namespace Yueby.AvatarTools.ClothesManager
                 }
                 else if (clothesAnimParameter.Type == nameof(SkinnedMeshRenderer))
                 {
-                    if (parameter.BlendShapeIndex == clothesAnimParameter.BlendShapeIndex)
+                    if (parameter.SmrParameter.Index == clothesAnimParameter.SmrParameter.Index)
                         animParameters.Remove(parameter);
                 }
             }
@@ -128,10 +124,25 @@ namespace Yueby.AvatarTools.ClothesManager
             public string Path;
             public string Type;
 
+            public SMRParameter SmrParameter = new SMRParameter();
 
-            public int BlendShapeIndex = -1;
-            public string BlendShapeName;
-            public float BlendShapeValue;
+            [Serializable]
+            public class SMRParameter
+            {
+                [Serializable]
+                public enum SMRType
+                {
+                    ShapeKey,
+                    Material
+                }
+
+                public SMRType Type = SMRType.ShapeKey;
+                public Material Material;
+
+                public int Index = -1;
+                public string BlendShapeName;
+                public float BlendShapeValue;
+            }
         }
     }
 }

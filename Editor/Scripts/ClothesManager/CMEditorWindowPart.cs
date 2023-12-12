@@ -330,7 +330,7 @@ namespace Yueby.AvatarTools.ClothesManager
 
                         if (count == skinnedMeshRenderer.sharedMesh.blendShapeCount)
                         {
-                            EditorUtility.DisplayDialog("提示", $"{path}上形态键已全部添加，无法再次添加新的形态键！", "Ok");
+                            EditorUtility.DisplayDialog(Localization.Get("tips"), string.Format(Localization.Get("clothes_all_bs_tip"), path), Localization.Get("ok"));
                             continue;
                         }
                     }
@@ -365,7 +365,7 @@ namespace Yueby.AvatarTools.ClothesManager
                     obj = pathTrans.gameObject;
             }
 
-            var objFieldRect = new Rect(rect.x, rect.y + 2, 60, rect.height - 2);
+            var objFieldRect = new Rect(rect.x, rect.y + 2, rect.width / 2 - 1, EditorGUIUtility.singleLineHeight);
             if (target.Type == nameof(SkinnedMeshRenderer))
             {
                 var skinnedMeshRenderer = obj != null ? obj.GetComponent<SkinnedMeshRenderer>() : null;
@@ -373,8 +373,6 @@ namespace Yueby.AvatarTools.ClothesManager
 
                 EditorGUI.BeginChangeCheck();
                 skinnedMeshRenderer = (SkinnedMeshRenderer)EditorGUI.ObjectField(objFieldRect, skinnedMeshRenderer, typeof(SkinnedMeshRenderer), true);
-
-
                 if (EditorGUI.EndChangeCheck())
                 {
                     if (skinnedMeshRenderer)
@@ -391,46 +389,85 @@ namespace Yueby.AvatarTools.ClothesManager
                         }
 
                         target.Path = path;
-                        target.BlendShapeIndex = -1;
-                        target.BlendShapeValue = 0;
+                        target.SmrParameter.Index = -1;
+                        target.SmrParameter.BlendShapeValue = 0;
                     }
                 }
 
                 if (skinnedMeshRenderer)
                 {
-                    var blendShapeNames = new List<string>();
-                    for (var i = 0; i < skinnedMeshRenderer.sharedMesh.blendShapeCount; i++)
-                        blendShapeNames.Add(skinnedMeshRenderer.sharedMesh.GetBlendShapeName(i));
-                    var tfRect = new Rect(objFieldRect.x + objFieldRect.width + 2, objFieldRect.y, 80, objFieldRect.height);
+                    var typeRect = new Rect(objFieldRect.x + objFieldRect.width + 1, objFieldRect.y, objFieldRect.width, objFieldRect.height);
+                    target.SmrParameter.Type = (CMClothesData.ClothesAnimParameter.SMRParameter.SMRType)EditorGUI.EnumPopup(typeRect, target.SmrParameter.Type);
+                    var firstRect = new Rect(objFieldRect.x, objFieldRect.y + objFieldRect.height + 1, objFieldRect.width, objFieldRect.height);
+                    var secondRect = new Rect(firstRect.x + firstRect.width + 5, firstRect.y, rect.width - 7 - firstRect.width, firstRect.height);
 
-                    EditorGUI.BeginChangeCheck();
-                    target.BlendShapeIndex = EditorGUI.Popup(tfRect, target.BlendShapeIndex, blendShapeNames.ToArray());
-
-                    if (target.BlendShapeIndex != -1)
-                        target.BlendShapeName = skinnedMeshRenderer.sharedMesh.GetBlendShapeName(target.BlendShapeIndex);
-                    if (EditorGUI.EndChangeCheck())
+                    switch (target.SmrParameter.Type)
                     {
-                        if (_clothes.ContainsInList(target, animParameters))
-                            target.BlendShapeIndex = -1;
-
-                        if (target.BlendShapeIndex == -1)
-                            target.BlendShapeValue = 0;
-                    }
-
-                    if (target.BlendShapeIndex != -1)
-                    {
-                        if (target.BlendShapeIndex >= 0)
-                        {
-                            var sliderRect = new Rect(tfRect.x + tfRect.width + 2, tfRect.y, rect.width - 4 - tfRect.width - objFieldRect.width, tfRect.height);
+                        case CMClothesData.ClothesAnimParameter.SMRParameter.SMRType.ShapeKey:
+                            var blendShapeNames = new List<string>();
+                            for (var i = 0; i < skinnedMeshRenderer.sharedMesh.blendShapeCount; i++)
+                                blendShapeNames.Add(skinnedMeshRenderer.sharedMesh.GetBlendShapeName(i));
 
                             EditorGUI.BeginChangeCheck();
-                            target.BlendShapeValue = EditorGUI.Slider(sliderRect, target.BlendShapeValue, 0, 100f);
+                            target.SmrParameter.Index = EditorGUI.Popup(firstRect, target.SmrParameter.Index, blendShapeNames.ToArray());
+
+                            if (target.SmrParameter.Index != -1)
+                                target.SmrParameter.BlendShapeName = skinnedMeshRenderer.sharedMesh.GetBlendShapeName(target.SmrParameter.Index);
                             if (EditorGUI.EndChangeCheck())
                             {
-                                Undo.RegisterCompleteObjectUndo(_currentClothesCategory, "Category SliderValueChanged");
-                                PreviewCurrentClothes(false, false);
+                                if (_clothes.ContainsInList(target, animParameters))
+                                    target.SmrParameter.Index = -1;
+
+                                if (target.SmrParameter.Index == -1)
+                                    target.SmrParameter.BlendShapeValue = 0;
                             }
-                        }
+
+                            if (target.SmrParameter.Index != -1)
+                            {
+                                if (target.SmrParameter.Index >= 0)
+                                {
+                                    EditorGUI.BeginChangeCheck();
+                                    target.SmrParameter.BlendShapeValue = EditorGUI.Slider(secondRect, target.SmrParameter.BlendShapeValue, 0, 100f);
+                                    if (EditorGUI.EndChangeCheck())
+                                    {
+                                        Undo.RegisterCompleteObjectUndo(_currentClothesCategory, "Category SliderValueChanged");
+                                        PreviewSMR(_clothes);
+                                    }
+                                }
+                            }
+
+                            break;
+                        case CMClothesData.ClothesAnimParameter.SMRParameter.SMRType.Material:
+
+                            var count = skinnedMeshRenderer.sharedMaterials.Length;
+                            var popups = new string[count];
+                            for (var i = 0; i < count; i++)
+                                popups[i] = i.ToString();
+
+                            EditorGUI.BeginChangeCheck();
+                            target.SmrParameter.Index = EditorGUI.Popup(firstRect, target.SmrParameter.Index, popups);
+                            if (EditorGUI.EndChangeCheck())
+                            {
+                                if (_clothes.ContainsInList(target, animParameters))
+                                {
+                                    target.SmrParameter.Index = -1;
+                                    target.SmrParameter.Type = CMClothesData.ClothesAnimParameter.SMRParameter.SMRType.ShapeKey;
+                                    return;
+                                }
+                            }
+
+                            if (target.SmrParameter.Index >= 0)
+                            {
+                                EditorGUI.BeginChangeCheck();
+                                target.SmrParameter.Material = (Material)EditorGUI.ObjectField(secondRect, target.SmrParameter.Material, typeof(Material), false);
+                                if (EditorGUI.EndChangeCheck())
+                                {
+                                    Undo.RegisterCompleteObjectUndo(_currentClothesCategory, "SMR Material Change");
+                                    PreviewSMR(_clothes);
+                                }
+                            }
+
+                            break;
                     }
                 }
             }
@@ -442,9 +479,11 @@ namespace Yueby.AvatarTools.ClothesManager
                 if (EditorGUI.EndChangeCheck())
                 {
                     target.Path = VRC.Core.ExtensionMethods.GetHierarchyPath(obj.transform).Replace(_descriptor.name + "/", "");
-                    PreviewCurrentClothes();
+                    PreviewAll();
                 }
             }
+
+            EditorUtility.SetDirty(_currentClothesCategory);
         }
 
         private void Apply(CMCDataSo data)
@@ -807,7 +846,7 @@ namespace Yueby.AvatarTools.ClothesManager
 
             var showList = parametersDic["Show"];
             var hideList = parametersDic["Hide"];
-            var blendShapeList = category.Clothes[index].BlendShapeParameters;
+            var smrList = category.Clothes[index].GetNotEmptyParameters(category.Clothes[index].SMRParameters);
 
 
             foreach (var showParameter in showList)
@@ -834,17 +873,36 @@ namespace Yueby.AvatarTools.ClothesManager
                 AnimationUtility.SetEditorCurve(clip, bind, curve);
             }
 
-            foreach (var blendShapeParameter in blendShapeList)
+            foreach (var smr in smrList)
             {
-                if (string.IsNullOrEmpty(blendShapeParameter.BlendShapeName)) continue;
-                var curve = new AnimationCurve { keys = new[] { new Keyframe { time = 0, value = blendShapeParameter.BlendShapeValue } } };
-                var bind = new EditorCurveBinding
+                if (string.IsNullOrEmpty(smr.Path)) continue;
+
+
+                if (smr.SmrParameter.Index < 0) continue;
+
+                EditorCurveBinding bind;
+                switch (smr.SmrParameter.Type)
                 {
-                    path = blendShapeParameter.Path,
-                    propertyName = "blendShape." + blendShapeParameter.BlendShapeName,
-                    type = typeof(SkinnedMeshRenderer),
-                };
-                AnimationUtility.SetEditorCurve(clip, bind, curve);
+                    case CMClothesData.ClothesAnimParameter.SMRParameter.SMRType.ShapeKey:
+                        if (string.IsNullOrEmpty(smr.SmrParameter.BlendShapeName)) continue;
+                        var curve = new AnimationCurve { keys = new[] { new Keyframe { time = 0, value = smr.SmrParameter.BlendShapeValue } } };
+                        bind = new EditorCurveBinding
+                        {
+                            path = smr.Path,
+                            propertyName = "blendShape." + smr.SmrParameter.BlendShapeName,
+                            type = typeof(SkinnedMeshRenderer),
+                        };
+                        AnimationUtility.SetEditorCurve(clip, bind, curve);
+                        Debug.Log("enter");
+                        break;
+                    case CMClothesData.ClothesAnimParameter.SMRParameter.SMRType.Material:
+
+                        var objCurve = new ObjectReferenceKeyframe { time = 0, value = smr.SmrParameter.Material };
+
+                        bind = EditorCurveBinding.PPtrCurve(smr.Path, typeof(SkinnedMeshRenderer), $"m_Materials.Array.data[{smr.SmrParameter.Index}]");
+                        AnimationUtility.SetObjectReferenceCurve(clip, bind, new[] { objCurve });
+                        break;
+                }
             }
 
 
@@ -872,8 +930,8 @@ namespace Yueby.AvatarTools.ClothesManager
             var currentClothes = category.Clothes[index];
             showList = CombineCAPList(showList, currentClothes.GetNotEmptyParameters(currentClothes.ShowParameters));
             hideList = CombineCAPList(hideList, currentClothes.GetNotEmptyParameters(currentClothes.HideParameters));
-            
-            
+
+
             foreach (var showParameter in currentClothes.ShowParameters)
             {
                 var removeList = hideList.Where(hide => hide.Path == showParameter.Path).ToList();
@@ -947,54 +1005,12 @@ namespace Yueby.AvatarTools.ClothesManager
         }
 
 
-        private void PreviewCurrentClothes(bool needGameObject = true, bool needReset = true)
+        private void PreviewAll()
         {
             if (!_isClothesPreview) return;
-            if (needReset)
-                ResetAvatarState();
 
-
-            foreach (var category in _dataReference.Data.Categories)
-            {
-                if (category.Clothes.Count == 0) continue;
-
-                if (needGameObject)
-                {
-                    var parameters = GetClothesParameters(category, category.Selected);
-                    var showList = parameters["Show"];
-                    var hideList = parameters["Hide"];
-
-                    Undo.RegisterFullObjectHierarchyUndo(_descriptor.gameObject, "Record Descriptor GameObjects State");
-
-                    foreach (var trans in hideList.Select(parameter => _descriptor.transform.Find(parameter.Path)).Where(trans => trans))
-                    {
-                        // Undo.RegisterCompleteObjectUndo(trans.gameObject, "Preview Hide GameObject");
-                        trans.gameObject.SetActive(false);
-
-                        // Debug.Log(parameter.Path);
-                    }
-
-
-                    foreach (var trans in showList.Select(parameter => _descriptor.transform.Find(parameter.Path)).Where(trans => trans))
-                    {
-                        // Undo.RegisterCompleteObjectUndo(trans.gameObject, "Preview Show GameObject");
-                        trans.gameObject.SetActive(true);
-                    }
-                }
-
-                var blendShapeList = _clothes.BlendShapeParameters;
-                foreach (var parameter in blendShapeList)
-                {
-                    var trans = _descriptor.transform.Find(parameter.Path);
-                    if (!trans) continue;
-                    var skinnedMeshRenderer = trans.GetComponent<SkinnedMeshRenderer>();
-                    if (!skinnedMeshRenderer) continue;
-                    Undo.RegisterCompleteObjectUndo(skinnedMeshRenderer, "Preview BlendShapes");
-                    // trans.gameObject.SetActive(true);
-                    if (parameter.BlendShapeIndex < 0) continue;
-                    skinnedMeshRenderer.SetBlendShapeWeight(parameter.BlendShapeIndex, parameter.BlendShapeValue);
-                }
-            }
+            PreviewGameObject();
+            PreviewSMR(_clothes);
 
             if (_isStartCapture)
             {
@@ -1009,6 +1025,65 @@ namespace Yueby.AvatarTools.ClothesManager
             }
         }
 
+        private void PreviewGameObject()
+        {
+            foreach (var category in _dataReference.Data.Categories)
+            {
+                if (category.Clothes.Count == 0) continue;
+
+
+                var parameters = GetClothesParameters(category, category.Selected);
+                var showList = parameters["Show"];
+                var hideList = parameters["Hide"];
+
+                Undo.RegisterFullObjectHierarchyUndo(_descriptor.gameObject, "Record Descriptor GameObjects State");
+
+                foreach (var trans in hideList.Select(parameter => _descriptor.transform.Find(parameter.Path)).Where(trans => trans))
+                {
+                    // Undo.RegisterCompleteObjectUndo(trans.gameObject, "Preview Hide GameObject");
+                    trans.gameObject.SetActive(false);
+
+                    // Debug.Log(parameter.Path);
+                }
+
+
+                foreach (var trans in showList.Select(parameter => _descriptor.transform.Find(parameter.Path)).Where(trans => trans))
+                {
+                    // Undo.RegisterCompleteObjectUndo(trans.gameObject, "Preview Show GameObject");
+                    trans.gameObject.SetActive(true);
+                }
+            }
+        }
+
+        private void PreviewSMR(CMClothesData clothes)
+        {
+            ResetAvatarSMRs();
+
+            var smrParameters = clothes.SMRParameters;
+            foreach (var parameter in smrParameters)
+            {
+                var trans = _descriptor.transform.Find(parameter.Path);
+                if (!trans) continue;
+                var skinnedMeshRenderer = trans.GetComponent<SkinnedMeshRenderer>();
+                if (!skinnedMeshRenderer) continue;
+
+                if (parameter.SmrParameter.Index < 0) continue;
+                Undo.RegisterCompleteObjectUndo(skinnedMeshRenderer, "Preview SMR");
+                switch (parameter.SmrParameter.Type)
+                {
+                    case CMClothesData.ClothesAnimParameter.SMRParameter.SMRType.ShapeKey:
+                        skinnedMeshRenderer.SetBlendShapeWeight(parameter.SmrParameter.Index, parameter.SmrParameter.BlendShapeValue);
+                        break;
+                    case CMClothesData.ClothesAnimParameter.SMRParameter.SMRType.Material:
+                        var mats = skinnedMeshRenderer.sharedMaterials;
+
+                        mats[parameter.SmrParameter.Index] = parameter.SmrParameter.Material;
+                        skinnedMeshRenderer.sharedMaterials = mats;
+                        break;
+                }
+            }
+        }
+
         private CMAvatarState _avatarState;
 
         private void RecordAvatarState()
@@ -1019,6 +1094,16 @@ namespace Yueby.AvatarTools.ClothesManager
         private void ResetAvatarState()
         {
             _avatarState?.Reset();
+        }
+
+        private void ResetAvatarGameObjects()
+        {
+            _avatarState?.ResetGameObjects();
+        }
+
+        private void ResetAvatarSMRs()
+        {
+            _avatarState?.ResetSMRs();
         }
 
         private void MoveFile()
@@ -1058,8 +1143,8 @@ namespace Yueby.AvatarTools.ClothesManager
 
     public class CMAvatarState
     {
-        private readonly List<CMAvatarGameObjectState> _gameObjectStates = new List<CMAvatarGameObjectState>();
-        private readonly List<CMAvatarBlendShapesState> _blendShapesStates = new List<CMAvatarBlendShapesState>();
+        private readonly List<CMAvatarGameObjectState> _gameObjectStates = new();
+        private readonly List<CMAvatarSMRState> _smrStates = new();
 
         public CMAvatarState(GameObject gameObject)
         {
@@ -1071,17 +1156,26 @@ namespace Yueby.AvatarTools.ClothesManager
             foreach (var renderer in skinnedMeshRenderers)
             {
                 if (renderer == null) continue;
-                _blendShapesStates.Add(new CMAvatarBlendShapesState(renderer));
+                _smrStates.Add(new CMAvatarSMRState(renderer));
             }
         }
 
         public void Reset()
         {
+            ResetGameObjects();
+            ResetSMRs();
+        }
+
+        public void ResetGameObjects()
+        {
             foreach (var gameObjectState in _gameObjectStates)
                 gameObjectState.Reset();
+        }
 
-            foreach (var blendShapeState in _blendShapesStates)
-                blendShapeState.Reset();
+        public void ResetSMRs()
+        {
+            foreach (var smr in _smrStates)
+                smr.Reset();
         }
 
 
@@ -1098,16 +1192,18 @@ namespace Yueby.AvatarTools.ClothesManager
 
             public void Reset()
             {
-                _gameObject?.SetActive(_isActive);
+                if (_gameObject)
+                    _gameObject.SetActive(_isActive);
             }
         }
 
-        private class CMAvatarBlendShapesState
+        private class CMAvatarSMRState
         {
             private readonly SkinnedMeshRenderer _skinnedMeshRenderer;
             private readonly Dictionary<int, float> _blendShapes = new Dictionary<int, float>();
+            private readonly Material[] _materials;
 
-            public CMAvatarBlendShapesState(SkinnedMeshRenderer skinnedMeshRenderer)
+            public CMAvatarSMRState(SkinnedMeshRenderer skinnedMeshRenderer)
             {
                 _skinnedMeshRenderer = skinnedMeshRenderer;
                 if (skinnedMeshRenderer == null || skinnedMeshRenderer.sharedMesh == null)
@@ -1121,12 +1217,16 @@ namespace Yueby.AvatarTools.ClothesManager
                     var weight = skinnedMeshRenderer.GetBlendShapeWeight(i);
                     _blendShapes.Add(i, weight);
                 }
+
+                _materials = skinnedMeshRenderer.sharedMaterials;
             }
 
             public void Reset()
             {
                 foreach (var item in _blendShapes)
                     _skinnedMeshRenderer.SetBlendShapeWeight(item.Key, item.Value);
+
+                _skinnedMeshRenderer.sharedMaterials = _materials;
             }
         }
     }

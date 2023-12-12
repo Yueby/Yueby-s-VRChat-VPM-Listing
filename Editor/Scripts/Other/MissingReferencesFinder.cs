@@ -11,7 +11,7 @@ using UnityEngine.SceneManagement;
 /// </summary>
 public class MissingReferencesFinder : MonoBehaviour
 {
-    private const string MENU_ROOT = "Tools/YuebyTools/Missing References/";
+    private const string MENU_ROOT = "Tools/YuebyTools/Utils/Missing References/";
 
     /// <summary>
     /// Finds all missing references to objects in the currently loaded scene.
