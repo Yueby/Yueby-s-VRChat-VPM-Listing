@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.IMGUI.Controls;
 using UnityEditorInternal;
 using UnityEngine;
 using VRC.SDK3.Avatars.Components;
@@ -24,7 +25,7 @@ namespace Yueby.AvatarTools.ClothesManager
         private static readonly CMLocalization Localization = new CMLocalization();
 
         // Init
-        private VRCAvatarDescriptor _descriptor;
+        private static VRCAvatarDescriptor _descriptor;
         private CMAvatarDataReference _dataReference;
 
         private bool _isFoldoutVrcConfigure;
@@ -69,6 +70,10 @@ namespace Yueby.AvatarTools.ClothesManager
         private readonly Texture2D[] _listIcons = new Texture2D[2];
         private Texture2D _nextIcon;
 
+        private List<CMClothesData.ClothesAnimParameter> _copiedSMRData;
+
+        private static CMAvatarState _avatarState;
+
         #endregion
 
         [MenuItem("Tools/YuebyTools/Avatar/Clothes Manager", false, 11)]
@@ -78,6 +83,8 @@ namespace Yueby.AvatarTools.ClothesManager
 
             _window.titleContent = new GUIContent(Localization.Get("window_title"));
             _window.minSize = new Vector2(770, 600);
+
+            _avatarState = new CMAvatarState(_descriptor.gameObject);
         }
 
         private void OnEnable()
@@ -331,33 +338,22 @@ namespace Yueby.AvatarTools.ClothesManager
             _clothesHideRl.InverseRlList.AddRange(new[] { _clothesShowRl, _clothesSmrRL });
             _clothesSmrRL.InverseRlList.AddRange(new[] { _clothesHideRl, _clothesShowRl });
 
-            switch (_clothesFoldoutIndex)
-            {
-                case 0:
-                    _clothesShowRl.ChangeAnimBool(true);
-                    break;
-                case 1:
-                    _clothesHideRl.ChangeAnimBool(true);
-                    break;
-                case 2:
-                    _clothesSmrRL.ChangeAnimBool(true);
-                    break;
-            }
+
+            if (_clothesFoldoutIndex == 0) _clothesShowRl.ChangeAnimBool(true);
+            else if (_clothesFoldoutIndex == 1) _clothesHideRl.ChangeAnimBool(true);
+            else if (_clothesFoldoutIndex == 2) _clothesSmrRL.ChangeAnimBool(true);
 
             _clothesShowRl.OnChangeAnimBoolTarget += value =>
             {
-                if (value)
-                    _clothesFoldoutIndex = 0;
+                if (value) _clothesFoldoutIndex = 0;
             };
             _clothesHideRl.OnChangeAnimBoolTarget += value =>
             {
-                if (value)
-                    _clothesFoldoutIndex = 1;
+                if (value) _clothesFoldoutIndex = 1;
             };
             _clothesSmrRL.OnChangeAnimBoolTarget += value =>
             {
-                if (value)
-                    _clothesFoldoutIndex = 2;
+                if (value) _clothesFoldoutIndex = 2;
             };
 
 
@@ -387,6 +383,16 @@ namespace Yueby.AvatarTools.ClothesManager
             _clothesShowRl.OnRemove += _ => { PreviewAll(); };
             _clothesHideRl.OnRemove += _ => { PreviewAll(); };
             _clothesSmrRL.OnRemove += _ => { PreviewAll(); };
+            _clothesSmrRL.OnRemoveBefore += index =>
+            {
+                var target = _clothes.SMRParameters[index];
+                if (target.SmrParameter.Index == -1) return;
+                var smrList = GetOtherSMRParameters(target);
+                if (smrList.Count > 0 && EditorUtility.DisplayDialog(Localization.Get("tips"), string.Format(Localization.Get("clothes_smr_remove_tip"), smrList.Count), Localization.Get("ok"), Localization.Get("cancel")))
+                {
+                    RemoveSMRParameterToOther(target);
+                }
+            };
 
 
             _clothesShowRl.OnDraw += (rect, index, a, b) => { RegisterClothPathListPanel(rect, index, ref _clothes.ShowParameters); };
@@ -399,25 +405,17 @@ namespace Yueby.AvatarTools.ClothesManager
             _exitDriverRl = new ReorderableListDroppable(_clothes.ExitParameter.Parameters, typeof(VRC_AvatarParameterDriver.Parameter), EditorGUIUtility.singleLineHeight + 5, Repaint);
             _enterDriverRl.InverseRlList.Add(_exitDriverRl);
             _exitDriverRl.InverseRlList.Add(_enterDriverRl);
-            switch (_driverFoldoutIndex)
-            {
-                case 0:
-                    _enterDriverRl.ChangeAnimBool(true);
-                    break;
-                case 1:
-                    _exitDriverRl.ChangeAnimBool(true);
-                    break;
-            }
+
+            if (_driverFoldoutIndex == 0) _enterDriverRl.ChangeAnimBool(true);
+            else if (_driverFoldoutIndex == 1) _exitDriverRl.ChangeAnimBool(true);
 
             _enterDriverRl.OnChangeAnimBoolTarget += value =>
             {
-                if (value)
-                    _driverFoldoutIndex = 0;
+                if (value) _driverFoldoutIndex = 0;
             };
             _exitDriverRl.OnChangeAnimBoolTarget += value =>
             {
-                if (value)
-                    _driverFoldoutIndex = 1;
+                if (value) _driverFoldoutIndex = 1;
             };
 
 
@@ -445,6 +443,71 @@ namespace Yueby.AvatarTools.ClothesManager
 
             _enterDriverRl.OnDraw += (rect, index, active, focused) => { DrawParameterDriverElement(ref _clothes.EnterParameter.Parameters, rect, index); };
             _exitDriverRl.OnDraw += (rect, index, active, focused) => { DrawParameterDriverElement(ref _clothes.ExitParameter.Parameters, rect, index); };
+
+            _clothesSmrRL.OnDrawTitle += () =>
+            {
+                if (_clothes != null && _clothes.SMRParameters.Count > 0 && GUILayout.Button(Localization.Get("clothes_smr_copy"), GUILayout.Width(50)))
+                {
+                    CopyCurrentSMR();
+                }
+
+                if (_clothes != null && _copiedSMRData != null && _copiedSMRData.Count > 0 && GUILayout.Button(Localization.Get("clothes_smr_paste"), GUILayout.Width(50)))
+                {
+                    // create the menu and add items to it
+                    var menu = new GenericMenu();
+                    menu.AddItem(new GUIContent(Localization.Get("clothes_smr_paste_overwrite")), false, PasteCurrentSMRAll);
+                    menu.AddItem(new GUIContent(Localization.Get("clothes_smr_paste_additive")), false, PasteUniqueSMR);
+
+                    menu.ShowAsContext();
+                }
+            };
+        }
+
+        private void PasteUniqueSMR()
+        {
+            var addList = new List<CMClothesData.ClothesAnimParameter>();
+
+            foreach (var data in _copiedSMRData)
+            {
+                if (!_clothes.ContainsInList(data, _clothes.SMRParameters))
+                    addList.Add(data);
+            }
+
+            _clothes.SMRParameters.AddRange(addList);
+
+            _copiedSMRData = null;
+            OnClothesGridChangeSelected(null, _clothesIndex);
+        }
+
+        private void PasteCurrentSMRAll()
+        {
+            _clothes.SMRParameters = _copiedSMRData;
+            _copiedSMRData = null;
+            OnClothesGridChangeSelected(null, _clothesIndex);
+        }
+
+        private void CopyCurrentSMR()
+        {
+            _copiedSMRData = new List<CMClothesData.ClothesAnimParameter>();
+            foreach (var parameter in _clothes.SMRParameters)
+            {
+                _copiedSMRData.Add(new CMClothesData.ClothesAnimParameter(parameter));
+            }
+        }
+
+        private CMClothesData.ClothesAnimParameter AddNextSMRParameter(CMClothesData.ClothesAnimParameter target)
+        {
+            var addParameter = new CMClothesData.ClothesAnimParameter(target);
+            addParameter.SmrParameter.Index += 1;
+
+            if (_clothes.ContainsInList(addParameter, _clothes.SMRParameters))
+            {
+                return AddNextSMRParameter(addParameter);
+            }
+
+            _clothes.SMRParameters.Add(addParameter);
+
+            return addParameter;
         }
 
         private void DrawParameterDriverElement(ref List<VRC_AvatarParameterDriver.Parameter> drivers, Rect rect, int index)

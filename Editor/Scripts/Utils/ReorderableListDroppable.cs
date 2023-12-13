@@ -23,6 +23,7 @@ namespace Yueby.AvatarTools
         public UnityAction<int> OnChanged;
         public UnityAction<Rect, int, bool, bool> OnDraw;
         public UnityAction<ReorderableList> OnRemove;
+        public UnityAction<int> OnRemoveBefore;
         public UnityAction<int> OnSelected;
         public UnityAction OnDrawTitle;
 
@@ -48,9 +49,9 @@ namespace Yueby.AvatarTools
                 onAddCallback = list => OnAdd?.Invoke(list),
                 onRemoveCallback = reorderableList =>
                 {
+                    OnRemoveBefore?.Invoke(reorderableList.index);
                     elements.RemoveAt(reorderableList.index);
                     OnRemove?.Invoke(reorderableList);
-
                     if (reorderableList.count > 0 && reorderableList.index != 0)
                         reorderableList.index--;
                 },
@@ -78,7 +79,8 @@ namespace Yueby.AvatarTools
                 foreach (var inverse in InverseRlList)
                     inverse.AnimBool.target = false;
             }
-           OnChangeAnimBoolTarget?.Invoke(AnimBool.target);
+
+            OnChangeAnimBoolTarget?.Invoke(AnimBool.target);
         }
 
         public void DoLayoutList(string title, Vector2 area, bool isNoBorder = false, bool hasFoldout = true, bool allowDrop = true, UnityAction<Object[]> onDropped = null, UnityAction repaint = null)

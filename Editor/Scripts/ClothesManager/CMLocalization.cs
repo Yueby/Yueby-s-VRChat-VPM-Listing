@@ -75,6 +75,16 @@ namespace Yueby.AvatarTools.ClothesManager
                         { "apply_success_tip", "已成功应用！" },
                         { "tool_save_path_change", "更改保存路径" },
                         { "tool_save_path_change_success", "更改保存路径成功！" },
+                        { "clothes_smr_add_new_tip", "即将添加新的形态键：{0}，你想要其他的配置也同步添加吗？" },
+                        { "clothes_smr_change_tip", "即将变更形态键，在其他配置中找到共 [{0}] 个参数，你想要其他的配置也同步变更吗？" },
+                        { "clothes_smr_remove_tip", "即将删除该配置，在其他配置中找到共 [{0}] 个参数，你想要其他的配置也同步删除吗？" },
+                        { "clothes_smr_mat_add_new_tip", "即将添加新的材质参数，你想要其他的配置也同步添加吗？" },
+                        { "clothes_smr_mat_change_tip", "即将变更材质参数，在其他配置中找到共 [{0}] 个参数，你想要其他的配置也同步变更吗？" },
+                        { "clothes_smr_shape_key_change_to_mat_tip", "即将变更参数类型，在其他配置中找到共 [{0}] 个参数，你想要其他的配置也同步变更吗？" },
+                        { "clothes_smr_copy", "复制" },
+                        { "clothes_smr_paste", "粘贴" },
+                        { "clothes_smr_paste_overwrite", "覆盖" },
+                        { "clothes_smr_paste_additive", "添加" },
                     }
                 },
                 {
@@ -143,6 +153,16 @@ namespace Yueby.AvatarTools.ClothesManager
                         { "apply_success_tip", "Apply success!" },
                         { "tool_save_path_change", "Save Path" },
                         { "tool_save_path_change_success", "Success to change save path！" },
+                        { "clothes_smr_add_new_tip", "The new blendShape key:{0} is about to be added. Do you want other configurations to be added synchronously?" },
+                        { "clothes_smr_change_tip", "The blendShape key is about to be changed. A total of [{0}] parameters are found in other configurations. Do you want other configurations to change synchronously?" },
+                        { "clothes_smr_remove_tip", "The parameter is about to be deleted. A total of [{0}] parameters are found in other configurations. Do you want other configurations to be deleted synchronously?" },
+                        { "clothes_smr_mat_add_new_tip", "The new materials parameter is about to be added. Do you want other configurations to be added synchronously?" },
+                        { "clothes_smr_mat_change_tip", "The materials parameter is about to be changed. A total of [{0}] parameters are found in other configurations. Do you want other configurations to change synchronously?" },
+                        { "clothes_smr_shape_key_change_to_mat_tip", "The parameter type is about to be changed. A total of [{0}] parameters are found in other configurations. Do you want other configurations to be changed simultaneously?" },
+                        { "clothes_smr_copy", "Copy" },
+                        { "clothes_smr_paste", "Paste" },
+                        { "clothes_smr_paste_overwrite", "Overwrite" },
+                        { "clothes_smr_paste_additive", "Additive" },
                     }
                 },
             };
