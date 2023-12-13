@@ -71,7 +71,6 @@ namespace Yueby.AvatarTools.ClothesManager
 
         #endregion
 
-        // Tools/YuebyTools/Avatar/Coming Soon.../
         [MenuItem("Tools/YuebyTools/Avatar/Clothes Manager", false, 11)]
         public static void OpenWindow()
         {
@@ -137,6 +136,9 @@ namespace Yueby.AvatarTools.ClothesManager
 
         private void OnGUI()
         {
+            if (_descriptor == null)
+                GetDescriptorOnEnable();
+
             wantsMouseMove = true;
 
             if (_window == null)
@@ -146,17 +148,10 @@ namespace Yueby.AvatarTools.ClothesManager
             YuebyUtil.DrawEditorTitle(Localization.Get("window_title"));
             Localization.DrawLanguageUI();
 
-            if (!Application.isPlaying)
-            {
-                DrawInit();
+            DrawInit();
 
-                if (_descriptor != null && _dataReference != null)
-                    DrawConfigure();
-            }
-            else
-            {
-                EditorGUILayout.HelpBox(Localization.Get("in_playing_mode_tip"), MessageType.Warning);
-            }
+            if (_descriptor != null && _dataReference != null)
+                DrawConfigure();
         }
 
 
@@ -324,17 +319,47 @@ namespace Yueby.AvatarTools.ClothesManager
         }
 
 
+        private static int _clothesFoldoutIndex;
+        private static int _driverFoldoutIndex;
+
         private void InitClothData()
         {
             _clothesShowRl = new ReorderableListDroppable(_clothes.ShowParameters, typeof(GameObject), EditorGUIUtility.singleLineHeight + 5, Repaint);
             _clothesHideRl = new ReorderableListDroppable(_clothes.HideParameters, typeof(GameObject), EditorGUIUtility.singleLineHeight + 5, Repaint);
             _clothesSmrRL = new ReorderableListDroppable(_clothes.SMRParameters, typeof(SkinnedMeshRenderer), EditorGUIUtility.singleLineHeight * 2 + 5, Repaint);
-            _clothesShowRl.AnimBool.target = true;
-
-
             _clothesShowRl.InverseRlList.AddRange(new[] { _clothesHideRl, _clothesSmrRL });
             _clothesHideRl.InverseRlList.AddRange(new[] { _clothesShowRl, _clothesSmrRL });
             _clothesSmrRL.InverseRlList.AddRange(new[] { _clothesHideRl, _clothesShowRl });
+
+            switch (_clothesFoldoutIndex)
+            {
+                case 0:
+                    _clothesShowRl.ChangeAnimBool(true);
+                    break;
+                case 1:
+                    _clothesHideRl.ChangeAnimBool(true);
+                    break;
+                case 2:
+                    _clothesSmrRL.ChangeAnimBool(true);
+                    break;
+            }
+
+            _clothesShowRl.OnChangeAnimBoolTarget += value =>
+            {
+                if (value)
+                    _clothesFoldoutIndex = 0;
+            };
+            _clothesHideRl.OnChangeAnimBoolTarget += value =>
+            {
+                if (value)
+                    _clothesFoldoutIndex = 1;
+            };
+            _clothesSmrRL.OnChangeAnimBoolTarget += value =>
+            {
+                if (value)
+                    _clothesFoldoutIndex = 2;
+            };
+
 
             _clothesShowRl.OnAdd += _ =>
             {
@@ -372,11 +397,29 @@ namespace Yueby.AvatarTools.ClothesManager
             // Parameter Driver ReorderableList Init
             _enterDriverRl = new ReorderableListDroppable(_clothes.EnterParameter.Parameters, typeof(VRC_AvatarParameterDriver.Parameter), EditorGUIUtility.singleLineHeight + 5, Repaint);
             _exitDriverRl = new ReorderableListDroppable(_clothes.ExitParameter.Parameters, typeof(VRC_AvatarParameterDriver.Parameter), EditorGUIUtility.singleLineHeight + 5, Repaint);
-
-            _enterDriverRl.AnimBool.target = true;
-
             _enterDriverRl.InverseRlList.Add(_exitDriverRl);
             _exitDriverRl.InverseRlList.Add(_enterDriverRl);
+            switch (_driverFoldoutIndex)
+            {
+                case 0:
+                    _enterDriverRl.ChangeAnimBool(true);
+                    break;
+                case 1:
+                    _exitDriverRl.ChangeAnimBool(true);
+                    break;
+            }
+
+            _enterDriverRl.OnChangeAnimBoolTarget += value =>
+            {
+                if (value)
+                    _driverFoldoutIndex = 0;
+            };
+            _exitDriverRl.OnChangeAnimBoolTarget += value =>
+            {
+                if (value)
+                    _driverFoldoutIndex = 1;
+            };
+
 
             _enterDriverRl.OnAdd += _ =>
             {
@@ -1061,7 +1104,7 @@ namespace Yueby.AvatarTools.ClothesManager
                             EditorGUILayout.HelpBox(Localization.Get("clothes_select_tip"), MessageType.Info);
                         }
                     }, GUILayout.Width(200));
-                    _clothesGrid.Draw(50, new Vector2(5, 5), new Vector2(200, ConfigurePageHeight - 20));
+                    _clothesGrid?.Draw(50, new Vector2(5, 5), new Vector2(200, ConfigurePageHeight - 20));
                 });
 
 

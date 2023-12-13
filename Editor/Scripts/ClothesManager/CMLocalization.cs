@@ -42,7 +42,7 @@ namespace Yueby.AvatarTools.ClothesManager
                         { "tip_success_save", "保存成功，是否跳转查看？" },
                         { "show", "显示" },
                         { "hide", "隐藏" },
-                        { "skinned_mesh_renderer", "Skinned Mesh Renderer相关" },
+                        { "skinned_mesh_renderer", "蒙皮网格渲染器" },
                         { "driver_is_using", "是否使用参数驱动" },
                         { "driver_enter", "进入时" },
                         { "driver_exit", "离开时" },

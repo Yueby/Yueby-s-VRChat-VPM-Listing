@@ -28,7 +28,7 @@ namespace Yueby.AvatarTools.ClothesManager
         {
             foreach (var clothes in Clothes)
             {
-                if (clothes.HasParameterDriver)
+                if (clothes.HasParameterDriver && clothes.EnterParameter.Parameters.Count > 0 && clothes.ExitParameter.Parameters.Count > 0)
                     return true;
             }
 
@@ -132,11 +132,11 @@ namespace Yueby.AvatarTools.ClothesManager
                 [Serializable]
                 public enum SMRType
                 {
-                    ShapeKey,
-                    Material
+                    BlendShapes,
+                    Materials
                 }
 
-                public SMRType Type = SMRType.ShapeKey;
+                public SMRType Type = SMRType.BlendShapes;
                 public Material Material;
 
                 public int Index = -1;

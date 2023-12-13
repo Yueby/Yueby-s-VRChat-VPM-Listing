@@ -90,18 +90,21 @@ namespace Yueby.AvatarTools.DressingTools
             _isAutoCombinePb = false;
             _isSplitCombine = true;
 
-            GetAssetsDressingToolsFolder();
+            var path = GetControllerFolder();
+            _path = string.IsNullOrEmpty(path) ? DefaultControllerPath : path;
             _runtimeAnimatorController = AssetDatabase.LoadMainAssetAtPath($"{_path}/AvatarTest.controller") as RuntimeAnimatorController;
         }
 
-        private static string _path = "Packages/com.yueby.avatartools/Editor/Assets/DressingTools/Animation/AvatarTest";
+
+        private const string DefaultControllerPath = "Packages/com.yueby.avatartools/Editor/Assets/DressingTools/Animation/AvatarTest";
+        private static string _path = DefaultControllerPath;
 
         private string GetDressingToolsAssetsPath()
         {
             return _path.Replace("/Animation/AvatarTest", "");
         }
 
-        private void GetAssetsDressingToolsFolder()
+        private string GetControllerFolder()
         {
             var assets = AssetDatabase.FindAssets("AvatarTest");
             foreach (var asset in assets)
@@ -109,13 +112,14 @@ namespace Yueby.AvatarTools.DressingTools
                 var path = AssetDatabase.GUIDToAssetPath(asset);
                 if (AssetDatabase.IsValidFolder(path))
                 {
-                    if (path.StartsWith("Assets"))
+                    if (path.StartsWith("Assets") && path.Contains("DressingTools"))
                     {
-                        _path = path;
-                        return;
+                        return path;
                     }
                 }
             }
+
+            return "";
         }
 
         private void OnDestroy()

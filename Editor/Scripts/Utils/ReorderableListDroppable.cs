@@ -25,6 +25,8 @@ namespace Yueby.AvatarTools
         public UnityAction<ReorderableList> OnRemove;
         public UnityAction<int> OnSelected;
         public UnityAction OnDrawTitle;
+
+        public UnityAction<bool> OnChangeAnimBoolTarget;
         public ReorderableList List { get; }
         private bool _isEnterListArea;
 
@@ -76,6 +78,7 @@ namespace Yueby.AvatarTools
                 foreach (var inverse in InverseRlList)
                     inverse.AnimBool.target = false;
             }
+           OnChangeAnimBoolTarget?.Invoke(AnimBool.target);
         }
 
         public void DoLayoutList(string title, Vector2 area, bool isNoBorder = false, bool hasFoldout = true, bool allowDrop = true, UnityAction<Object[]> onDropped = null, UnityAction repaint = null)

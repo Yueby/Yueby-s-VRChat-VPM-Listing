@@ -35,7 +35,7 @@ namespace Yueby.AvatarTools.ClothesManager
             {
                 var descriptorId = EditorPrefs.GetInt(DescriptorPrefs);
                 var descriptor = EditorUtility.InstanceIDToObject(descriptorId);
-                Debug.Log(descriptor);
+
                 if (descriptor != null)
                 {
                     _descriptor = (VRCAvatarDescriptor)descriptor;
@@ -406,7 +406,7 @@ namespace Yueby.AvatarTools.ClothesManager
 
                     switch (target.SmrParameter.Type)
                     {
-                        case CMClothesData.ClothesAnimParameter.SMRParameter.SMRType.ShapeKey:
+                        case CMClothesData.ClothesAnimParameter.SMRParameter.SMRType.BlendShapes:
                             var blendShapeNames = new List<string>();
                             for (var i = 0; i < skinnedMeshRenderer.sharedMesh.blendShapeCount; i++)
                                 blendShapeNames.Add(skinnedMeshRenderer.sharedMesh.GetBlendShapeName(i));
@@ -439,7 +439,7 @@ namespace Yueby.AvatarTools.ClothesManager
                             }
 
                             break;
-                        case CMClothesData.ClothesAnimParameter.SMRParameter.SMRType.Material:
+                        case CMClothesData.ClothesAnimParameter.SMRParameter.SMRType.Materials:
                             var count = skinnedMeshRenderer.sharedMaterials.Length;
                             var popups = new string[count];
                             for (var i = 0; i < count; i++)
@@ -452,7 +452,7 @@ namespace Yueby.AvatarTools.ClothesManager
                                 if (_clothes.ContainsInList(target, animParameters))
                                 {
                                     target.SmrParameter.Index = -1;
-                                    target.SmrParameter.Type = CMClothesData.ClothesAnimParameter.SMRParameter.SMRType.ShapeKey;
+                                    target.SmrParameter.Type = CMClothesData.ClothesAnimParameter.SMRParameter.SMRType.BlendShapes;
                                     target.SmrParameter.BlendShapeName = "";
                                     return;
                                 }
@@ -493,9 +493,10 @@ namespace Yueby.AvatarTools.ClothesManager
         private void Apply(CMCDataSo data)
         {
             var backupPath = GetBackupsPath();
-            BackupFile(backupPath, _expressionsMenu);
-            BackupFile(backupPath, _parameters);
-            BackupFile(backupPath, _fxLayer);
+            var time = new DirectoryInfo(backupPath).Name;
+            BackupFile(backupPath, _expressionsMenu, time);
+            BackupFile(backupPath, _parameters, time);
+            BackupFile(backupPath, _fxLayer, time);
             PrefabUtility.SaveAsPrefabAsset(_descriptor.gameObject, backupPath + "/" + _descriptor.name + ".prefab");
 
 
@@ -553,7 +554,7 @@ namespace Yueby.AvatarTools.ClothesManager
                 currentExMenu = GetLastNextSubMenu(_expressionsMenu, expressionMenuPath, _expressionsMenu.name, 0);
 
             if (currentExMenu != _expressionsMenu)
-                BackupFile(backupPath, currentExMenu);
+                BackupFile(backupPath, currentExMenu, time);
 
             foreach (var category in data.Categories)
             {
@@ -649,6 +650,7 @@ namespace Yueby.AvatarTools.ClothesManager
                     AssetDatabase.CreateAsset(clip, $"{clothesAnimDir}/{category.Name}_{clothes.Name}.anim");
                 }
 
+                // 删除动画控制器内之前的配置
                 var parameterName = $"YCM/{category.Name}/Switch";
                 for (var i = 0; i < _fxLayer.parameters.Length; i++)
                 {
@@ -664,6 +666,7 @@ namespace Yueby.AvatarTools.ClothesManager
                     i--;
                 }
 
+                // 添加新的进入动画控制器
                 if (category.Clothes.Count > 0)
                 {
                     _fxLayer.AddParameter(new AnimatorControllerParameter
@@ -679,7 +682,7 @@ namespace Yueby.AvatarTools.ClothesManager
                     };
 
                     AssetDatabase.AddObjectToAsset(categoryStateMachine, _fxLayer); // 必须放这，我也不知道为什么 *那就放这里吧
-
+                    var categoryIdleState = categoryStateMachine.AddState("Idle");
                     for (var i = 0; i < clothesAnimClipList.Count; i++)
                     {
                         var clip = clothesAnimClipList[i];
@@ -767,15 +770,20 @@ namespace Yueby.AvatarTools.ClothesManager
             EditorUtility.DisplayDialog(Localization.Get("tips"), Localization.Get("apply_success_tip"), Localization.Get("ok"));
         }
 
-        private void BackupFile(string path, Object targetFile)
+        private void BackupFile(string path, Object targetFile, string backupTime)
         {
             var sourcePath = AssetDatabase.GetAssetPath(targetFile);
             var fileInfo = new FileInfo(sourcePath);
 
-            // Debug.Log($"{sourcePath}\n{path + fileInfo.Name}");
             var destPath = path + "/" + fileInfo.Name;
             if (!File.Exists(destPath))
+            {
+                Debug.Log(destPath);
                 FileUtil.CopyFileOrDirectory(sourcePath, destPath);
+                AssetDatabase.Refresh();
+                AssetDatabase.RenameAsset(destPath, fileInfo.Name + " " + backupTime);
+                AssetDatabase.Refresh();
+            }
         }
 
 
@@ -887,7 +895,7 @@ namespace Yueby.AvatarTools.ClothesManager
                 EditorCurveBinding bind;
                 switch (smr.SmrParameter.Type)
                 {
-                    case CMClothesData.ClothesAnimParameter.SMRParameter.SMRType.ShapeKey:
+                    case CMClothesData.ClothesAnimParameter.SMRParameter.SMRType.BlendShapes:
                         if (string.IsNullOrEmpty(smr.SmrParameter.BlendShapeName)) continue;
                         var curve = new AnimationCurve { keys = new[] { new Keyframe { time = 0, value = smr.SmrParameter.BlendShapeValue } } };
                         bind = new EditorCurveBinding
@@ -898,7 +906,7 @@ namespace Yueby.AvatarTools.ClothesManager
                         };
                         AnimationUtility.SetEditorCurve(clip, bind, curve);
                         break;
-                    case CMClothesData.ClothesAnimParameter.SMRParameter.SMRType.Material:
+                    case CMClothesData.ClothesAnimParameter.SMRParameter.SMRType.Materials:
                         var objCurve = new ObjectReferenceKeyframe { time = 0, value = smr.SmrParameter.Material };
 
                         bind = EditorCurveBinding.PPtrCurve(smr.Path, typeof(SkinnedMeshRenderer), $"m_Materials.Array.data[{smr.SmrParameter.Index}]");
@@ -1073,10 +1081,10 @@ namespace Yueby.AvatarTools.ClothesManager
                 Undo.RegisterCompleteObjectUndo(skinnedMeshRenderer, "Preview SMR");
                 switch (parameter.SmrParameter.Type)
                 {
-                    case CMClothesData.ClothesAnimParameter.SMRParameter.SMRType.ShapeKey:
+                    case CMClothesData.ClothesAnimParameter.SMRParameter.SMRType.BlendShapes:
                         skinnedMeshRenderer.SetBlendShapeWeight(parameter.SmrParameter.Index, parameter.SmrParameter.BlendShapeValue);
                         break;
-                    case CMClothesData.ClothesAnimParameter.SMRParameter.SMRType.Material:
+                    case CMClothesData.ClothesAnimParameter.SMRParameter.SMRType.Materials:
                         var mats = skinnedMeshRenderer.sharedMaterials;
 
                         mats[parameter.SmrParameter.Index] = parameter.SmrParameter.Material;
