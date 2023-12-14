@@ -195,7 +195,6 @@ namespace Yueby.Utils
         {
             var isContentEmpty = string.IsNullOrEmpty(content);
 
-
             if (isContentEmpty)
             {
                 action?.Invoke();
@@ -212,8 +211,7 @@ namespace Yueby.Utils
                         Line();
                 }
             }
-
-
+            
             return foldout;
         }
 

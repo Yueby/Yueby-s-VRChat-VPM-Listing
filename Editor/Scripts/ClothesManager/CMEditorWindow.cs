@@ -65,6 +65,7 @@ namespace Yueby.AvatarTools.ClothesManager
 
         private const float ConfigurePageHeight = 480;
         private const float ConfigureListHeight = ConfigurePageHeight - 100;
+        private const float ConfigureListWidth = 380f;
 
         private readonly Texture2D[] _categoryIcons = new Texture2D[2];
         private readonly Texture2D[] _clothesIcons = new Texture2D[2];
@@ -84,7 +85,7 @@ namespace Yueby.AvatarTools.ClothesManager
             _window = GetWindow<CMEditorWindow>();
 
             _window.titleContent = new GUIContent(Localization.Get("window_title"));
-            _window.minSize = new Vector2(770, 650);
+            _window.minSize = new Vector2(820, 650);
         }
 
         private void OnEnable()
@@ -607,14 +608,13 @@ namespace Yueby.AvatarTools.ClothesManager
             {
                 _categorySerializedObject.UpdateIfRequiredOrScript();
 
-                const float width = 320f;
                 YuebyUtil.HorizontalEGL(() =>
                 {
                     YuebyUtil.VerticalEGL(() =>
                     {
                         _clothesParameterBar.Draw();
                         _clothesDriverBar.Draw();
-                    }, GUILayout.MinWidth(width));
+                    }, GUILayout.MinWidth(ConfigureListWidth));
 
                     if (_categoryBar.IsDraw) return;
                     YuebyUtil.Line(LineType.Vertical);
@@ -901,8 +901,8 @@ namespace Yueby.AvatarTools.ClothesManager
 
         private void DrawClothesAnimParameter()
         {
-            const float width = 320f;
-            _clothesShowRl.DoLayoutList(Localization.Get("show"), new Vector2(width, ConfigureListHeight), false, true, true, objs =>
+            
+            _clothesShowRl.DoLayoutList(Localization.Get("show"), new Vector2(ConfigureListWidth, ConfigureListHeight), false, true, true, objs =>
             {
                 // Show Paths
                 ListenToDrop(typeof(GameObject), ref _clothes.ShowParameters, parameter =>
@@ -914,7 +914,7 @@ namespace Yueby.AvatarTools.ClothesManager
                 YuebyUtil.WaitToDo(20, "WaitToPreview", () => { PreviewGameObject(); });
             }, Repaint);
 
-            _clothesHideRl.DoLayoutList(Localization.Get("hide"), new Vector2(width, ConfigureListHeight), false, true, true, objs =>
+            _clothesHideRl.DoLayoutList(Localization.Get("hide"), new Vector2(ConfigureListWidth, ConfigureListHeight), false, true, true, objs =>
             {
                 // Hide Paths
                 ListenToDrop(typeof(GameObject), ref _clothes.HideParameters, parameter =>
@@ -926,17 +926,16 @@ namespace Yueby.AvatarTools.ClothesManager
                 YuebyUtil.WaitToDo(20, "WaitToPreview", () => { PreviewGameObject(); });
             }, Repaint);
 
-            _clothesSmrRL.DoLayoutList(Localization.Get("skinned_mesh_renderer"), new Vector2(width, ConfigureListHeight), false, true, true, obj => { ListenToDrop(typeof(SkinnedMeshRenderer), ref _clothes.SMRParameters, null, obj); }, Repaint);
+            _clothesSmrRL.DoLayoutList(Localization.Get("skinned_mesh_renderer"), new Vector2(ConfigureListWidth, ConfigureListHeight), false, true, true, obj => { ListenToDrop(typeof(SkinnedMeshRenderer), ref _clothes.SMRParameters, null, obj); }, Repaint);
         }
 
         private void DrawClothesParameterDriver()
         {
-            const float width = 320f;
             _clothes.HasParameterDriver = YuebyUtil.Toggle(_clothes.HasParameterDriver, Localization.Get("driver_is_using"));
             if (_clothes.HasParameterDriver)
             {
-                _enterDriverRl.DoLayoutList(Localization.Get("driver_enter"), new Vector2(width, ConfigureListHeight), false, true, false, null, Repaint);
-                _exitDriverRl.DoLayoutList(Localization.Get("driver_exit"), new Vector2(width, ConfigureListHeight), false, true, false, null, Repaint);
+                _enterDriverRl.DoLayoutList(Localization.Get("driver_enter"), new Vector2(ConfigureListWidth, ConfigureListHeight), false, true, false, null, Repaint);
+                _exitDriverRl.DoLayoutList(Localization.Get("driver_exit"), new Vector2(ConfigureListWidth, ConfigureListHeight), false, true, false, null, Repaint);
 
                 YuebyUtil.Line();
 

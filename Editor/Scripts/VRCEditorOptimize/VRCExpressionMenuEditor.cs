@@ -10,6 +10,7 @@ using ExpressionParameters = VRC.SDK3.Avatars.ScriptableObjects.VRCExpressionPar
 using VRC.SDK3.Avatars.ScriptableObjects;
 using System.Reflection.Emit;
 using Yueby.Utils;
+using static VRC.SDK3.Avatars.ScriptableObjects.VRCExpressionsMenu;
 
 [CustomEditor(typeof(VRC.SDK3.Avatars.ScriptableObjects.VRCExpressionsMenu))]
 public class VRCExpressionsMenuEditor : Editor
@@ -26,11 +27,132 @@ public class VRCExpressionsMenuEditor : Editor
         controls = serializedObject.FindProperty("controls");
         _menuRl = new YuebyReorderableList(serializedObject, controls, true, true, false, Repaint);
         _menuRl.OnDraw += OnDrawMenuElement;
+        _menuRl.OnTitleDraw += () =>
+        {
+            GUILayout.Box("", GUILayout.ExpandWidth(true));
+            var rect = GUILayoutUtility.GetLastRect();
+            if (rect.size.magnitude > 40f)
+            {
+                var count = ((ExpressionsMenu)target).controls.Count;
+                var value = (count * 1f) / (ExpressionsMenu.MAX_CONTROLS * 1f);
+
+                EditorGUI.ProgressBar(rect, value, $"{count}/{ExpressionsMenu.MAX_CONTROLS}");
+
+                _menuRl.IsDisableAddButton = count >= ExpressionsMenu.MAX_CONTROLS;
+            }
+        };
     }
 
+    // Draw List Element
     private float OnDrawMenuElement(Rect rect, int i, bool arg3, bool arg4)
     {
-        return EditorGUIUtility.singleLineHeight;
+        var control = controls.GetArrayElementAtIndex(i);
+        var name = control.FindPropertyRelative("name");
+        var icon = control.FindPropertyRelative("icon");
+        var type = control.FindPropertyRelative("type");
+
+        var height = EditorGUIUtility.singleLineHeight;
+        rect.x += 10;
+        var foldoutRect = new Rect(rect.x, rect.y, rect.width, height);
+        control.isExpanded = EditorGUI.Foldout(foldoutRect, control.isExpanded, name.stringValue);
+        if (control.isExpanded)
+        {
+            GUI.Box(new Rect(foldoutRect.x, foldoutRect.y + foldoutRect.height, foldoutRect.width - 5, 2), "");
+            height = EditorGUIUtility.singleLineHeight * 5;
+            var nowRect = new Rect(foldoutRect.x + 2, foldoutRect.y + foldoutRect.height + 4, rect.width - 4 * 2f, rect.height - foldoutRect.height - 4 * 2f);
+            var iconRect = new Rect(nowRect.x, nowRect.y, EditorGUIUtility.singleLineHeight * 2, EditorGUIUtility.singleLineHeight * 2);
+            icon.objectReferenceValue = EditorGUI.ObjectField(iconRect, icon.objectReferenceValue, typeof(Texture2D), false);
+
+            var nameRect = new Rect(iconRect.x + iconRect.width + 2, iconRect.y, nowRect.width - iconRect.width - 4, EditorGUIUtility.singleLineHeight);
+            var typeRect = new Rect(nameRect.x, nameRect.y + nameRect.height, nameRect.width, nameRect.height);
+
+            DrawPropertyField(nameRect, name, "Name");
+            DrawPropertyField(typeRect, type, "Type");
+
+
+            height += DrawType(new Rect(iconRect.x, iconRect.y + iconRect.height + 2, nowRect.width, nowRect.height - iconRect.height), control, type);
+        }
+
+        return height;
+    }
+
+    private float DrawType(Rect rect, SerializedProperty controlProperty, SerializedProperty typeProperty)
+    {
+        var type = (ExpressionControl.ControlType)typeProperty.enumValueIndex;
+
+        var parameter = controlProperty.FindPropertyRelative("parameter");
+        var value = controlProperty.FindPropertyRelative("value");
+        var subMenu = controlProperty.FindPropertyRelative("subMenu");
+
+        var subParameters = controlProperty.FindPropertyRelative("subParameters");
+        var labels = controlProperty.FindPropertyRelative("labels");
+
+        float height = 0;
+
+        GUI.Box(rect, "");
+
+        switch (type)
+        {
+            case ExpressionControl.ControlType.Button:
+                height += DrawButtonType(rect, controlProperty, parameter);
+                break;
+            case ExpressionControl.ControlType.Toggle:
+                height += DrawToggleType(rect, controlProperty, parameter);
+                break;
+            case ExpressionControl.ControlType.SubMenu:
+                height += DrawSubMenuType(rect, controlProperty, subMenu);
+                break;
+            case ExpressionControl.ControlType.TwoAxisPuppet:
+                height += DrawTwoAxisPuppetType(rect, controlProperty, subParameters);
+                break;
+            case ExpressionControl.ControlType.FourAxisPuppet:
+                height += DrawFourAxisPuppetType(rect, controlProperty, subParameters);
+                break;
+            case ExpressionControl.ControlType.RadialPuppet:
+                height += DrawRadialPuppetType(rect, controlProperty, subParameters);
+                break;
+        }
+
+        return height;
+    }
+
+    private float DrawRadialPuppetType(Rect rect, SerializedProperty controlProperty, SerializedProperty parameter)
+    {
+        return 0;
+    }
+
+    private float DrawFourAxisPuppetType(Rect rect, SerializedProperty controlProperty, SerializedProperty parameter)
+    {
+        return 0;
+    }
+
+    private float DrawTwoAxisPuppetType(Rect rect, SerializedProperty controlProperty, SerializedProperty parameter)
+    {
+        return 0;
+    }
+
+    private float DrawSubMenuType(Rect rect, SerializedProperty controlProperty, SerializedProperty parameter)
+    {
+        return 0;
+    }
+
+    private float DrawToggleType(Rect rect, SerializedProperty controlProperty, SerializedProperty parameter)
+    {
+        return 0;
+    }
+
+    private float DrawButtonType(Rect rect, SerializedProperty controlProperty, SerializedProperty parameter)
+    {
+        return 0;
+    }
+
+    private void DrawPropertyField(Rect rect, SerializedProperty serializedProperty, string label)
+    {
+        var size = GUI.skin.label.CalcSize(new GUIContent(label + "\t"));
+        var labelRect = new Rect(rect.x, rect.y, size.x, rect.height);
+        var pRect = new Rect(labelRect.x + labelRect.width + 2, labelRect.y, rect.width - labelRect.width - 2 * 2, labelRect.height);
+        EditorGUI.LabelField(labelRect, label);
+        EditorGUI.PropertyField(pRect, serializedProperty, new GUIContent(""));
     }
 
     public void OnDisable()
@@ -52,6 +174,7 @@ public class VRCExpressionsMenuEditor : Editor
         EditorGUILayout.Space();
 
         //Controls
+        //_menuRl.DoLayout("Controls");
         EditorGUI.BeginDisabledGroup(activeDescriptor == null);
         EditorGUILayout.LabelField("Controls");
         EditorGUI.indentLevel += 1;

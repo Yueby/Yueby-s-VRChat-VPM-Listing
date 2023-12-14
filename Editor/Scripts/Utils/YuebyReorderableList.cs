@@ -28,7 +28,7 @@ namespace Yueby.Utils
         public UnityAction<Object, int> OnSelected;
         public UnityAction OnTitleDraw;
         public UnityAction OnHeaderBottomDraw;
-        public List<float> ElementHeights;
+        public float[] ElementHeights;
         public ReorderableList List { get; }
 
 
@@ -37,7 +37,7 @@ namespace Yueby.Utils
             _serializedProperty = serializedProperty;
             _isShowAddButton = isShowAddButton;
             _isShowRemoveButton = isShowRemoveButton;
-            ElementHeights = new List<float>(serializedProperty.arraySize);
+            ElementHeights = new float[serializedProperty.arraySize];
 
             List = new ReorderableList(serializedObject, serializedProperty, true, false, false, false)
             {
@@ -51,7 +51,7 @@ namespace Yueby.Utils
                 },
 
 
-                onAddCallback = _ =>
+                onAddCallback = list =>
                 {
                     serializedProperty.arraySize++;
                     OnListAdd();
@@ -61,6 +61,8 @@ namespace Yueby.Utils
                         List.index = 0;
                         List.onMouseUpCallback?.Invoke(List);
                     }
+
+                    Array.Resize(ref ElementHeights, serializedProperty.arraySize);
                 },
                 onRemoveCallback = reorderableList =>
                 {
@@ -79,6 +81,8 @@ namespace Yueby.Utils
 
                         List.onMouseUpCallback?.Invoke(List);
                     }
+
+                    Array.Resize(ref ElementHeights, serializedProperty.arraySize);
                 },
                 onChangedCallback = list =>
                 {
@@ -91,22 +95,10 @@ namespace Yueby.Utils
                 {
                     repaint?.Invoke();
                     float height = 0;
-
-                    try
-                    {
-                        height = ElementHeights[index];
-                    }
-                    catch (ArgumentOutOfRangeException e)
-                    {
-                        Debug.LogWarning(e.Message);
-                    }
-                    finally
-                    {
-                        var floats = ElementHeights.ToArray();
-                        Array.Resize(ref floats, serializedProperty.arraySize);
-                        ElementHeights = floats.ToList();
-                    }
-
+                    height = ElementHeights[index];
+                    
+                    Array.Resize(ref ElementHeights, serializedProperty.arraySize);
+                    repaint?.Invoke();
                     return height;
                 },
             };
@@ -117,7 +109,6 @@ namespace Yueby.Utils
                 List.onMouseUpCallback?.Invoke(List);
             }
         }
-
 
 
         public void DoLayout(string title, Vector2 area, bool isNoBorder = false, bool hasFoldout = true)
@@ -153,6 +144,39 @@ namespace Yueby.Utils
                 }, GUILayout.MaxHeight(area.y), maxWidth > 0 ? GUILayout.MaxWidth(maxWidth) : GUILayout.ExpandWidth(true));
             }
         }
+
+        public void DoLayout(string title, bool isNoBorder = false, bool hasFoldout = true)
+        {
+            if (hasFoldout)
+            {
+                _isFoldout = YuebyUtil.Foldout(_isFoldout, title, () =>
+                {
+                    YuebyUtil.VerticalEGL(() =>
+                    {
+                        if (isNoBorder)
+                            YuebyUtil.VerticalEGL(DrawContentNoScroll);
+                        else
+                            YuebyUtil.VerticalEGL("Badge", DrawContentNoScroll);
+                        EditorGUILayout.Space(5);
+                    });
+                });
+            }
+            else
+            {
+                YuebyUtil.VerticalEGL(() =>
+                {
+                    if (!string.IsNullOrEmpty(title))
+                        YuebyUtil.TitleLabelField(title);
+
+                    if (isNoBorder)
+                        YuebyUtil.VerticalEGL(DrawContentNoScroll);
+                    else
+                        YuebyUtil.VerticalEGL("Badge", DrawContentNoScroll);
+                    EditorGUILayout.Space(5);
+                });
+            }
+        }
+
 
         private void DrawContent()
         {
@@ -212,10 +236,72 @@ namespace Yueby.Utils
                 ScrollPos = YuebyUtil.ScrollViewEGL(() =>
                 {
                     if (List.count == 0)
-                        EditorGUILayout.HelpBox("列表为空！", MessageType.Info);
+                        EditorGUILayout.HelpBox("List is null!", MessageType.Info);
                     else
                         List?.DoLayoutList();
                 }, ScrollPos);
+            });
+        }
+
+        private void DrawContentNoScroll()
+        {
+            YuebyUtil.SpaceArea(() =>
+            {
+                // 绘制标题头
+                YuebyUtil.HorizontalEGL(() =>
+                {
+                    YuebyUtil.HorizontalEGL("Badge", () =>
+                    {
+                        EditorGUILayout.LabelField($"{List.count}", EditorStyles.centeredGreyMiniLabel,
+                            GUILayout.Width(25), GUILayout.Height(18));
+                    }, GUILayout.Width(25), GUILayout.Height(18));
+
+                    if (OnTitleDraw == null)
+                        EditorGUILayout.Space();
+                    else
+                    {
+                        OnTitleDraw.Invoke();
+                    }
+
+                    if (_isShowAddButton)
+                    {
+                        EditorGUI.BeginDisabledGroup(IsDisableAddButton);
+                        if (GUILayout.Button("+", GUILayout.Width(25), GUILayout.Height(18)))
+                        {
+                            //添加
+                            List.onAddCallback?.Invoke(List);
+                        }
+
+                        EditorGUI.EndDisabledGroup();
+                    }
+
+
+                    EditorGUI.BeginDisabledGroup(List.count == 0 || List.index == -1);
+
+                    if (_isShowRemoveButton)
+                    {
+                        EditorGUI.BeginDisabledGroup(IsDisableRemoveButton);
+                        if (GUILayout.Button("-", GUILayout.Width(25), GUILayout.Height(18)))
+                            List.onRemoveCallback?.Invoke(List);
+                        EditorGUI.EndDisabledGroup();
+                    }
+
+                    EditorGUI.EndDisabledGroup();
+                });
+
+                if (OnHeaderBottomDraw != null)
+                {
+                    YuebyUtil.Line(LineType.Horizontal, 2, 0);
+                    OnHeaderBottomDraw.Invoke();
+                }
+
+
+                YuebyUtil.Line(LineType.Horizontal, 2, 0);
+                // 绘制列表内容
+                if (List.count == 0)
+                    EditorGUILayout.HelpBox("List is null!", MessageType.Info);
+                else
+                    List?.DoLayoutList();
             });
         }
 
@@ -244,21 +330,19 @@ namespace Yueby.Utils
         {
             var height = OnDraw?.Invoke(rect, index, isActive, isFocused);
             height ??= 0;
+            ElementHeights[index] = (float)height;
+            Array.Resize(ref ElementHeights, _serializedProperty.arraySize);
+        }
 
-            try
+        public override string ToString()
+        {
+            var result = "";
+            foreach (var i in ElementHeights)
             {
-                ElementHeights[index] = (float)height;
+                result += $"{i} ";
             }
-            catch (ArgumentOutOfRangeException e)
-            {
-                Debug.LogWarning(e.Message);
-            }
-            finally
-            {
-                float[] floats = ElementHeights.ToArray();
-                Array.Resize(ref floats, _serializedProperty.arraySize);
-                ElementHeights = floats.ToList();
-            }
+
+            return result;
         }
     }
 }
