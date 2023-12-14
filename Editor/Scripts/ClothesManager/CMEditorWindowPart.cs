@@ -983,7 +983,6 @@ namespace Yueby.AvatarTools.ClothesManager
             var destPath = path + "/" + fileInfo.Name;
             if (!File.Exists(destPath))
             {
-                Debug.Log(destPath);
                 FileUtil.CopyFileOrDirectory(sourcePath, destPath);
                 AssetDatabase.Refresh();
                 AssetDatabase.RenameAsset(destPath, fileInfo.Name + " " + backupTime);

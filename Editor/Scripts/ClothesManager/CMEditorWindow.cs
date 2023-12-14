@@ -74,7 +74,7 @@ namespace Yueby.AvatarTools.ClothesManager
 
         private List<CMClothesData.ClothesAnimParameter> _copiedSMRData;
 
-        private static CMAvatarState _avatarState;
+        private CMAvatarState _avatarState;
 
         #endregion
 
@@ -89,8 +89,6 @@ namespace Yueby.AvatarTools.ClothesManager
 
         private void OnEnable()
         {
-            _avatarState ??= new CMAvatarState(_descriptor.gameObject);
-
             GetIcons();
 
             _categoryBar = new TabBarElement(_categoryIcons, () => { _categoriesRl.DoLayout(Localization.Get("category"), new Vector2(150, ConfigurePageHeight + 20), false, false); });
@@ -111,6 +109,7 @@ namespace Yueby.AvatarTools.ClothesManager
             _configureTabBarGroup = new TabBarGroup(new List<TabBarElement> { _categoryBar, _clothesBar, _clothesParameterBar, _clothesDriverBar });
             GetDescriptorOnEnable();
             InitSerializedObjects();
+            _avatarState ??= new CMAvatarState(_descriptor.gameObject);
         }
 
         private void GetIcons()
@@ -170,7 +169,7 @@ namespace Yueby.AvatarTools.ClothesManager
             _serializedObject = new SerializedObject(_dataReference.Data);
             _categoriesProperty = _serializedObject.FindProperty(nameof(CMCDataSo.Categories));
 
-            _categoriesRl = new YuebyReorderableList(_serializedObject, _categoriesProperty, 40f, true, true, true);
+            _categoriesRl = new YuebyReorderableList(_serializedObject, _categoriesProperty, true, true, true);
             _categoriesRl.OnAdd += OnCategoriesAdd;
             _categoriesRl.OnRemove += OnCategoriesRemove;
             _categoriesRl.OnDraw += OnCategoriesDraw;
@@ -203,7 +202,7 @@ namespace Yueby.AvatarTools.ClothesManager
         }
 
 
-        private void OnCategoriesDraw(Rect rect, int index, bool isActive, bool isFocused)
+        private float OnCategoriesDraw(Rect rect, int index, bool isActive, bool isFocused)
         {
             var categorySo = new SerializedObject(_categoriesProperty.GetArrayElementAtIndex(index).objectReferenceValue);
 
@@ -234,6 +233,8 @@ namespace Yueby.AvatarTools.ClothesManager
                     // YuebyUtil.SaveAndRefreshAssets();
                 }
             }
+
+            return 40f;
         }
 
         private void OnCategoriesRemove(ReorderableList list, Object obj)
@@ -624,9 +625,9 @@ namespace Yueby.AvatarTools.ClothesManager
                         // if (IsClothesPreview)
                         //     GUI.backgroundColor = Color.green;
 
-                        EditorGUILayout.LabelField(Localization.Get("clothes_preview"),GUILayout.Width(80));
+                        EditorGUILayout.LabelField(Localization.Get("clothes_preview"), GUILayout.Width(80));
                         EditorGUI.BeginChangeCheck();
-                        var previewContents = new[] {Localization.Get("clothes_preview_none"), Localization.Get("clothes_preview_all"), Localization.Get("clothes_preview_current") };
+                        var previewContents = new[] { Localization.Get("clothes_preview_none"), Localization.Get("clothes_preview_all"), Localization.Get("clothes_preview_current") };
                         _previewIndex = GUILayout.Toolbar(_previewIndex, previewContents);
 
                         if (EditorGUI.EndChangeCheck())

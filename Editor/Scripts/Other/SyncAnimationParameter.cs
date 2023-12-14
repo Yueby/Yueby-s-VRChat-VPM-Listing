@@ -59,12 +59,12 @@ namespace Yueby.AvatarTools.Other
             _clipBsInfoSo = new SerializedObject(_clipAnimationBsHelper);
             _clipBsParameters = _clipBsInfoSo.FindProperty(nameof(AnimationBlendShapeHelper.Parameters));
 
-            _bsRL = new YuebyReorderableList(_clipBsInfoSo, _clipBsParameters, EditorGUIUtility.singleLineHeight, false, true);
+            _bsRL = new YuebyReorderableList(_clipBsInfoSo, _clipBsParameters,  false, true,false,Repaint);
             _bsRL.OnRemove += OnBsRLRemove;
             _bsRL.OnDraw += OnBsRLDraw;
         }
 
-        private void OnBsRLDraw(Rect rect, int index, bool isActive, bool isFocused)
+        private float OnBsRLDraw(Rect rect, int index, bool isActive, bool isFocused)
         {
             var parameter = _clipAnimationBsHelper.Parameters[index];
             var labelRect = new Rect(rect.x, rect.y, rect.width / 2, rect.height);
@@ -72,6 +72,7 @@ namespace Yueby.AvatarTools.Other
 
             var sliderRect = new Rect(labelRect.x + labelRect.width + 5f, labelRect.y, rect.width - 5f - labelRect.width, labelRect.height);
             parameter.Value = EditorGUI.Slider(sliderRect, parameter.Value, 0f, 100f);
+            return EditorGUIUtility.singleLineHeight;
         }
 
         private void OnBsRLRemove(ReorderableList list, Object obj)

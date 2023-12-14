@@ -1,4 +1,5 @@
 ﻿#if YUEBY_AVATAR_STYLE
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,6 +9,7 @@ using ExpressionControl = VRC.SDK3.Avatars.ScriptableObjects.VRCExpressionsMenu.
 using ExpressionParameters = VRC.SDK3.Avatars.ScriptableObjects.VRCExpressionParameters;
 using VRC.SDK3.Avatars.ScriptableObjects;
 using System.Reflection.Emit;
+using Yueby.Utils;
 
 [CustomEditor(typeof(VRC.SDK3.Avatars.ScriptableObjects.VRCExpressionsMenu))]
 public class VRCExpressionsMenuEditor : Editor
@@ -16,8 +18,19 @@ public class VRCExpressionsMenuEditor : Editor
 
     List<UnityEngine.Object> foldoutList = new List<UnityEngine.Object>();
 
-    public void Start()
+    private YuebyReorderableList _menuRl;
+    private SerializedProperty controls;
+
+    private void OnEnable()
     {
+        controls = serializedObject.FindProperty("controls");
+        _menuRl = new YuebyReorderableList(serializedObject, controls, true, true, false, Repaint);
+        _menuRl.OnDraw += OnDrawMenuElement;
+    }
+
+    private float OnDrawMenuElement(Rect rect, int i, bool arg3, bool arg4)
+    {
+        return EditorGUIUtility.singleLineHeight;
     }
 
     public void OnDisable()

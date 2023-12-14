@@ -27,7 +27,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
         {
             // Init Reorderable List
             _parametersProperty = serializedObject.FindProperty("parameters");
-            _paramRl = new YuebyReorderableList(serializedObject, _parametersProperty, EditorGUIUtility.singleLineHeight + 5, true, true);
+            _paramRl = new YuebyReorderableList(serializedObject, _parametersProperty,  true, true);
             _paramRl.OnDraw += OnListDraw;
             _paramRl.OnHeaderBottomDraw += OnListHeaderBottomDraw;
             _paramRl.OnTitleDraw += OnTitleDraw;
@@ -78,7 +78,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
         }
 
 
-        private void OnListDraw(Rect rect, int index, bool arg2, bool arg3)
+        private float OnListDraw(Rect rect, int index, bool arg2, bool arg3)
         {
             if (_parametersProperty.arraySize < index + 1)
                 _parametersProperty.InsertArrayElementAtIndex(index);
@@ -118,6 +118,8 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
 
             EditorGUI.PropertyField(typeRect, valueType, new GUIContent(""));
             EditorGUI.PropertyField(nameRect, itemName, new GUIContent(""));
+
+            return EditorGUIUtility.singleLineHeight + 5;
         }
 
 

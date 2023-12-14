@@ -1,13 +1,18 @@
 #if UNITY_EDITOR
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Events;
+using Object = UnityEngine.Object;
 
 namespace Yueby.Utils
 {
     public class YuebyReorderableList
     {
+        private SerializedProperty _serializedProperty;
         private bool _isFoldout = true;
         private readonly bool _isShowAddButton;
         private readonly bool _isShowRemoveButton;
@@ -18,23 +23,26 @@ namespace Yueby.Utils
         public Vector2 ScrollPos;
         public UnityAction OnAdd;
         public UnityAction<Object, int> OnChanged;
-        public UnityAction<Rect, int, bool, bool> OnDraw;
+        public Func<Rect, int, bool, bool, float> OnDraw;
         public UnityAction<ReorderableList, Object> OnRemove;
         public UnityAction<Object, int> OnSelected;
         public UnityAction OnTitleDraw;
         public UnityAction OnHeaderBottomDraw;
+        public List<float> ElementHeights;
         public ReorderableList List { get; }
 
-        public YuebyReorderableList(SerializedObject serializedObject, SerializedProperty serializedProperty, float elementHeight, bool isShowAddButton, bool isShowRemoveButton, bool isPPTR = false)
+
+        public YuebyReorderableList(SerializedObject serializedObject, SerializedProperty serializedProperty, bool isShowAddButton, bool isShowRemoveButton, bool isPPTR = false, UnityAction repaint = null)
         {
+            _serializedProperty = serializedProperty;
             _isShowAddButton = isShowAddButton;
             _isShowRemoveButton = isShowRemoveButton;
+            ElementHeights = new List<float>(serializedProperty.arraySize);
 
             List = new ReorderableList(serializedObject, serializedProperty, true, false, false, false)
             {
                 headerHeight = 0,
                 footerHeight = 0,
-                elementHeight = elementHeight,
                 drawElementCallback = OnListDraw,
                 onMouseUpCallback = list =>
                 {
@@ -78,7 +86,29 @@ namespace Yueby.Utils
                         ? serializedProperty.GetArrayElementAtIndex(list.index).objectReferenceValue
                         : null;
                     OnListChanged(item, list.index);
-                }
+                },
+                elementHeightCallback = index =>
+                {
+                    repaint?.Invoke();
+                    float height = 0;
+
+                    try
+                    {
+                        height = ElementHeights[index];
+                    }
+                    catch (ArgumentOutOfRangeException e)
+                    {
+                        Debug.LogWarning(e.Message);
+                    }
+                    finally
+                    {
+                        var floats = ElementHeights.ToArray();
+                        Array.Resize(ref floats, serializedProperty.arraySize);
+                        ElementHeights = floats.ToList();
+                    }
+
+                    return height;
+                },
             };
 
             if (serializedProperty.arraySize > 0)
@@ -87,6 +117,7 @@ namespace Yueby.Utils
                 List.onMouseUpCallback?.Invoke(List);
             }
         }
+
 
 
         public void DoLayout(string title, Vector2 area, bool isNoBorder = false, bool hasFoldout = true)
@@ -211,7 +242,23 @@ namespace Yueby.Utils
 
         private void OnListDraw(Rect rect, int index, bool isActive, bool isFocused)
         {
-            OnDraw?.Invoke(rect, index, isActive, isFocused);
+            var height = OnDraw?.Invoke(rect, index, isActive, isFocused);
+            height ??= 0;
+
+            try
+            {
+                ElementHeights[index] = (float)height;
+            }
+            catch (ArgumentOutOfRangeException e)
+            {
+                Debug.LogWarning(e.Message);
+            }
+            finally
+            {
+                float[] floats = ElementHeights.ToArray();
+                Array.Resize(ref floats, _serializedProperty.arraySize);
+                ElementHeights = floats.ToList();
+            }
         }
     }
 }
