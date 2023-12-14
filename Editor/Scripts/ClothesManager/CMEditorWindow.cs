@@ -25,7 +25,7 @@ namespace Yueby.AvatarTools.ClothesManager
         private static readonly CMLocalization Localization = new CMLocalization();
 
         // Init
-        private static VRCAvatarDescriptor _descriptor;
+        private VRCAvatarDescriptor _descriptor;
         private CMAvatarDataReference _dataReference;
 
         private bool _isFoldoutVrcConfigure;
@@ -60,9 +60,11 @@ namespace Yueby.AvatarTools.ClothesManager
         private TabBarElement _clothesDriverBar;
 
         private VRC_AvatarParameterDriver.Parameter _currentDriverParameter;
-        private bool _isClothesPreview = true;
+        private bool IsClothesPreview => _previewIndex > 0;
+        private static int _previewIndex = 1;
 
-        private const float ConfigurePageHeight = 420;
+        private const float ConfigurePageHeight = 480;
+        private const float ConfigureListHeight = ConfigurePageHeight - 100;
 
         private readonly Texture2D[] _categoryIcons = new Texture2D[2];
         private readonly Texture2D[] _clothesIcons = new Texture2D[2];
@@ -82,13 +84,13 @@ namespace Yueby.AvatarTools.ClothesManager
             _window = GetWindow<CMEditorWindow>();
 
             _window.titleContent = new GUIContent(Localization.Get("window_title"));
-            _window.minSize = new Vector2(770, 600);
-
-            _avatarState = new CMAvatarState(_descriptor.gameObject);
+            _window.minSize = new Vector2(770, 650);
         }
 
         private void OnEnable()
         {
+            _avatarState ??= new CMAvatarState(_descriptor.gameObject);
+
             GetIcons();
 
             _categoryBar = new TabBarElement(_categoryIcons, () => { _categoriesRl.DoLayout(Localization.Get("category"), new Vector2(150, ConfigurePageHeight + 20), false, false); });
@@ -130,7 +132,7 @@ namespace Yueby.AvatarTools.ClothesManager
 
         private void OnDisable()
         {
-            if (!_isClothesPreview)
+            if (!IsClothesPreview)
                 ResetAvatarState();
 
             if (_isStartCapture)
@@ -317,9 +319,9 @@ namespace Yueby.AvatarTools.ClothesManager
                 _categoryBar.ChangeDrawState(false);
 
             _currentDriverParameter = null;
-
-            ResetAvatarState();
-            PreviewAll();
+            // if (!_isGridInit)
+            //     ResetAvatarState();
+            PreviewConfig();
 
             if (_isGridInit)
                 _isGridInit = false;
@@ -380,9 +382,9 @@ namespace Yueby.AvatarTools.ClothesManager
                 });
             };
 
-            _clothesShowRl.OnRemove += _ => { PreviewAll(); };
-            _clothesHideRl.OnRemove += _ => { PreviewAll(); };
-            _clothesSmrRL.OnRemove += _ => { PreviewAll(); };
+            _clothesShowRl.OnRemove += _ => { PreviewConfig(); };
+            _clothesHideRl.OnRemove += _ => { PreviewConfig(); };
+            _clothesSmrRL.OnRemove += _ => { PreviewConfig(); };
             _clothesSmrRL.OnRemoveBefore += index =>
             {
                 var target = _clothes.SMRParameters[index];
@@ -495,21 +497,6 @@ namespace Yueby.AvatarTools.ClothesManager
             }
         }
 
-        private CMClothesData.ClothesAnimParameter AddNextSMRParameter(CMClothesData.ClothesAnimParameter target)
-        {
-            var addParameter = new CMClothesData.ClothesAnimParameter(target);
-            addParameter.SmrParameter.Index += 1;
-
-            if (_clothes.ContainsInList(addParameter, _clothes.SMRParameters))
-            {
-                return AddNextSMRParameter(addParameter);
-            }
-
-            _clothes.SMRParameters.Add(addParameter);
-
-            return addParameter;
-        }
-
         private void DrawParameterDriverElement(ref List<VRC_AvatarParameterDriver.Parameter> drivers, Rect rect, int index)
         {
             var typeRect = new Rect(rect.x, rect.y + 2, 70, rect.height);
@@ -563,8 +550,12 @@ namespace Yueby.AvatarTools.ClothesManager
 
             if (currentCloth == null) return;
 
+            rect.x += 2;
+            rect.y += 2;
+            rect.width -= 4;
+            rect.height -= 4;
             if (currentCloth.Icon != null)
-                GUI.Box(rect, currentCloth.Icon);
+                GUI.DrawTexture(rect, currentCloth.Icon);
 
             if (_currentClothesCategory && _currentClothesCategory.Default == i)
             {
@@ -572,7 +563,7 @@ namespace Yueby.AvatarTools.ClothesManager
                 EditorGUI.LabelField(defaultIconRect, "*");
             }
 
-            var labelRect = new Rect(rect.x, rect.y + rect.height / 2, rect.width, EditorGUIUtility.singleLineHeight);
+            var labelRect = new Rect(rect.x, rect.y + rect.height / 1.5f, rect.width, EditorGUIUtility.singleLineHeight);
             EditorGUI.LabelField(labelRect, currentCloth.Name);
         }
 
@@ -629,23 +620,26 @@ namespace Yueby.AvatarTools.ClothesManager
 
                     YuebyUtil.VerticalEGL(() =>
                     {
-                        var bkgColor = GUI.backgroundColor;
-                        if (_isClothesPreview)
-                            GUI.backgroundColor = Color.green;
-                        if (GUILayout.Button(Localization.Get("clothes_preview")))
-                        {
-                            _isClothesPreview = !_isClothesPreview;
-                            if (!_isClothesPreview)
-                            {
-                                ResetAvatarState();
-                            }
-                            else
-                            {
-                                PreviewAll();
-                            }
-                        }
+                        // var bkgColor = GUI.backgroundColor;
+                        // if (IsClothesPreview)
+                        //     GUI.backgroundColor = Color.green;
 
-                        GUI.backgroundColor = bkgColor;
+                        EditorGUILayout.LabelField(Localization.Get("clothes_preview"),GUILayout.Width(80));
+                        EditorGUI.BeginChangeCheck();
+                        var previewContents = new[] {Localization.Get("clothes_preview_none"), Localization.Get("clothes_preview_all"), Localization.Get("clothes_preview_current") };
+                        _previewIndex = GUILayout.Toolbar(_previewIndex, previewContents);
+
+                        if (EditorGUI.EndChangeCheck())
+                        {
+                            PreviewConfig();
+                        }
+                        // if (GUILayout.Button(Localization.Get("clothes_preview")))
+                        // {
+                        //     // IsClothesPreview = !IsClothesPreview;
+                        //    
+                        // }
+
+                        // GUI.backgroundColor = bkgColor;
 
                         var isCurrentDefault = _currentClothesCategory.Default == _clothesIndex;
 
@@ -907,7 +901,7 @@ namespace Yueby.AvatarTools.ClothesManager
         private void DrawClothesAnimParameter()
         {
             const float width = 320f;
-            _clothesShowRl.DoLayoutList(Localization.Get("show"), new Vector2(width, 320), false, true, true, objs =>
+            _clothesShowRl.DoLayoutList(Localization.Get("show"), new Vector2(width, ConfigureListHeight), false, true, true, objs =>
             {
                 // Show Paths
                 ListenToDrop(typeof(GameObject), ref _clothes.ShowParameters, parameter =>
@@ -916,10 +910,10 @@ namespace Yueby.AvatarTools.ClothesManager
                         _clothes.DeleteInList(parameter, ref _clothes.HideParameters);
                 }, objs);
 
-                YuebyUtil.WaitToDo(20, "WaitToPreview", PreviewGameObject);
+                YuebyUtil.WaitToDo(20, "WaitToPreview", () => { PreviewGameObject(); });
             }, Repaint);
 
-            _clothesHideRl.DoLayoutList(Localization.Get("hide"), new Vector2(width, 320), false, true, true, objs =>
+            _clothesHideRl.DoLayoutList(Localization.Get("hide"), new Vector2(width, ConfigureListHeight), false, true, true, objs =>
             {
                 // Hide Paths
                 ListenToDrop(typeof(GameObject), ref _clothes.HideParameters, parameter =>
@@ -928,10 +922,10 @@ namespace Yueby.AvatarTools.ClothesManager
                         _clothes.DeleteInList(parameter, ref _clothes.ShowParameters);
                 }, objs);
 
-                YuebyUtil.WaitToDo(20, "WaitToPreview", PreviewGameObject);
+                YuebyUtil.WaitToDo(20, "WaitToPreview", () => { PreviewGameObject(); });
             }, Repaint);
 
-            _clothesSmrRL.DoLayoutList(Localization.Get("skinned_mesh_renderer"), new Vector2(width, 320), false, true, true, obj => { ListenToDrop(typeof(SkinnedMeshRenderer), ref _clothes.SMRParameters, null, obj); }, Repaint);
+            _clothesSmrRL.DoLayoutList(Localization.Get("skinned_mesh_renderer"), new Vector2(width, ConfigureListHeight), false, true, true, obj => { ListenToDrop(typeof(SkinnedMeshRenderer), ref _clothes.SMRParameters, null, obj); }, Repaint);
         }
 
         private void DrawClothesParameterDriver()
@@ -940,8 +934,8 @@ namespace Yueby.AvatarTools.ClothesManager
             _clothes.HasParameterDriver = YuebyUtil.Toggle(_clothes.HasParameterDriver, Localization.Get("driver_is_using"));
             if (_clothes.HasParameterDriver)
             {
-                _enterDriverRl.DoLayoutList(Localization.Get("driver_enter"), new Vector2(width, 320), false, true, false, null, Repaint);
-                _exitDriverRl.DoLayoutList(Localization.Get("driver_exit"), new Vector2(width, 320), false, true, false, null, Repaint);
+                _enterDriverRl.DoLayoutList(Localization.Get("driver_enter"), new Vector2(width, ConfigureListHeight), false, true, false, null, Repaint);
+                _exitDriverRl.DoLayoutList(Localization.Get("driver_exit"), new Vector2(width, ConfigureListHeight), false, true, false, null, Repaint);
 
                 YuebyUtil.Line();
 
