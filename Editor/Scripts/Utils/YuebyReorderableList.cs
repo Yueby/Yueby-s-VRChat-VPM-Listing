@@ -100,7 +100,7 @@ namespace Yueby.Utils
                     var height = ElementHeights[index];
                     if (ElementHeights.Length != serializedProperty.arraySize)
                         Array.Resize(ref ElementHeights, serializedProperty.arraySize);
-                    
+
                     return height;
                 }
             };
@@ -153,29 +153,22 @@ namespace Yueby.Utils
             {
                 _isFoldout = YuebyUtil.Foldout(_isFoldout, title, () =>
                 {
-                    YuebyUtil.VerticalEGL(() =>
-                    {
-                        if (isNoBorder)
-                            YuebyUtil.VerticalEGL(DrawContentNoScroll);
-                        else
-                            YuebyUtil.VerticalEGL("Badge", DrawContentNoScroll);
-                        EditorGUILayout.Space(5);
-                    });
-                });
-            }
-            else
-            {
-                YuebyUtil.VerticalEGL(() =>
-                {
-                    if (!string.IsNullOrEmpty(title))
-                        YuebyUtil.TitleLabelField(title);
-
                     if (isNoBorder)
                         YuebyUtil.VerticalEGL(DrawContentNoScroll);
                     else
                         YuebyUtil.VerticalEGL("Badge", DrawContentNoScroll);
                     EditorGUILayout.Space(5);
                 });
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(title))
+                    YuebyUtil.TitleLabelField(title);
+
+                if (isNoBorder)
+                    YuebyUtil.VerticalEGL(DrawContentNoScroll);
+                else
+                    YuebyUtil.VerticalEGL("Badge", DrawContentNoScroll);
             }
         }
 
@@ -331,7 +324,7 @@ namespace Yueby.Utils
         private void OnListDraw(Rect rect, int index, bool isActive, bool isFocused)
         {
             if (OnDraw == null) return;
-            rect.height = ElementHeights[index];
+
             var height = OnDraw.Invoke(rect, index, isActive, isFocused);
 
             ElementHeights[index] = height;

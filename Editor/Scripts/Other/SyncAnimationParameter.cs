@@ -58,10 +58,6 @@ namespace Yueby.AvatarTools.Other
 
             _clipBsInfoSo = new SerializedObject(_clipAnimationBsHelper);
             _clipBsParameters = _clipBsInfoSo.FindProperty(nameof(AnimationBlendShapeHelper.Parameters));
-
-            _bsRL = new YuebyReorderableList(_clipBsInfoSo, _clipBsParameters, false, true);
-            _bsRL.OnRemove += OnBsRLRemove;
-            _bsRL.OnDraw += OnBsRLDraw;
         }
 
         private float OnBsRLDraw(Rect rect, int index, bool isActive, bool isFocused)
@@ -172,6 +168,10 @@ namespace Yueby.AvatarTools.Other
                 });
                 // _clipPropertiesDic.Add(curveBinding.propertyName, curve[0].value);
             }
+
+            _bsRL = new YuebyReorderableList(_clipBsInfoSo, _clipBsParameters, false, true);
+            _bsRL.OnRemove += OnBsRLRemove;
+            _bsRL.OnDraw += OnBsRLDraw;
         }
 
         private void GetMeshInfo()

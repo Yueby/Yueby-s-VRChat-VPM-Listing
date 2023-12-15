@@ -27,7 +27,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
         {
             // Init Reorderable List
             _parametersProperty = serializedObject.FindProperty("parameters");
-            _paramRl = new YuebyReorderableList(serializedObject, _parametersProperty,  true, true);
+            _paramRl = new YuebyReorderableList(serializedObject, _parametersProperty, true, true);
             _paramRl.OnDraw += OnListDraw;
             _paramRl.OnHeaderBottomDraw += OnListHeaderBottomDraw;
             _paramRl.OnTitleDraw += OnTitleDraw;
@@ -96,7 +96,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
             var offset = -28;
             var syncedRect = new Rect(_syncedRect.x + offset + 3, rect.y, _savedRect.width, rect.height);
             var savedRect = new Rect(_savedRect.x + offset + 3, rect.y, _savedRect.width, rect.height);
-            var defaultRect = new Rect(_defaultRect.x + offset + 3, rect.y, _defaultRect.width-3, rect.height);
+            var defaultRect = new Rect(_defaultRect.x + offset + 3, rect.y, _defaultRect.width - 3, rect.height);
             var typeRect = new Rect(_typeRect.x + offset, rect.y, _typeRect.width, rect.height);
             var nameRect = new Rect(_nameRect.x + offset, rect.y, _nameRect.width, rect.height);
 
@@ -125,8 +125,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
 
         public override void OnInspectorGUI()
         {
-            var screenWidth = Screen.width;
-            Localization.DrawLanguageUI(screenWidth - 120);
+            Localization.DrawLanguageUI(Screen.width - 120);
             EditorGUILayout.Space(10);
             serializedObject.Update();
             {
