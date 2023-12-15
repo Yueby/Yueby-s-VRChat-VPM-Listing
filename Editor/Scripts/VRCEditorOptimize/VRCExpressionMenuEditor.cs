@@ -9,15 +9,18 @@ using ExpressionControl = VRC.SDK3.Avatars.ScriptableObjects.VRCExpressionsMenu.
 using ExpressionParameters = VRC.SDK3.Avatars.ScriptableObjects.VRCExpressionParameters;
 using VRC.SDK3.Avatars.ScriptableObjects;
 using System.Reflection.Emit;
+using UnityEngine.Events;
 using Yueby.Utils;
 using static VRC.SDK3.Avatars.ScriptableObjects.VRCExpressionsMenu;
 
-[CustomEditor(typeof(VRC.SDK3.Avatars.ScriptableObjects.VRCExpressionsMenu))]
+[CustomEditor(typeof(VRCExpressionsMenu))]
 public class VRCExpressionsMenuEditor : Editor
 {
     static string[] ToggleStyles = { "Pip-Slot", "Animation" };
 
     List<UnityEngine.Object> foldoutList = new List<UnityEngine.Object>();
+    VRC.SDK3.Avatars.Components.VRCAvatarDescriptor activeDescriptor = null;
+    string[] parameterNames;
 
     private YuebyReorderableList _menuRl;
     private SerializedProperty controls;
@@ -25,7 +28,7 @@ public class VRCExpressionsMenuEditor : Editor
     private void OnEnable()
     {
         controls = serializedObject.FindProperty("controls");
-        _menuRl = new YuebyReorderableList(serializedObject, controls, true, true, false, Repaint);
+        _menuRl = new YuebyReorderableList(serializedObject, controls, true, true);
         _menuRl.OnDraw += OnDrawMenuElement;
         _menuRl.OnTitleDraw += () =>
         {
@@ -34,125 +37,15 @@ public class VRCExpressionsMenuEditor : Editor
             if (rect.size.magnitude > 40f)
             {
                 var count = ((ExpressionsMenu)target).controls.Count;
-                var value = (count * 1f) / (ExpressionsMenu.MAX_CONTROLS * 1f);
+                var value = (count * 1f) / (MAX_CONTROLS * 1f);
 
-                EditorGUI.ProgressBar(rect, value, $"{count}/{ExpressionsMenu.MAX_CONTROLS}");
+                EditorGUI.ProgressBar(rect, value, $"{count}/{MAX_CONTROLS}");
 
-                _menuRl.IsDisableAddButton = count >= ExpressionsMenu.MAX_CONTROLS;
+                _menuRl.IsDisableAddButton = count >= MAX_CONTROLS;
             }
         };
-    }
 
-    // Draw List Element
-    private float OnDrawMenuElement(Rect rect, int i, bool arg3, bool arg4)
-    {
-        var control = controls.GetArrayElementAtIndex(i);
-        var name = control.FindPropertyRelative("name");
-        var icon = control.FindPropertyRelative("icon");
-        var type = control.FindPropertyRelative("type");
-
-        var height = EditorGUIUtility.singleLineHeight;
-        rect.x += 10;
-        var foldoutRect = new Rect(rect.x, rect.y, rect.width, height);
-        control.isExpanded = EditorGUI.Foldout(foldoutRect, control.isExpanded, name.stringValue);
-        if (control.isExpanded)
-        {
-            GUI.Box(new Rect(foldoutRect.x, foldoutRect.y + foldoutRect.height, foldoutRect.width - 5, 2), "");
-            height = EditorGUIUtility.singleLineHeight * 5;
-            var nowRect = new Rect(foldoutRect.x + 2, foldoutRect.y + foldoutRect.height + 4, rect.width - 4 * 2f, rect.height - foldoutRect.height - 4 * 2f);
-            var iconRect = new Rect(nowRect.x, nowRect.y, EditorGUIUtility.singleLineHeight * 2, EditorGUIUtility.singleLineHeight * 2);
-            icon.objectReferenceValue = EditorGUI.ObjectField(iconRect, icon.objectReferenceValue, typeof(Texture2D), false);
-
-            var nameRect = new Rect(iconRect.x + iconRect.width + 2, iconRect.y, nowRect.width - iconRect.width - 4, EditorGUIUtility.singleLineHeight);
-            var typeRect = new Rect(nameRect.x, nameRect.y + nameRect.height, nameRect.width, nameRect.height);
-
-            DrawPropertyField(nameRect, name, "Name");
-            DrawPropertyField(typeRect, type, "Type");
-
-
-            height += DrawType(new Rect(iconRect.x, iconRect.y + iconRect.height + 2, nowRect.width, nowRect.height - iconRect.height), control, type);
-        }
-
-        return height;
-    }
-
-    private float DrawType(Rect rect, SerializedProperty controlProperty, SerializedProperty typeProperty)
-    {
-        var type = (ExpressionControl.ControlType)typeProperty.enumValueIndex;
-
-        var parameter = controlProperty.FindPropertyRelative("parameter");
-        var value = controlProperty.FindPropertyRelative("value");
-        var subMenu = controlProperty.FindPropertyRelative("subMenu");
-
-        var subParameters = controlProperty.FindPropertyRelative("subParameters");
-        var labels = controlProperty.FindPropertyRelative("labels");
-
-        float height = 0;
-
-        GUI.Box(rect, "");
-
-        switch (type)
-        {
-            case ExpressionControl.ControlType.Button:
-                height += DrawButtonType(rect, controlProperty, parameter);
-                break;
-            case ExpressionControl.ControlType.Toggle:
-                height += DrawToggleType(rect, controlProperty, parameter);
-                break;
-            case ExpressionControl.ControlType.SubMenu:
-                height += DrawSubMenuType(rect, controlProperty, subMenu);
-                break;
-            case ExpressionControl.ControlType.TwoAxisPuppet:
-                height += DrawTwoAxisPuppetType(rect, controlProperty, subParameters);
-                break;
-            case ExpressionControl.ControlType.FourAxisPuppet:
-                height += DrawFourAxisPuppetType(rect, controlProperty, subParameters);
-                break;
-            case ExpressionControl.ControlType.RadialPuppet:
-                height += DrawRadialPuppetType(rect, controlProperty, subParameters);
-                break;
-        }
-
-        return height;
-    }
-
-    private float DrawRadialPuppetType(Rect rect, SerializedProperty controlProperty, SerializedProperty parameter)
-    {
-        return 0;
-    }
-
-    private float DrawFourAxisPuppetType(Rect rect, SerializedProperty controlProperty, SerializedProperty parameter)
-    {
-        return 0;
-    }
-
-    private float DrawTwoAxisPuppetType(Rect rect, SerializedProperty controlProperty, SerializedProperty parameter)
-    {
-        return 0;
-    }
-
-    private float DrawSubMenuType(Rect rect, SerializedProperty controlProperty, SerializedProperty parameter)
-    {
-        return 0;
-    }
-
-    private float DrawToggleType(Rect rect, SerializedProperty controlProperty, SerializedProperty parameter)
-    {
-        return 0;
-    }
-
-    private float DrawButtonType(Rect rect, SerializedProperty controlProperty, SerializedProperty parameter)
-    {
-        return 0;
-    }
-
-    private void DrawPropertyField(Rect rect, SerializedProperty serializedProperty, string label)
-    {
-        var size = GUI.skin.label.CalcSize(new GUIContent(label + "\t"));
-        var labelRect = new Rect(rect.x, rect.y, size.x, rect.height);
-        var pRect = new Rect(labelRect.x + labelRect.width + 2, labelRect.y, rect.width - labelRect.width - 2 * 2, labelRect.height);
-        EditorGUI.LabelField(labelRect, label);
-        EditorGUI.PropertyField(pRect, serializedProperty, new GUIContent(""));
+        _menuRl.OnElementHeightCallback += arg0 => { Repaint(); };
     }
 
     public void OnDisable()
@@ -174,218 +67,277 @@ public class VRCExpressionsMenuEditor : Editor
         EditorGUILayout.Space();
 
         //Controls
-        //_menuRl.DoLayout("Controls");
-        EditorGUI.BeginDisabledGroup(activeDescriptor == null);
-        EditorGUILayout.LabelField("Controls");
-        EditorGUI.indentLevel += 1;
-        {
-            var controls = serializedObject.FindProperty("controls");
-            for (int i = 0; i < controls.arraySize; i++)
-            {
-                var control = controls.GetArrayElementAtIndex(i);
-                DrawControl(controls, control as SerializedProperty, i);
-            }
 
-            //Add
-            EditorGUI.BeginDisabledGroup(controls.arraySize >= ExpressionsMenu.MAX_CONTROLS);
-            if (GUILayout.Button("Add Control"))
-            {
-                var menu = serializedObject.targetObject as ExpressionsMenu;
-
-                var control = new ExpressionControl();
-                control.name = "New Control";
-                menu.controls.Add(control);
-            }
-
-            EditorGUI.EndDisabledGroup();
-        }
-        EditorGUI.indentLevel -= 1;
-        EditorGUI.EndDisabledGroup();
-
+        _menuRl.DoLayout("Controls", false, false);
         serializedObject.ApplyModifiedProperties();
     }
 
-    void DrawControl(SerializedProperty controls, SerializedProperty control, int index)
+    // Draw List Element
+    private float OnDrawMenuElement(Rect rect, int i, bool arg3, bool arg4)
     {
+        var control = controls.GetArrayElementAtIndex(i);
         var name = control.FindPropertyRelative("name");
         var icon = control.FindPropertyRelative("icon");
         var type = control.FindPropertyRelative("type");
         var parameter = control.FindPropertyRelative("parameter");
         var value = control.FindPropertyRelative("value");
-        var subMenu = control.FindPropertyRelative("subMenu");
 
-        var subParameters = control.FindPropertyRelative("subParameters");
-        var labels = control.FindPropertyRelative("labels");
+        rect.x += 10;
+        var foldoutRect = new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight);
 
-        //Foldout
-        EditorGUI.BeginChangeCheck();
-        control.isExpanded = EditorGUILayout.Foldout(control.isExpanded, name.stringValue);
-        if (!control.isExpanded)
-            return;
+        var firstRect = foldoutRect;
+        var lastRect = firstRect;
 
-        //Box
-        GUILayout.BeginVertical(GUI.skin.box);
+        control.isExpanded = EditorGUI.Foldout(foldoutRect, control.isExpanded, name.stringValue);
+        if (control.isExpanded)
         {
-            //Up, Down, Delete
-            GUILayout.BeginHorizontal();
-            GUILayout.FlexibleSpace();
-            if (GUILayout.Button("Up", GUILayout.Width(64)))
-            {
-                if (index > 0)
-                    controls.MoveArrayElement(index, index - 1);
-            }
+            var nowRect = new Rect(foldoutRect.x + 2, foldoutRect.y + foldoutRect.height, rect.width - 4 * 2f, rect.height - foldoutRect.height);
 
-            if (GUILayout.Button("Down", GUILayout.Width(64)))
-            {
-                if (index < controls.arraySize - 1)
-                    controls.MoveArrayElement(index, index + 1);
-            }
+            nowRect = DrawLine(nowRect);
 
-            if (GUILayout.Button("Delete", GUILayout.Width(64)))
-            {
-                controls.DeleteArrayElementAtIndex(index);
-                return;
-            }
+            var iconRect = new Rect(nowRect.x, nowRect.y, EditorGUIUtility.singleLineHeight * 2, EditorGUIUtility.singleLineHeight * 2 + 4);
+            icon.objectReferenceValue = EditorGUI.ObjectField(iconRect, icon.objectReferenceValue, typeof(Texture2D), false);
 
-            GUILayout.EndHorizontal();
+            var nameRect = new Rect(iconRect.x + iconRect.width + 2, iconRect.y, nowRect.width - iconRect.width - 4, EditorGUIUtility.singleLineHeight);
+            var typeRect = new Rect(nameRect.x, nameRect.y + nameRect.height + 2, nameRect.width, nameRect.height);
+            var parameterRect = new Rect(iconRect.x, iconRect.y + iconRect.height + 2, nowRect.width, EditorGUIUtility.singleLineHeight);
 
-            //Generic params
-            EditorGUI.indentLevel += 1;
-            {
-                EditorGUILayout.PropertyField(name);
-                EditorGUILayout.PropertyField(icon);
-                EditorGUILayout.PropertyField(type);
 
-                //Type Info
-                var controlType = (ExpressionControl.ControlType)type.intValue;
-                switch (controlType)
-                {
-                    case ExpressionControl.ControlType.Button:
-                        EditorGUILayout.HelpBox("Click or hold to activate. The button remains active for a minimum 0.2s.\nWhile active the (Parameter) is set to (Value).\nWhen inactive the (Parameter) is reset to zero.", MessageType.Info);
-                        break;
-                    case ExpressionControl.ControlType.Toggle:
-                        EditorGUILayout.HelpBox("Click to toggle on or off.\nWhen turned on the (Parameter) is set to (Value).\nWhen turned off the (Parameter) is reset to zero.", MessageType.Info);
-                        break;
-                    case ExpressionControl.ControlType.SubMenu:
-                        EditorGUILayout.HelpBox("Opens another expression menu.\nWhen opened the (Parameter) is set to (Value).\nWhen closed (Parameter) is reset to zero.", MessageType.Info);
-                        break;
-                    case ExpressionControl.ControlType.TwoAxisPuppet:
-                        EditorGUILayout.HelpBox("Puppet menu that maps the joystick to two parameters (-1 to +1).\nWhen opened the (Parameter) is set to (Value).\nWhen closed (Parameter) is reset to zero.", MessageType.Info);
-                        break;
-                    case ExpressionControl.ControlType.FourAxisPuppet:
-                        EditorGUILayout.HelpBox("Puppet menu that maps the joystick to four parameters (0 to 1).\nWhen opened the (Parameter) is set to (Value).\nWhen closed (Parameter) is reset to zero.", MessageType.Info);
-                        break;
-                    case ExpressionControl.ControlType.RadialPuppet:
-                        EditorGUILayout.HelpBox("Puppet menu that sets a value based on joystick rotation. (0 to 1)\nWhen opened the (Parameter) is set to (Value).\nWhen closed (Parameter) is reset to zero.", MessageType.Info);
-                        break;
-                }
+            DrawPropertyField(nameRect, name, "Name");
+            DrawPopup(typeRect, type, "Type");
 
-                //Param
-                switch (controlType)
-                {
-                    case ExpressionControl.ControlType.Button:
-                    case ExpressionControl.ControlType.Toggle:
-                    case ExpressionControl.ControlType.SubMenu:
-                    case ExpressionControl.ControlType.TwoAxisPuppet:
-                    case ExpressionControl.ControlType.FourAxisPuppet:
-                    case ExpressionControl.ControlType.RadialPuppet:
-                        DrawParameterDropDown(parameter, "Parameter");
-                        DrawParameterValue(parameter, value);
-                        break;
-                }
-
-                EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
-
-                //Style
-                /*if (controlType == ExpressionsControl.ControlType.Toggle)
-                {
-                    style.intValue = EditorGUILayout.Popup("Visual Style", style.intValue, ToggleStyles);
-                }*/
-
-                //Sub menu
-                if (controlType == ExpressionControl.ControlType.SubMenu)
-                {
-                    EditorGUILayout.PropertyField(subMenu);
-                }
-
-                //Puppet Parameter Set
-                switch (controlType)
-                {
-                    case ExpressionControl.ControlType.TwoAxisPuppet:
-                        subParameters.arraySize = 2;
-                        labels.arraySize = 4;
-
-                        DrawParameterDropDown(subParameters.GetArrayElementAtIndex(0), "Parameter Horizontal", false);
-                        DrawParameterDropDown(subParameters.GetArrayElementAtIndex(1), "Parameter Vertical", false);
-
-                        DrawLabel(labels.GetArrayElementAtIndex(0), "Label Up");
-                        DrawLabel(labels.GetArrayElementAtIndex(1), "Label Right");
-                        DrawLabel(labels.GetArrayElementAtIndex(2), "Label Down");
-                        DrawLabel(labels.GetArrayElementAtIndex(3), "Label Left");
-                        break;
-                    case ExpressionControl.ControlType.FourAxisPuppet:
-                        subParameters.arraySize = 4;
-                        labels.arraySize = 4;
-
-                        DrawParameterDropDown(subParameters.GetArrayElementAtIndex(0), "Parameter Up", false);
-                        DrawParameterDropDown(subParameters.GetArrayElementAtIndex(1), "Parameter Right", false);
-                        DrawParameterDropDown(subParameters.GetArrayElementAtIndex(2), "Parameter Down", false);
-                        DrawParameterDropDown(subParameters.GetArrayElementAtIndex(3), "Parameter Left", false);
-
-                        DrawLabel(labels.GetArrayElementAtIndex(0), "Label Up");
-                        DrawLabel(labels.GetArrayElementAtIndex(1), "Label Right");
-                        DrawLabel(labels.GetArrayElementAtIndex(2), "Label Down");
-                        DrawLabel(labels.GetArrayElementAtIndex(3), "Label Left");
-                        break;
-                    case ExpressionControl.ControlType.RadialPuppet:
-                        subParameters.arraySize = 1;
-                        labels.arraySize = 0;
-
-                        DrawParameterDropDown(subParameters.GetArrayElementAtIndex(0), "Paramater Rotation", false);
-                        break;
-                    default:
-                        subParameters.arraySize = 0;
-                        labels.arraySize = 0;
-                        break;
-                }
-            }
-            EditorGUI.indentLevel -= 1;
+            parameterRect = DrawParameterDropDownGUI(parameterRect, parameter, "Parameter");
+            var valueRect = DrawParameterValueGUI(parameterRect, parameter, value);
+            lastRect = DrawType(valueRect, control, type);
         }
-        GUILayout.EndVertical();
+
+        var height = EditorGUIUtility.singleLineHeight;
+        if (firstRect != lastRect)
+        {
+            var maxHeight = lastRect.y + lastRect.height;
+            height = maxHeight - firstRect.y;
+        }
+
+        return height;
     }
 
-    void DrawLabel(SerializedProperty subControl, string name)
+    private void DrawPopup(Rect rect, SerializedProperty property, string label)
+    {
+        var guiContents = new GUIContent[property.enumNames.Length];
+        for (var i = 0; i < guiContents.Length; i++)
+        {
+            var type = (int)Enum.GetValues(typeof(Control.ControlType)).GetValue(property.enumValueIndex);
+            guiContents[i] = new GUIContent(property.enumNames[i], GetTypeToolTip(type));
+        }
+
+        DrawEditorGUI(rect, label, drawRect => { property.enumValueIndex = EditorGUI.Popup(drawRect, property.enumValueIndex, guiContents); });
+    }
+
+    private string GetTypeToolTip(int type)
+    {
+        var result = type switch
+        {
+            (int)Control.ControlType.Button => "Click or hold to activate. The button remains active for a minimum 0.2s.\nWhile active the (Parameter) is set to (Value).\nWhen inactive the (Parameter) is reset to zero.",
+            (int)Control.ControlType.Toggle => "Click to toggle on or off.\nWhen turned on the (Parameter) is set to (Value).\nWhen turned off the (Parameter) is reset to zero.",
+            (int)Control.ControlType.SubMenu => "Opens another expression menu.\nWhen opened the (Parameter) is set to (Value).\nWhen closed (Parameter) is reset to zero.",
+            (int)Control.ControlType.TwoAxisPuppet => "Puppet menu that maps the joystick to two parameters (-1 to +1).\nWhen opened the (Parameter) is set to (Value).\nWhen closed (Parameter) is reset to zero.",
+            (int)Control.ControlType.FourAxisPuppet => "Puppet menu that maps the joystick to four parameters (0 to 1).\nWhen opened the (Parameter) is set to (Value).\nWhen closed (Parameter) is reset to zero.",
+            (int)Control.ControlType.RadialPuppet => "Puppet menu that sets a value based on joystick rotation. (0 to 1)\nWhen opened the (Parameter) is set to (Value).\nWhen closed (Parameter) is reset to zero.",
+            _ => ""
+        };
+
+        return result;
+    }
+
+    private Rect DrawType(Rect rect, SerializedProperty controlProperty, SerializedProperty typeProperty)
+    {
+        var type = (int)Enum.GetValues(typeof(Control.ControlType)).GetValue(typeProperty.enumValueIndex);
+
+        rect.height = EditorGUIUtility.singleLineHeight;
+        var lastRect = rect;
+        switch (type)
+        {
+            case (int)Control.ControlType.Button:
+            case (int)Control.ControlType.Toggle:
+                var subParameters = controlProperty.FindPropertyRelative("subParameters");
+                var labels = controlProperty.FindPropertyRelative("labels");
+                subParameters.arraySize = 0;
+                labels.arraySize = 0;
+                break;
+            case (int)Control.ControlType.SubMenu:
+                lastRect = DrawSubMenuType(rect, controlProperty);
+                break;
+            case (int)Control.ControlType.TwoAxisPuppet:
+                lastRect = DrawTwoAxisPuppetType(rect, controlProperty);
+                break;
+            case (int)Control.ControlType.FourAxisPuppet:
+                lastRect = DrawFourAxisPuppetType(rect, controlProperty);
+                break;
+            case (int)Control.ControlType.RadialPuppet:
+                lastRect = DrawRadialPuppetType(rect, controlProperty);
+                break;
+        }
+
+        if (lastRect == rect)
+            lastRect.height = 0;
+        else
+            lastRect.height += 2;
+        return lastRect;
+    }
+
+    private Rect DrawRadialPuppetType(Rect rect, SerializedProperty controlProperty)
+    {
+        var subParameters = controlProperty.FindPropertyRelative("subParameters");
+        var labels = controlProperty.FindPropertyRelative("labels");
+
+        subParameters.arraySize = 1;
+        labels.arraySize = 0;
+
+        rect = DrawLine(rect);
+        DrawParameterDropDownGUI(rect, subParameters.GetArrayElementAtIndex(0), "Paramater Rotation", false);
+        return rect;
+    }
+
+    private Rect DrawFourAxisPuppetType(Rect rect, SerializedProperty controlProperty)
+    {
+        var subParameters = controlProperty.FindPropertyRelative("subParameters");
+        var labels = controlProperty.FindPropertyRelative("labels");
+
+        subParameters.arraySize = 4;
+        labels.arraySize = 4;
+
+        rect = DrawLine(rect);
+
+
+        rect = DrawParameterDropDownGUI(rect, subParameters.GetArrayElementAtIndex(0), "Parameter Up", false);
+        rect = DrawParameterDropDownGUI(rect, subParameters.GetArrayElementAtIndex(1), "Parameter Right", false);
+        rect = DrawParameterDropDownGUI(rect, subParameters.GetArrayElementAtIndex(2), "Parameter Down", false);
+        rect = DrawParameterDropDownGUI(rect, subParameters.GetArrayElementAtIndex(3), "Parameter Left", false);
+
+        var dirRect = DrawFourDirection(rect, labels, new Vector2(50, 50), new Vector2(70, 70));
+
+        return dirRect;
+    }
+
+    private Rect DrawTwoAxisPuppetType(Rect rect, SerializedProperty controlProperty)
+    {
+        var subParameters = controlProperty.FindPropertyRelative("subParameters");
+        var labels = controlProperty.FindPropertyRelative("labels");
+
+        subParameters.arraySize = 2;
+        labels.arraySize = 4;
+
+        rect = DrawLine(rect);
+
+        rect = DrawParameterDropDownGUI(rect, subParameters.GetArrayElementAtIndex(0), "Parameter Horizontal", false);
+        rect = DrawParameterDropDownGUI(rect, subParameters.GetArrayElementAtIndex(1), "Parameter Vertical", false);
+
+        var dirRect = DrawFourDirection(rect, labels, new Vector2(50, 50), new Vector2(70, 70));
+
+        return dirRect;
+    }
+
+    private Rect DrawSubMenuType(Rect rect, SerializedProperty controlProperty)
+    {
+        var subMenu = controlProperty.FindPropertyRelative("subMenu");
+
+        rect = DrawLine(rect);
+
+        var subMenuRect = new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight);
+
+        DrawEditorGUI(subMenuRect, "SubMenu", drawRect =>
+        {
+            //
+            EditorGUI.PropertyField(drawRect, subMenu, new GUIContent(""));
+        });
+
+        return subMenuRect;
+    }
+
+    private Rect DrawFourDirection(Rect rect, SerializedProperty dirControls, Vector2 size, Vector2 offset)
+    {
+        var labelRect = rect;
+        labelRect.height = EditorGUIUtility.singleLineHeight;
+        EditorGUI.LabelField(labelRect, "Expression Menu Show");
+        rect.y += labelRect.height + 2;
+
+        var height = 240f;
+        rect.height = height;
+
+        GUI.Box(rect, "", "Badge");
+        var center = new Rect(rect.center.x, rect.center.y - size.y / 4f, 10, 10);
+
+        var upRect = new Rect(center.x - size.x / 2f, center.y - size.y / 2 - offset.y, size.x, size.y);
+        var downRect = new Rect(center.x - size.x / 2f, center.y - size.y / 2 + offset.y, size.x, size.y);
+        var leftRect = new Rect(center.x - size.x / 2f - offset.x, center.y - size.y / 2, size.x, size.y);
+        var rightRect = new Rect(center.x - size.x / 2f + offset.x, center.y - size.y / 2, size.x, size.y);
+
+        DrawLabelGUI(upRect, dirControls.GetArrayElementAtIndex(0), "Up");
+        DrawLabelGUI(leftRect, dirControls.GetArrayElementAtIndex(1), "Right");
+        DrawLabelGUI(downRect, dirControls.GetArrayElementAtIndex(2), "Down");
+        DrawLabelGUI(rightRect, dirControls.GetArrayElementAtIndex(3), "Left");
+
+        rect.height += 2;
+        return rect;
+    }
+
+    private void DrawLabelGUI(Rect rect, SerializedProperty subControl, string name)
     {
         var nameProp = subControl.FindPropertyRelative("name");
         var icon = subControl.FindPropertyRelative("icon");
 
-        EditorGUILayout.LabelField(name);
-        EditorGUI.indentLevel += 2;
-        EditorGUILayout.PropertyField(nameProp);
-        EditorGUILayout.PropertyField(icon);
-        EditorGUI.indentLevel -= 2;
+        icon.objectReferenceValue = EditorGUI.ObjectField(rect, icon.objectReferenceValue, typeof(Texture2D), false);
+        rect.y += rect.height + 2;
+        rect.height = EditorGUIUtility.singleLineHeight;
+        EditorGUI.PropertyField(rect, nameProp, new GUIContent(""));
+
+        if (nameProp.stringValue.Length <= 0)
+            EditorGUI.LabelField(rect, new GUIContent(name), EditorStyles.centeredGreyMiniLabel);
     }
 
-    void DrawInfoHover(string text)
+
+    private Rect DrawLine(Rect rect)
     {
-        GUILayout.Button(new GUIContent("?", text), GUILayout.MaxWidth(32));
+        var height = 2f;
+        rect.y += height;
+
+        var boxRect = new Rect(rect.x, rect.y, rect.width - 5f, height);
+        GUI.Box(boxRect, "");
+        rect.y = boxRect.y + boxRect.height + height * 2;
+        // rect.height += boxRect.height;
+        return rect;
     }
 
-    void DrawInfo(string text)
+    private Rect DrawHelpBox(Rect rect, string text, MessageType messageType)
     {
-        GUILayout.BeginHorizontal();
-        GUILayout.FlexibleSpace();
-        GUILayout.Label(text, GUI.skin.textArea, GUILayout.MaxWidth(400));
-        GUILayout.FlexibleSpace();
-        GUILayout.EndHorizontal();
+        rect.y += rect.height + 4;
+        var textSize = GUI.skin.label.CalcSize(new GUIContent(text));
+
+        var helpBoxRect = new Rect(rect.x, rect.y, rect.width, textSize.y + EditorGUIUtility.singleLineHeight);
+        EditorGUI.HelpBox(helpBoxRect, text, messageType);
+        rect.height = helpBoxRect.height + 2;
+
+        return rect;
     }
 
-    VRC.SDK3.Avatars.Components.VRCAvatarDescriptor activeDescriptor = null;
-    string[] parameterNames;
+    private void DrawPropertyField(Rect rect, SerializedProperty serializedProperty, string label, string tooltip = "")
+    {
+        DrawEditorGUI(rect, label, drawRect => { EditorGUI.PropertyField(drawRect, serializedProperty, new GUIContent("")); }, tooltip);
+    }
+
+    private void DrawEditorGUI(Rect rect, string label, UnityAction<Rect> onDraw, string tooltip = "")
+    {
+        var size = GUI.skin.label.CalcSize(new GUIContent(label + "\t"));
+        var labelRect = new Rect(rect.x, rect.y, size.x, rect.height);
+        var pRect = new Rect(labelRect.x + labelRect.width + 2, labelRect.y, rect.width - labelRect.width - 2 * 2, labelRect.height);
+        EditorGUI.LabelField(labelRect, new GUIContent(label, tooltip));
+        onDraw?.Invoke(pRect);
+    }
+
 
     void SelectAvatarDescriptor()
     {
-        var descriptors = GameObject.FindObjectsOfType<VRC.SDK3.Avatars.Components.VRCAvatarDescriptor>();
+        var descriptors = FindObjectsOfType<VRC.SDK3.Avatars.Components.VRCAvatarDescriptor>();
         if (descriptors.Length > 0)
         {
             //Compile list of names
@@ -394,7 +346,7 @@ public class VRCExpressionsMenuEditor : Editor
                 names[i] = descriptors[i].gameObject.name;
 
             //Select
-            var currentIndex = System.Array.IndexOf(descriptors, activeDescriptor);
+            var currentIndex = Array.IndexOf(descriptors, activeDescriptor);
             var nextIndex = EditorGUILayout.Popup("Active Avatar", currentIndex, names);
             if (nextIndex < 0)
                 nextIndex = 0;
@@ -446,77 +398,86 @@ public class VRCExpressionsMenuEditor : Editor
         return null;
     }
 
-    void DrawParameterDropDown(SerializedProperty parameter, string name, bool allowBool = true)
+    private Rect DrawParameterDropDownGUI(Rect rect, SerializedProperty parameter, string name, bool allowBool = true)
     {
         var parameterName = parameter.FindPropertyRelative("name");
         VRCExpressionParameters.Parameter param = null;
         string value = parameterName.stringValue;
 
         bool parameterFound = false;
-        EditorGUILayout.BeginHorizontal();
-        {
-            if (activeDescriptor != null)
-            {
-                //Dropdown
-                int currentIndex;
-                if (string.IsNullOrEmpty(value))
-                {
-                    currentIndex = -1;
-                    parameterFound = true;
-                }
-                else
-                {
-                    currentIndex = -2;
-                    for (int i = 0; i < GetExpressionParametersCount(); i++)
-                    {
-                        var item = activeDescriptor.GetExpressionParameter(i);
-                        if (item.name == value)
-                        {
-                            param = item;
-                            parameterFound = true;
-                            currentIndex = i;
-                            break;
-                        }
-                    }
-                }
+        rect.height = EditorGUIUtility.singleLineHeight;
+        var popupRect = new Rect(rect.x, rect.y, rect.width / 1.5f - 1f, rect.height);
+        var textRect = new Rect(popupRect.x + popupRect.width + 1, rect.y, rect.width - popupRect.width - 2f, rect.height);
 
-                //Dropdown
-                EditorGUI.BeginChangeCheck();
-                currentIndex = EditorGUILayout.Popup(name, currentIndex + 1, parameterNames);
-                if (EditorGUI.EndChangeCheck())
-                {
-                    if (currentIndex == 0)
-                        parameterName.stringValue = "";
-                    else
-                        parameterName.stringValue = GetExpressionParameter(currentIndex - 1).name;
-                }
+        if (activeDescriptor != null)
+        {
+            //Dropdown
+            int currentIndex;
+            if (string.IsNullOrEmpty(value))
+            {
+                currentIndex = -1;
+                parameterFound = true;
             }
             else
             {
-                EditorGUI.BeginDisabledGroup(true);
-                EditorGUILayout.Popup(0, new string[0]);
-                EditorGUI.EndDisabledGroup();
+                currentIndex = -2;
+                for (int i = 0; i < GetExpressionParametersCount(); i++)
+                {
+                    var item = activeDescriptor.GetExpressionParameter(i);
+                    if (item.name == value)
+                    {
+                        param = item;
+                        parameterFound = true;
+                        currentIndex = i;
+                        break;
+                    }
+                }
             }
 
-            //Text field
-            parameterName.stringValue = EditorGUILayout.TextField(parameterName.stringValue, GUILayout.MaxWidth(200));
+            //Dropdown
+            EditorGUI.BeginChangeCheck();
+            DrawEditorGUI(popupRect, name, drawRect => { currentIndex = EditorGUI.Popup(drawRect, currentIndex + 1, parameterNames); });
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                if (currentIndex == 0)
+                    parameterName.stringValue = "";
+                else
+                    parameterName.stringValue = GetExpressionParameter(currentIndex - 1).name;
+            }
         }
-        EditorGUILayout.EndHorizontal();
+        else
+        {
+            EditorGUI.BeginDisabledGroup(true);
+            EditorGUI.Popup(popupRect, 0, new string[0]);
+            EditorGUI.EndDisabledGroup();
+        }
+
+        //Text field
+        parameterName.stringValue = EditorGUI.TextField(textRect, parameterName.stringValue);
+
 
         if (!parameterFound)
         {
-            EditorGUILayout.HelpBox("Parameter not found on the active avatar descriptor.", MessageType.Warning);
+            var helpRect = DrawHelpBox(rect, "Parameter not found on the active avatar descriptor.", MessageType.Warning);
+            rect.height += helpRect.height + 2;
         }
 
         if (!allowBool && param != null && param.valueType == ExpressionParameters.ValueType.Bool)
         {
-            EditorGUILayout.HelpBox("Bool parameters not valid for this choice.", MessageType.Error);
+            var helpRect = DrawHelpBox(rect, "Bool parameters not valid for this choice.", MessageType.Error);
+            rect.height += helpRect.height + 2;
         }
+
+        rect.y += rect.height + 2;
+        return rect;
     }
 
-    void DrawParameterValue(SerializedProperty parameter, SerializedProperty value)
+    private Rect DrawParameterValueGUI(Rect rect, SerializedProperty parameter, SerializedProperty value)
     {
-        string paramName = parameter.FindPropertyRelative("name").stringValue;
+        var paramName = parameter.FindPropertyRelative("name").stringValue;
+        rect.height = EditorGUIUtility.singleLineHeight;
+        var height = 0f;
         if (!string.IsNullOrEmpty(paramName))
         {
             var paramDef = FindExpressionParameterDef(paramName);
@@ -524,11 +485,19 @@ public class VRCExpressionsMenuEditor : Editor
             {
                 if (paramDef.valueType == ExpressionParameters.ValueType.Int)
                 {
-                    value.floatValue = EditorGUILayout.IntField("Value", Mathf.Clamp((int)value.floatValue, 0, 255));
+                    DrawEditorGUI(rect, "Value", drawRect =>
+                    {
+                        height = drawRect.height;
+                        value.floatValue = EditorGUI.IntField(drawRect, Mathf.Clamp((int)value.floatValue, 0, 255));
+                    });
                 }
                 else if (paramDef.valueType == ExpressionParameters.ValueType.Float)
                 {
-                    value.floatValue = EditorGUILayout.FloatField("Value", Mathf.Clamp(value.floatValue, -1f, 1f));
+                    DrawEditorGUI(rect, "Value", drawRect =>
+                    {
+                        height = drawRect.height;
+                        value.floatValue = EditorGUI.FloatField(drawRect, Mathf.Clamp(value.floatValue, -1f, 1f));
+                    });
                 }
                 else if (paramDef.valueType == ExpressionParameters.ValueType.Bool)
                 {
@@ -538,10 +507,19 @@ public class VRCExpressionsMenuEditor : Editor
             else
             {
                 EditorGUI.BeginDisabledGroup(true);
-                value.floatValue = EditorGUILayout.FloatField("Value", value.floatValue);
+                DrawEditorGUI(rect, "Value", drawRect =>
+                {
+                    height = drawRect.height;
+                    value.floatValue = EditorGUI.FloatField(drawRect, value.floatValue);
+                });
+
                 EditorGUI.EndDisabledGroup();
             }
         }
+
+        rect.y += height + 2;
+        rect.height = height;
+        return rect;
     }
 
     ExpressionParameters.Parameter FindExpressionParameterDef(string name)

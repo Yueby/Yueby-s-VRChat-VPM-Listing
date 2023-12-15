@@ -59,7 +59,7 @@ namespace Yueby.AvatarTools.Other
             _clipBsInfoSo = new SerializedObject(_clipAnimationBsHelper);
             _clipBsParameters = _clipBsInfoSo.FindProperty(nameof(AnimationBlendShapeHelper.Parameters));
 
-            _bsRL = new YuebyReorderableList(_clipBsInfoSo, _clipBsParameters,  false, true,false,Repaint);
+            _bsRL = new YuebyReorderableList(_clipBsInfoSo, _clipBsParameters, false, true);
             _bsRL.OnRemove += OnBsRLRemove;
             _bsRL.OnDraw += OnBsRLDraw;
         }

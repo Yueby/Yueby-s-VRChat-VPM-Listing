@@ -31,8 +31,10 @@ namespace Yueby.Utils
         public float[] ElementHeights;
         public ReorderableList List { get; }
 
+        public UnityAction<int> OnElementHeightCallback;
 
-        public YuebyReorderableList(SerializedObject serializedObject, SerializedProperty serializedProperty, bool isShowAddButton, bool isShowRemoveButton, bool isPPTR = false, UnityAction repaint = null)
+
+        public YuebyReorderableList(SerializedObject serializedObject, SerializedProperty serializedProperty, bool isShowAddButton, bool isShowRemoveButton, bool isPPTR = false)
         {
             _serializedProperty = serializedProperty;
             _isShowAddButton = isShowAddButton;
@@ -50,7 +52,6 @@ namespace Yueby.Utils
                     OnListSelected(item, list.index);
                 },
 
-
                 onAddCallback = list =>
                 {
                     serializedProperty.arraySize++;
@@ -62,7 +63,8 @@ namespace Yueby.Utils
                         List.onMouseUpCallback?.Invoke(List);
                     }
 
-                    Array.Resize(ref ElementHeights, serializedProperty.arraySize);
+                    if (ElementHeights.Length != serializedProperty.arraySize)
+                        Array.Resize(ref ElementHeights, serializedProperty.arraySize);
                 },
                 onRemoveCallback = reorderableList =>
                 {
@@ -82,7 +84,8 @@ namespace Yueby.Utils
                         List.onMouseUpCallback?.Invoke(List);
                     }
 
-                    Array.Resize(ref ElementHeights, serializedProperty.arraySize);
+                    if (ElementHeights.Length != serializedProperty.arraySize)
+                        Array.Resize(ref ElementHeights, serializedProperty.arraySize);
                 },
                 onChangedCallback = list =>
                 {
@@ -93,14 +96,13 @@ namespace Yueby.Utils
                 },
                 elementHeightCallback = index =>
                 {
-                    repaint?.Invoke();
-                    float height = 0;
-                    height = ElementHeights[index];
+                    OnElementHeightCallback?.Invoke(index);
+                    var height = ElementHeights[index];
+                    if (ElementHeights.Length != serializedProperty.arraySize)
+                        Array.Resize(ref ElementHeights, serializedProperty.arraySize);
                     
-                    Array.Resize(ref ElementHeights, serializedProperty.arraySize);
-                    repaint?.Invoke();
                     return height;
-                },
+                }
             };
 
             if (serializedProperty.arraySize > 0)
@@ -328,21 +330,14 @@ namespace Yueby.Utils
 
         private void OnListDraw(Rect rect, int index, bool isActive, bool isFocused)
         {
-            var height = OnDraw?.Invoke(rect, index, isActive, isFocused);
-            height ??= 0;
-            ElementHeights[index] = (float)height;
-            Array.Resize(ref ElementHeights, _serializedProperty.arraySize);
-        }
+            if (OnDraw == null) return;
+            rect.height = ElementHeights[index];
+            var height = OnDraw.Invoke(rect, index, isActive, isFocused);
 
-        public override string ToString()
-        {
-            var result = "";
-            foreach (var i in ElementHeights)
-            {
-                result += $"{i} ";
-            }
+            ElementHeights[index] = height;
 
-            return result;
+            if (ElementHeights.Length != _serializedProperty.arraySize)
+                Array.Resize(ref ElementHeights, _serializedProperty.arraySize);
         }
     }
 }
