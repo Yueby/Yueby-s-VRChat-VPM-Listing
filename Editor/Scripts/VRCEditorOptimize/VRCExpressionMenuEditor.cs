@@ -103,7 +103,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
                 DrawPopup(typeRect, type, Localization.Get("type"));
 
                 parameterRect = DrawParameterDropDownGUI(parameterRect, parameter, Localization.Get("parameter"));
-                var valueRect = DrawParameterValueGUI(parameterRect, parameter, value);
+                var valueRect = DrawParameterValueGUI(new Rect(parameterRect.x, parameterRect.y + parameterRect.height + 2, nowRect.width, EditorGUIUtility.singleLineHeight), parameter, value);
                 lastRect = DrawType(valueRect, control, type);
             }
 
@@ -190,7 +190,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
             labels.arraySize = 0;
 
             rect = DrawLine(rect);
-            DrawParameterDropDownGUI(rect, subParameters.GetArrayElementAtIndex(0), Localization.Get("parameter_rotation"), false);
+            rect = DrawParameterDropDownGUI(rect, subParameters.GetArrayElementAtIndex(0), Localization.Get("parameter_rotation"), false);
             return rect;
         }
 
@@ -206,11 +206,11 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
 
 
             rect = DrawParameterDropDownGUI(rect, subParameters.GetArrayElementAtIndex(0), Localization.Get("parameter") + " " + Localization.Get("up"), false);
-            rect = DrawParameterDropDownGUI(rect, subParameters.GetArrayElementAtIndex(1), Localization.Get("parameter") + " " + Localization.Get("right"), false);
-            rect = DrawParameterDropDownGUI(rect, subParameters.GetArrayElementAtIndex(2), Localization.Get("parameter") + " " + Localization.Get("down"), false);
-            rect = DrawParameterDropDownGUI(rect, subParameters.GetArrayElementAtIndex(3), Localization.Get("parameter") + " " + Localization.Get("left"), false);
+            rect = DrawParameterDropDownGUI(new Rect(rect.x, rect.y + rect.height + 2, rect.width, rect.height), subParameters.GetArrayElementAtIndex(1), Localization.Get("parameter") + " " + Localization.Get("right"), false);
+            rect = DrawParameterDropDownGUI(new Rect(rect.x, rect.y + rect.height + 2, rect.width, rect.height), subParameters.GetArrayElementAtIndex(2), Localization.Get("parameter") + " " + Localization.Get("down"), false);
+            rect = DrawParameterDropDownGUI(new Rect(rect.x, rect.y + rect.height + 2, rect.width, rect.height), subParameters.GetArrayElementAtIndex(3), Localization.Get("parameter") + " " + Localization.Get("left"), false);
 
-            var dirRect = DrawFourDirection(rect, labels, new Vector2(50, 50), new Vector2(70, 70));
+            var dirRect = DrawFourDirection(new Rect(rect.x, rect.y + rect.height + 2, rect.width, rect.height), labels, new Vector2(50, 50), new Vector2(70, 70));
 
             return dirRect;
         }
@@ -225,10 +225,10 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
 
             rect = DrawLine(rect);
 
-            rect = DrawParameterDropDownGUI(rect, subParameters.GetArrayElementAtIndex(0), Localization.Get("parameter") + " " + Localization.Get("Horizontal"), false);
-            rect = DrawParameterDropDownGUI(rect, subParameters.GetArrayElementAtIndex(1), Localization.Get("parameter") + " " + Localization.Get("Vertical"), false);
+            rect = DrawParameterDropDownGUI(rect, subParameters.GetArrayElementAtIndex(0), Localization.Get("parameter") + " " + Localization.Get("horizontal"), false);
+            rect = DrawParameterDropDownGUI(new Rect(rect.x, rect.y + rect.height + 2, rect.width, rect.height), subParameters.GetArrayElementAtIndex(1), Localization.Get("parameter") + " " + Localization.Get("vertical"), false);
 
-            var dirRect = DrawFourDirection(rect, labels, new Vector2(50, 50), new Vector2(70, 70));
+            var dirRect = DrawFourDirection(new Rect(rect.x, rect.y + rect.height + 2, rect.width, rect.height), labels, new Vector2(50, 50), new Vector2(70, 70));
 
             return dirRect;
         }
@@ -300,7 +300,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
             var boxRect = new Rect(rect.x, rect.y, rect.width - 5f, height);
             GUI.Box(boxRect, "");
             rect.y = boxRect.y + boxRect.height + height * 2;
-        
+
             return rect;
         }
 
@@ -450,17 +450,14 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
 
             if (!parameterFound)
             {
-                var helpRect = DrawHelpBox(rect, Localization.Get("parameter_not_found"), MessageType.Warning);
-                rect.height += helpRect.height + 2;
+                rect = DrawHelpBox(rect, Localization.Get("parameter_not_found"), MessageType.Warning);
             }
 
             if (!allowBool && param != null && param.valueType == ExpressionParameters.ValueType.Bool)
             {
-                var helpRect = DrawHelpBox(rect, Localization.Get("parameter_bool_not_valid"), MessageType.Error);
-                rect.height += helpRect.height + 2;
+                rect = DrawHelpBox(rect, Localization.Get("parameter_bool_not_valid"), MessageType.Error);
             }
 
-            rect.y += rect.height + 2;
             return rect;
         }
 
