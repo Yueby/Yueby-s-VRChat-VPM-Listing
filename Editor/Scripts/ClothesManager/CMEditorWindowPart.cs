@@ -104,51 +104,60 @@ namespace Yueby.AvatarTools.ClothesManager
 
             if (_dataReference.Data.Categories.Count > 0)
             {
-                foreach (var parameterName in _dataReference.Data.Categories.Select(category => $"YCM/{category.Name}/Switch"))
+                if (_fxLayer)
                 {
-                    for (var i = 0; i < _fxLayer.parameters.Length; i++)
+                    foreach (var parameterName in _dataReference.Data.Categories.Select(category => $"YCM/{category.Name}/Switch"))
                     {
-                        if (_fxLayer.parameters[i].name != parameterName) continue;
-                        _fxLayer.RemoveParameter(i);
-                        i--;
-                    }
+                        for (var i = 0; i < _fxLayer.parameters.Length; i++)
+                        {
+                            if (_fxLayer.parameters[i].name != parameterName) continue;
+                            _fxLayer.RemoveParameter(i);
+                            i--;
+                        }
 
-                    for (var i = 0; i < _fxLayer.layers.Length; i++)
-                    {
-                        if (_fxLayer.layers[i].name != parameterName && _fxLayer.layers[i].name != parameterName + "_ParameterDriver") continue;
-                        _fxLayer.RemoveLayer(i);
-                        i--;
+                        for (var i = 0; i < _fxLayer.layers.Length; i++)
+                        {
+                            if (_fxLayer.layers[i].name != parameterName && _fxLayer.layers[i].name != parameterName + "_ParameterDriver") continue;
+                            _fxLayer.RemoveLayer(i);
+                            i--;
+                        }
                     }
                 }
 
-                var newParameters = _parameters.parameters.ToList();
-
-                var removeList = new List<VRCExpressionParameters.Parameter>();
-                foreach (var parameterName in _dataReference.Data.Categories.Select(category => $"YCM/{category.Name}/Switch"))
+                if (_parameters)
                 {
-                    foreach (var par in newParameters.Where(par => par.name == parameterName))
-                    {
-                        removeList.Add(par);
-                        break;
-                    }
-                }
+                    var newParameters = _parameters.parameters.ToList();
 
-                foreach (var remove in removeList)
-                    newParameters.Remove(remove);
-                _parameters.parameters = newParameters.ToArray();
+                    var removeList = new List<VRCExpressionParameters.Parameter>();
+                    foreach (var parameterName in _dataReference.Data.Categories.Select(category => $"YCM/{category.Name}/Switch"))
+                    {
+                        foreach (var par in newParameters.Where(par => par.name == parameterName))
+                        {
+                            removeList.Add(par);
+                            break;
+                        }
+                    }
+
+                    foreach (var remove in removeList)
+                        newParameters.Remove(remove);
+                    _parameters.parameters = newParameters.ToArray();
+                }
             }
 
-
-            var currentExMenu = _expressionsMenu;
-            if (currentExMenu.controls.Count >= 8)
+            if (_expressionsMenu)
             {
-                var menuDir = GetIDPath() + "/Expressions";
-                currentExMenu = GetLastNextSubMenu(currentExMenu, $"{menuDir}", _expressionsMenu.name, 0);
+                var currentExMenu = _expressionsMenu;
+                if (currentExMenu.controls.Count >= 8)
+                {
+                    var menuDir = GetIDPath() + "/Expressions";
+                    currentExMenu = GetLastNextSubMenu(currentExMenu, $"{menuDir}", _expressionsMenu.name, 0);
+                }
+
+                var control = currentExMenu.controls.FirstOrDefault(c => c.name == Localization.Get("window_title"));
+                if (control != null)
+                    currentExMenu.controls.Remove(control);
             }
 
-            var control = currentExMenu.controls.FirstOrDefault(c => c.name == Localization.Get("window_title"));
-            if (control != null)
-                currentExMenu.controls.Remove(control);
 
             var path = GetIDPath();
             if (Directory.Exists(path))
@@ -393,7 +402,6 @@ namespace Yueby.AvatarTools.ClothesManager
                             EditorUtility.DisplayDialog(Localization.Get("tips"), message, Localization.Get("ok"));
 
                             target.SmrParameter.Type = CMClothesData.ClothesAnimParameter.SMRParameter.SMRType.Materials;
-
                         }
 
 
@@ -437,8 +445,6 @@ namespace Yueby.AvatarTools.ClothesManager
                     var secondRect = new Rect(firstRect.x + firstRect.width + 5, firstRect.y, rect.width - firstRect.width - addRect.width - 7, firstRect.height);
 
                     EditorGUI.BeginDisabledGroup(target.SmrParameter.Index == -1);
-
-
 
 
                     if (GUI.Button(addRect, "+"))
@@ -521,7 +527,6 @@ namespace Yueby.AvatarTools.ClothesManager
                                         }
                                     }
                                 }
-
                             }
 
                             if (target.SmrParameter.Index >= 0)

@@ -244,32 +244,38 @@ namespace Yueby.AvatarTools.ClothesManager
             if (categorySo != null)
             {
                 var parameterName = $"YCM/{categorySo.Name}/Switch";
-                for (var i = 0; i < _fxLayer.parameters.Length; i++)
+                if (_fxLayer != null)
                 {
-                    if (_fxLayer.parameters[i].name != parameterName) continue;
-                    _fxLayer.RemoveParameter(i);
-                    i--;
+                    for (var i = 0; i < _fxLayer.parameters.Length; i++)
+                    {
+                        if (_fxLayer.parameters[i].name != parameterName) continue;
+                        _fxLayer.RemoveParameter(i);
+                        i--;
+                    }
+
+                    for (var i = 0; i < _fxLayer.layers.Length; i++)
+                    {
+                        if (_fxLayer.layers[i].name != parameterName && _fxLayer.layers[i].name != parameterName + "_ParameterDriver") continue;
+                        _fxLayer.RemoveLayer(i);
+                        i--;
+                    }
                 }
 
-                for (var i = 0; i < _fxLayer.layers.Length; i++)
+                if (_parameters != null)
                 {
-                    if (_fxLayer.layers[i].name != parameterName && _fxLayer.layers[i].name != parameterName + "_ParameterDriver") continue;
-                    _fxLayer.RemoveLayer(i);
-                    i--;
+                    var newParameters = _parameters.parameters.ToList();
+
+                    var removeList = new List<VRCExpressionParameters.Parameter>();
+                    foreach (var par in newParameters.Where(par => par.name == parameterName))
+                    {
+                        removeList.Add(par);
+                        break;
+                    }
+
+                    foreach (var remove in removeList)
+                        newParameters.Remove(remove);
+                    _parameters.parameters = newParameters.ToArray();
                 }
-
-                var newParameters = _parameters.parameters.ToList();
-
-                var removeList = new List<VRCExpressionParameters.Parameter>();
-                foreach (var par in newParameters.Where(par => par.name == parameterName))
-                {
-                    removeList.Add(par);
-                    break;
-                }
-
-                foreach (var remove in removeList)
-                    newParameters.Remove(remove);
-                _parameters.parameters = newParameters.ToArray();
             }
 
             YuebyUtil.RemoveChildAsset(obj);
@@ -901,7 +907,6 @@ namespace Yueby.AvatarTools.ClothesManager
 
         private void DrawClothesAnimParameter()
         {
-            
             _clothesShowRl.DoLayoutList(Localization.Get("show"), new Vector2(ConfigureListWidth, ConfigureListHeight), false, true, true, objs =>
             {
                 // Show Paths
