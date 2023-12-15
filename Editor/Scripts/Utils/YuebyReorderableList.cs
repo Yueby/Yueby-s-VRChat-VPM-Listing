@@ -63,8 +63,7 @@ namespace Yueby.Utils
                         List.onMouseUpCallback?.Invoke(List);
                     }
 
-                    if (ElementHeights.Length != serializedProperty.arraySize)
-                        Array.Resize(ref ElementHeights, serializedProperty.arraySize);
+                    Array.Resize(ref ElementHeights, _serializedProperty.arraySize);
                 },
                 onRemoveCallback = reorderableList =>
                 {
@@ -84,8 +83,7 @@ namespace Yueby.Utils
                         List.onMouseUpCallback?.Invoke(List);
                     }
 
-                    if (ElementHeights.Length != serializedProperty.arraySize)
-                        Array.Resize(ref ElementHeights, serializedProperty.arraySize);
+                    Array.Resize(ref ElementHeights, _serializedProperty.arraySize);
                 },
                 onChangedCallback = list =>
                 {
@@ -147,17 +145,20 @@ namespace Yueby.Utils
             }
         }
 
-        public void DoLayout(string title, bool isNoBorder = false, bool hasFoldout = true)
+        public void DoLayout(string title, float maxHeight = 0, bool isNoBorder = false, bool hasFoldout = true)
         {
             if (hasFoldout)
             {
                 _isFoldout = YuebyUtil.Foldout(_isFoldout, title, () =>
                 {
-                    if (isNoBorder)
-                        YuebyUtil.VerticalEGL(DrawContentNoScroll);
-                    else
-                        YuebyUtil.VerticalEGL("Badge", DrawContentNoScroll);
-                    EditorGUILayout.Space(5);
+                    YuebyUtil.VerticalEGL(() =>
+                    {
+                        if (isNoBorder)
+                            YuebyUtil.VerticalEGL(DrawContentNoScroll);
+                        else
+                            YuebyUtil.VerticalEGL("Badge", DrawContentNoScroll);
+                        EditorGUILayout.Space(5);
+                    });
                 });
             }
             else
@@ -183,8 +184,8 @@ namespace Yueby.Utils
                     YuebyUtil.HorizontalEGL("Badge", () =>
                     {
                         EditorGUILayout.LabelField($"{List.count}", EditorStyles.centeredGreyMiniLabel,
-                            GUILayout.Width(25), GUILayout.Height(18));
-                    }, GUILayout.Width(25), GUILayout.Height(18));
+                            GUILayout.Width(25), GUILayout.Height(EditorGUIUtility.singleLineHeight));
+                    }, GUILayout.Width(25), GUILayout.Height(EditorGUIUtility.singleLineHeight));
 
                     if (OnTitleDraw == null)
                         EditorGUILayout.Space();
@@ -196,7 +197,7 @@ namespace Yueby.Utils
                     if (_isShowAddButton)
                     {
                         EditorGUI.BeginDisabledGroup(IsDisableAddButton);
-                        if (GUILayout.Button("+", GUILayout.Width(25), GUILayout.Height(18)))
+                        if (GUILayout.Button("+", GUILayout.Width(25), GUILayout.Height(EditorGUIUtility.singleLineHeight)))
                         {
                             //添加
                             List.onAddCallback?.Invoke(List);
@@ -211,7 +212,7 @@ namespace Yueby.Utils
                     if (_isShowRemoveButton)
                     {
                         EditorGUI.BeginDisabledGroup(IsDisableRemoveButton);
-                        if (GUILayout.Button("-", GUILayout.Width(25), GUILayout.Height(18)))
+                        if (GUILayout.Button("-", GUILayout.Width(25), GUILayout.Height(EditorGUIUtility.singleLineHeight)))
                             List.onRemoveCallback?.Invoke(List);
                         EditorGUI.EndDisabledGroup();
                     }
@@ -326,11 +327,8 @@ namespace Yueby.Utils
             if (OnDraw == null) return;
 
             var height = OnDraw.Invoke(rect, index, isActive, isFocused);
-
             ElementHeights[index] = height;
-
-            if (ElementHeights.Length != _serializedProperty.arraySize)
-                Array.Resize(ref ElementHeights, _serializedProperty.arraySize);
+            Array.Resize(ref ElementHeights, _serializedProperty.arraySize);
         }
     }
 }

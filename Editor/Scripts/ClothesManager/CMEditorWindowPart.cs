@@ -176,9 +176,12 @@ namespace Yueby.AvatarTools.ClothesManager
                 EditorUtility.DisplayDialog("提示", "删除失败!不存在数据目录", "Ok");
 
 
-            EditorUtility.SetDirty(_expressionsMenu);
-            EditorUtility.SetDirty(_parameters);
-            EditorUtility.SetDirty(_fxLayer);
+            if (_expressionsMenu)
+                EditorUtility.SetDirty(_expressionsMenu);
+            if (_parameters)
+                EditorUtility.SetDirty(_parameters);
+            if (_fxLayer)
+                EditorUtility.SetDirty(_fxLayer);
 
             OnEnable();
         }

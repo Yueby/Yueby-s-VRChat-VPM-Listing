@@ -64,7 +64,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
 
 
             //Controls
-            _menuRl.DoLayout(Localization.Get("controls"), false, false);
+            _menuRl.DoLayout(Localization.Get("controls"), 0, false, false);
             serializedObject.ApplyModifiedProperties();
         }
 
