@@ -305,6 +305,21 @@ namespace Yueby.AvatarTools.ClothesManager
             _clothesGrid.OnAdd += OnClothesGridAdd;
             _clothesGrid.OnRemove += OnClothesGridRemove;
             _clothesGrid.OnElementDraw += DrawClothesGridElement;
+            _clothesGrid.OnHeaderBottomDraw += () =>
+            {
+                if (_clothes == null) return;
+                YuebyUtil.Line();
+
+                YuebyUtil.HorizontalEGL(() =>
+                {
+                    _clothes.Icon = (Texture2D)EditorGUILayout.ObjectField(_clothes.Icon, typeof(Texture2D), false, GUILayout.Width(40), GUILayout.Height(40));
+
+                    EditorGUI.BeginChangeCheck();
+                    _clothes.Name = YuebyUtil.TextFieldVertical(Localization.Get("clothes_name"), _clothes.Name, 60);
+                    if (EditorGUI.EndChangeCheck())
+                        Undo.RegisterCompleteObjectUndo(_currentClothesCategory, "Category Undo Register");
+                });
+            };
             if (_clothesGrid.Count > 0 && _currentClothesCategory.Selected < _clothesGrid.Count)
                 _clothesGrid.Select(_currentClothesCategory.Selected);
         }
@@ -1151,15 +1166,10 @@ namespace Yueby.AvatarTools.ClothesManager
                     {
                         if (_clothes != null)
                         {
-                            YuebyUtil.HorizontalEGL(() =>
-                            {
-                                _clothes.Icon = (Texture2D)EditorGUILayout.ObjectField(_clothes.Icon, typeof(Texture2D), false, GUILayout.Width(40), GUILayout.Height(40));
-
-                                EditorGUI.BeginChangeCheck();
-                                _clothes.Name = YuebyUtil.TextFieldVertical(Localization.Get("clothes_name"), _clothes.Name, 60);
-                                if (EditorGUI.EndChangeCheck())
-                                    Undo.RegisterCompleteObjectUndo(_currentClothesCategory, "Category Undo Register");
-                            });
+                            var parentMenu = _categorySerializedObject.FindProperty(nameof(CMClothesCategorySo.ParentMenu));
+                            parentMenu.objectReferenceValue=  YuebyUtil.ObjectFieldVertical(parentMenu.objectReferenceValue, "父菜单", typeof(VRCExpressionsMenu), false);
+                            
+                           
                         }
                         else
                         {

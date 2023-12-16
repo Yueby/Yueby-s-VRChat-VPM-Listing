@@ -17,6 +17,7 @@ namespace Yueby.Utils
         public event UnityAction<int, Object> OnRemove;
         public event UnityAction<SerializedProperty, int> OnChangeSelected;
         public event UnityAction<Rect, int> OnElementDraw;
+        public event UnityAction OnHeaderBottomDraw;
 
         private static Vector2 _scrollPos;
         public event UnityAction OnTitleDraw;
@@ -201,7 +202,10 @@ namespace Yueby.Utils
                         EditorGUI.EndDisabledGroup();
                     });
 
+                    OnHeaderBottomDraw?.Invoke();
                     YuebyUtil.Line(LineType.Horizontal, 2, 0);
+                    
+                    
                     if (_selectionGridButtons.Count > 0)
                     {
                         // 绘制列表内容

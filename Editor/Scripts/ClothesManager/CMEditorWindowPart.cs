@@ -796,13 +796,11 @@ namespace Yueby.AvatarTools.ClothesManager
 
             // 生成衣服菜单
             var mainMenu = CreateSubMenuAssets($"{menuDir}/ClothesMenu.asset");
-            var currentCategoryMenu = mainMenu;
 
-            var expressionMenuPath = AssetDatabase.GetAssetPath(_expressionsMenu).Replace(_expressionsMenu.name + ".asset", "");
             var currentExMenu = _dataReference.ParentMenu == null ? _expressionsMenu : _dataReference.ParentMenu;
 
-            if (_expressionsMenu.controls.Count >= 8)
-                currentExMenu = GetLastNextSubMenu(_expressionsMenu, expressionMenuPath, _expressionsMenu.name, 0);
+            if (currentExMenu.controls.Count >= 8)
+                currentExMenu = GetLastNextSubMenu(currentExMenu, new FileInfo(AssetDatabase.GetAssetPath(currentExMenu)).DirectoryName, currentExMenu.name, 0);
 
             if (currentExMenu != _expressionsMenu)
                 BackupFile(backupPath, currentExMenu, time);
@@ -811,25 +809,32 @@ namespace Yueby.AvatarTools.ClothesManager
             {
                 if (category.Clothes.Count == 0) continue;
 
-                if (currentCategoryMenu.controls.Count >= 8)
+                VRCExpressionsMenu currentMainMenu;
+
+                if (category.ParentMenu != null)
                 {
-                    currentCategoryMenu = GetLastNextSubMenu(mainMenu, $"{menuDir}", mainMenu.name, 0, true, mainMenu);
+                    currentMainMenu = category.ParentMenu;
+                    BackupFile(backupPath, category.ParentMenu, time);
+                }
+                else
+                {
+                    currentMainMenu = mainMenu;
                 }
 
-                var categoryMenu = CreateSubMenuAssets($"{menuDir}/Category_{category.Name}.asset", currentCategoryMenu, category.Name, category.Icon);
+                var currentCategoryMenu = GetLastNextSubMenu(currentMainMenu, $"{menuDir}", currentMainMenu.name, 0, false, currentMainMenu);
+
+                Debug.Log(currentCategoryMenu);
                 var parameterName = $"YCM/{category.Name}/Switch";
+                var currentClothesMenu = CreateSubMenuAssets($"{menuDir}/Category_{category.Name}.asset");
 
-                var currentClothesMenu = categoryMenu;
                 var clothesPageIndex = 0;
-
                 foreach (var clothes in category.Clothes)
                 {
-                    if (currentClothesMenu.controls.Count >= 7)
+                    if (currentClothesMenu.controls.Count > 7)
                     {
                         currentClothesMenu = CreateSubMenuAssets("", currentClothesMenu, "下一页", null, true);
                         currentClothesMenu.name = $"{category.Name}_Page {++clothesPageIndex}";
                     }
-
 
                     currentClothesMenu.controls.Add(new VRCExpressionsMenu.Control
                     {
@@ -845,34 +850,16 @@ namespace Yueby.AvatarTools.ClothesManager
 
                     EditorUtility.SetDirty(currentClothesMenu);
                 }
+
+                SetupSubMen(currentCategoryMenu, currentClothesMenu, category.Name, category.Icon);
+                if (currentCategoryMenu)
+                    EditorUtility.SetDirty(currentCategoryMenu);
             }
 
-
-            var isFindMenu = false;
-            foreach (var control in currentExMenu.controls)
-            {
-                if (control.name != Localization.Get("window_title")) continue;
-
-                isFindMenu = true;
-                if (EditorUtility.DisplayDialog(Localization.Get("tips"), string.Format(Localization.Get("apply_menu_find_tip"), Localization.Get("window_title")), Localization.Get("yes"), Localization.Get("no")))
-                {
-                    control.subMenu = mainMenu;
-                }
-
-                break;
-            }
-
-            if (!isFindMenu)
-            {
-                currentExMenu.controls.Add(new VRCExpressionsMenu.Control()
-                {
-                    name = Localization.Get("window_title"),
-                    type = VRCExpressionsMenu.Control.ControlType.SubMenu,
-                    subMenu = mainMenu
-                });
-            }
-
-
+            if (mainMenu.controls.Count > 0)
+                SetupSubMen(currentExMenu, mainMenu, Localization.Get("window_title"), null);
+            else
+                AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(mainMenu));
             EditorUtility.SetDirty(currentExMenu);
 
 
@@ -1021,6 +1008,34 @@ namespace Yueby.AvatarTools.ClothesManager
             EditorUtility.DisplayDialog(Localization.Get("tips"), Localization.Get("apply_success_tip"), Localization.Get("ok"));
         }
 
+        private void SetupSubMen(VRCExpressionsMenu menu, VRCExpressionsMenu target, string targetName, Texture2D icon)
+        {
+            var isFindMenu = false;
+            foreach (var control in menu.controls)
+            {
+                if (control.name != targetName) continue;
+                isFindMenu = true;
+                if (EditorUtility.DisplayDialog(Localization.Get("tips"), string.Format(Localization.Get("apply_menu_find_tip"), targetName), Localization.Get("yes"), Localization.Get("no")))
+                {
+                    control.subMenu = target;
+                    control.icon = icon;
+                }
+
+                break;
+            }
+
+            if (!isFindMenu)
+            {
+                menu.controls.Add(new VRCExpressionsMenu.Control()
+                {
+                    name = targetName,
+                    type = VRCExpressionsMenu.Control.ControlType.SubMenu,
+                    subMenu = target,
+                    icon = icon
+                });
+            }
+        }
+
         private void BackupFile(string path, Object targetFile, string backupTime)
         {
             var sourcePath = AssetDatabase.GetAssetPath(targetFile);
@@ -1036,32 +1051,36 @@ namespace Yueby.AvatarTools.ClothesManager
             }
         }
 
-
         private VRCExpressionsMenu GetLastNextSubMenu(VRCExpressionsMenu current, string path, string menuName, int index, bool isAddChild = false, VRCExpressionsMenu parent = null)
         {
             if (current.controls.Count < 8) return current;
 
-            var currentName = $"{menuName} ({index})";
+            var currentName = $"{menuName} (NextPage {index + 1})";
             var createPath = path + $"/{currentName}.asset";
 
             var control = current.controls[current.controls.Count - 1];
+            bool isNullSubMenu = false;
             if (control.type == VRCExpressionsMenu.Control.ControlType.SubMenu)
             {
-                VRCExpressionsMenu subMenu = null;
                 if (control.name == "下一页" || control.name == "下一个" || control.name == "Next" || control.name == "Next Page")
-                    subMenu = control.subMenu;
-
-                if (subMenu != null)
                 {
-                    return GetLastNextSubMenu(control.subMenu, path, menuName, ++index, isAddChild, parent);
+                    if (control.subMenu != null)
+                    {
+                        return GetLastNextSubMenu(control.subMenu, path, menuName, ++index, isAddChild, parent);
+                    }
+
+                    isNullSubMenu = true;
                 }
             }
 
             current.controls.Remove(control);
-
             var currentExMenu = CreateSubMenuAssets(createPath, current, Localization.Get("apply_next_page"), _nextIcon, isAddChild, parent);
             currentExMenu.name = currentName;
-            currentExMenu.controls.Add(control);
+
+            if (!isNullSubMenu)
+            {
+                currentExMenu.controls.Add(control);
+            }
 
             return currentExMenu;
         }
@@ -1079,13 +1098,23 @@ namespace Yueby.AvatarTools.ClothesManager
 
             if (parentMenu != null)
             {
-                parentMenu.controls.Add(new VRCExpressionsMenu.Control
+                var control = parentMenu.controls[parentMenu.controls.Count - 1];
+                if (control.name == createdMenuName && control.type == VRCExpressionsMenu.Control.ControlType.SubMenu)
                 {
-                    name = createdMenuName,
-                    type = VRCExpressionsMenu.Control.ControlType.SubMenu,
-                    subMenu = createdMenu,
-                    icon = icon
-                });
+                    control.name = createdMenuName;
+                    control.subMenu = createdMenu;
+                    control.icon = icon;
+                }
+                else
+                {
+                    parentMenu.controls.Add(new VRCExpressionsMenu.Control
+                    {
+                        name = createdMenuName,
+                        type = VRCExpressionsMenu.Control.ControlType.SubMenu,
+                        subMenu = createdMenu,
+                        icon = icon
+                    });
+                }
 
                 if (isAddToChild)
                 {

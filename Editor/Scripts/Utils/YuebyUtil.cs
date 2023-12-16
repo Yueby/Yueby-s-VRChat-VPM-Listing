@@ -211,7 +211,7 @@ namespace Yueby.Utils
                         Line();
                 }
             }
-            
+
             return foldout;
         }
 
@@ -1097,7 +1097,8 @@ namespace Yueby.Utils
         {
             VerticalEGL(() =>
             {
-                EditorGUILayout.LabelField(label);
+                var size = GUI.skin.label.CalcSize(new GUIContent(label));
+                EditorGUILayout.LabelField(label, GUILayout.Width(size.x));
                 target = EditorGUILayout.ObjectField(target, type, allowSceneObjects);
                 EditorGUILayout.Space(5);
             });

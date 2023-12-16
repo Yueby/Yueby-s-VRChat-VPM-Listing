@@ -94,6 +94,7 @@ namespace Yueby.Utils
                 },
                 elementHeightCallback = index =>
                 {
+                    if (index < 0 || index > ElementHeights.Length - 1) return 0;
                     OnElementHeightCallback?.Invoke(index);
                     var height = ElementHeights[index];
                     if (ElementHeights.Length != serializedProperty.arraySize)
@@ -325,7 +326,7 @@ namespace Yueby.Utils
         private void OnListDraw(Rect rect, int index, bool isActive, bool isFocused)
         {
             if (OnDraw == null) return;
-
+            if (index < 0 || index > ElementHeights.Length - 1) return;
             var height = OnDraw.Invoke(rect, index, isActive, isFocused);
             ElementHeights[index] = height;
             Array.Resize(ref ElementHeights, _serializedProperty.arraySize);

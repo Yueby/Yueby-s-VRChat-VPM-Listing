@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using VRC.SDK3.Avatars.ScriptableObjects;
 using VRC.SDKBase;
 
 namespace Yueby.AvatarTools.ClothesManager
 {
     public class CMClothesCategorySo : ScriptableObject
     {
+        public VRCExpressionsMenu ParentMenu;
         public int Selected;
         public int Default;
         public string Name;

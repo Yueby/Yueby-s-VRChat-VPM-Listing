@@ -20,7 +20,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
 
         private YuebyReorderableList _menuRl;
         private SerializedProperty _controls;
-        public readonly VRCExMenuLocalization Localization = new VRCExMenuLocalization();
+        private static readonly VRCExMenuLocalization Localization = new VRCExMenuLocalization();
 
         private void OnEnable()
         {
@@ -40,6 +40,12 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
 
                     _menuRl.IsDisableAddButton = count >= MAX_CONTROLS;
                 }
+            };
+            _menuRl.OnAdd += () =>
+            {
+                var type = _controls.GetArrayElementAtIndex(_controls.arraySize - 1).FindPropertyRelative(nameof(Control.type));
+                if (type.enumValueIndex == -1)
+                    type.enumValueIndex = 0;
             };
         }
 
