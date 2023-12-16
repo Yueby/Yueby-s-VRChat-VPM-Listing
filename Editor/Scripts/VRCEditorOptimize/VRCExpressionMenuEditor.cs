@@ -25,7 +25,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
         private void OnEnable()
         {
             _controls = serializedObject.FindProperty("controls");
-            _menuRl = new YuebyReorderableList(serializedObject, _controls, true, true);
+            _menuRl = new YuebyReorderableList(serializedObject, _controls, true, true,false,Repaint);
             _menuRl.OnDraw += OnDrawMenuElement;
             _menuRl.OnTitleDraw += () =>
             {

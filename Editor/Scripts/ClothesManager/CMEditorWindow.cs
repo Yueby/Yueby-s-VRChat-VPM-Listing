@@ -420,9 +420,9 @@ namespace Yueby.AvatarTools.ClothesManager
             };
 
 
-            _clothesShowRl.OnDraw += (rect, index, a, b) => { RegisterClothPathListPanel(rect, index, ref _clothes.ShowParameters); };
-            _clothesHideRl.OnDraw += (rect, index, a, b) => { RegisterClothPathListPanel(rect, index, ref _clothes.HideParameters); };
-            _clothesSmrRL.OnDraw += (rect, index, a, b) => { RegisterClothPathListPanel(rect, index, ref _clothes.SMRParameters); };
+            _clothesShowRl.OnDraw += (rect, index, a, b) => { return RegisterClothPathListPanel(rect, index, ref _clothes.ShowParameters); };
+            _clothesHideRl.OnDraw += (rect, index, a, b) => { return RegisterClothPathListPanel(rect, index, ref _clothes.HideParameters); };
+            _clothesSmrRL.OnDraw += (rect, index, a, b) => { return RegisterClothPathListPanel(rect, index, ref _clothes.SMRParameters); };
 
 
             // Parameter Driver ReorderableList Init
@@ -466,8 +466,8 @@ namespace Yueby.AvatarTools.ClothesManager
             _enterDriverRl.OnDrawTitle += () => { _clothes.EnterParameter.IsLocal = YuebyUtil.Toggle(_clothes.EnterParameter.IsLocal, Localization.Get("driver_is_local"), 80); };
             _exitDriverRl.OnDrawTitle += () => { _clothes.ExitParameter.IsLocal = YuebyUtil.Toggle(_clothes.ExitParameter.IsLocal, Localization.Get("driver_is_local"), 80); };
 
-            _enterDriverRl.OnDraw += (rect, index, active, focused) => { DrawParameterDriverElement(ref _clothes.EnterParameter.Parameters, rect, index); };
-            _exitDriverRl.OnDraw += (rect, index, active, focused) => { DrawParameterDriverElement(ref _clothes.ExitParameter.Parameters, rect, index); };
+            _enterDriverRl.OnDraw += (rect, index, active, focused) => { return DrawParameterDriverElement(ref _clothes.EnterParameter.Parameters, rect, index); };
+            _exitDriverRl.OnDraw += (rect, index, active, focused) => { return DrawParameterDriverElement(ref _clothes.ExitParameter.Parameters, rect, index); };
 
             _clothesSmrRL.OnDrawTitle += () =>
             {
@@ -520,8 +520,9 @@ namespace Yueby.AvatarTools.ClothesManager
             }
         }
 
-        private void DrawParameterDriverElement(ref List<VRC_AvatarParameterDriver.Parameter> drivers, Rect rect, int index)
+        private float DrawParameterDriverElement(ref List<VRC_AvatarParameterDriver.Parameter> drivers, Rect rect, int index)
         {
+            var height = EditorGUIUtility.singleLineHeight + 2;
             var typeRect = new Rect(rect.x, rect.y + 2, 70, rect.height);
             var driver = drivers[index];
             driver.type = (VRC_AvatarParameterDriver.ChangeType)EditorGUI.Popup(typeRect, (int)driver.type, Enum.GetNames(typeof(VRC_AvatarParameterDriver.ChangeType)));
@@ -529,11 +530,11 @@ namespace Yueby.AvatarTools.ClothesManager
             var nameRect = new Rect(typeRect.x + typeRect.width + 2, typeRect.y, 120, typeRect.height);
 
             var names = GetParameterNames();
-            if (names.Length <= 0) return;
+            if (names.Length <= 0) return height;
             var nameIndex = EditorGUI.Popup(nameRect, IndexInParameterNames(driver.name), names);
             driver.name = nameIndex == -1 ? "" : names[nameIndex];
 
-            if (nameIndex == -1) return;
+            if (nameIndex == -1) return height;
             var valueRect = new Rect(nameRect.x + nameRect.width + 4, rect.y, rect.width - nameRect.width - typeRect.width - 6, nameRect.height - 2);
             switch (GetParameterType(driver.name))
             {
@@ -550,6 +551,8 @@ namespace Yueby.AvatarTools.ClothesManager
                     driver.value = valueBool ? 1f : 0f;
                     break;
             }
+
+            return height;
         }
 
         private void OnClothesGridRemove(int index, Object obj)
@@ -1167,9 +1170,7 @@ namespace Yueby.AvatarTools.ClothesManager
                         if (_clothes != null)
                         {
                             var parentMenu = _categorySerializedObject.FindProperty(nameof(CMClothesCategorySo.ParentMenu));
-                            parentMenu.objectReferenceValue=  YuebyUtil.ObjectFieldVertical(parentMenu.objectReferenceValue, "父菜单", typeof(VRCExpressionsMenu), false);
-                            
-                           
+                            parentMenu.objectReferenceValue = YuebyUtil.ObjectFieldVertical(parentMenu.objectReferenceValue, "父菜单", typeof(VRCExpressionsMenu), false);
                         }
                         else
                         {

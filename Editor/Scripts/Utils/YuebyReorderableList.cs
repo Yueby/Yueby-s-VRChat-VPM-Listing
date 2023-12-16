@@ -31,16 +31,15 @@ namespace Yueby.Utils
         public float[] ElementHeights;
         public ReorderableList List { get; }
 
-        public UnityAction<int> OnElementHeightCallback;
+        private UnityAction _onRepaint;
 
-
-        public YuebyReorderableList(SerializedObject serializedObject, SerializedProperty serializedProperty, bool isShowAddButton, bool isShowRemoveButton, bool isPPTR = false)
+        public YuebyReorderableList(SerializedObject serializedObject, SerializedProperty serializedProperty, bool isShowAddButton, bool isShowRemoveButton, bool isPPTR = false, UnityAction repaint =null)
         {
             _serializedProperty = serializedProperty;
             _isShowAddButton = isShowAddButton;
             _isShowRemoveButton = isShowRemoveButton;
             ElementHeights = new float[serializedProperty.arraySize];
-
+            _onRepaint = repaint;
             List = new ReorderableList(serializedObject, serializedProperty, true, false, false, false)
             {
                 headerHeight = 0,
@@ -95,7 +94,7 @@ namespace Yueby.Utils
                 elementHeightCallback = index =>
                 {
                     if (index < 0 || index > ElementHeights.Length - 1) return 0;
-                    OnElementHeightCallback?.Invoke(index);
+                    _onRepaint?.Invoke();
                     var height = ElementHeights[index];
                     if (ElementHeights.Length != serializedProperty.arraySize)
                         Array.Resize(ref ElementHeights, serializedProperty.arraySize);

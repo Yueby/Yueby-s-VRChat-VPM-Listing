@@ -25,17 +25,17 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
 
         public void OnEnable()
         {
-            // Init Reorderable List
-            _parametersProperty = serializedObject.FindProperty("parameters");
-            _paramRl = new YuebyReorderableList(serializedObject, _parametersProperty, true, true);
-            _paramRl.OnDraw += OnListDraw;
-            _paramRl.OnHeaderBottomDraw += OnListHeaderBottomDraw;
-            _paramRl.OnTitleDraw += OnTitleDraw;
             //Init parameters
             var expressionParameters = target as ExpressionParameters;
             if (expressionParameters != null && expressionParameters.parameters == null)
                 InitExpressionParameters(true);
-
+            
+            // Init Reorderable List
+            _parametersProperty = serializedObject.FindProperty("parameters");
+            _paramRl = new YuebyReorderableList(serializedObject, _parametersProperty, true, true, false, Repaint);
+            _paramRl.OnDraw += OnListDraw;
+            _paramRl.OnHeaderBottomDraw += OnListHeaderBottomDraw;
+            _paramRl.OnTitleDraw += OnTitleDraw;
             if (_scrollPos != Vector2.zero)
                 _paramRl.ScrollPos = _scrollPos;
         }

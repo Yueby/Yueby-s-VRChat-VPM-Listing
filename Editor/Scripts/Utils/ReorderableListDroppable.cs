@@ -21,32 +21,56 @@ namespace Yueby.AvatarTools
         private Vector2 _scrollPos;
         public UnityAction<ReorderableList> OnAdd;
         public UnityAction<int> OnChanged;
-        public UnityAction<Rect, int, bool, bool> OnDraw;
+        public Func<Rect, int, bool, bool, float> OnDraw;
         public UnityAction<ReorderableList> OnRemove;
         public UnityAction<int> OnRemoveBefore;
         public UnityAction<int> OnSelected;
         public UnityAction OnDrawTitle;
+        public UnityAction OnHeaderBottomDraw;
+        public float[] ElementHeights;
+        private IList _elements;
+
+        public UnityAction<int> OnElementHeightCallback;
 
         public UnityAction<bool> OnChangeAnimBoolTarget;
         public ReorderableList List { get; }
         private bool _isEnterListArea;
 
+        private UnityAction _onRepaint;
+
         public readonly List<ReorderableListDroppable> InverseRlList = new List<ReorderableListDroppable>();
 
-        public ReorderableListDroppable(IList elements, Type elementType, float elementHeight, UnityAction animBoolValueChangedRepaint, bool isShowAddButton = true, bool isShowRemoveButton = true)
+        public ReorderableListDroppable(IList elements, Type elementType, float elementHeight, UnityAction animBoolValueChangedRepaint, bool isShowAddButton = true, bool isShowRemoveButton = true,UnityAction onRepaint=null)
         {
+            _elements = elements;
             _isShowAddButton = isShowAddButton;
             _isShowRemoveButton = isShowRemoveButton;
+            ElementHeights = new float[elements.Count];
+
+            _onRepaint = onRepaint;
+
 
             List = new ReorderableList(elements, elementType, true, false, false, false)
             {
                 headerHeight = 0,
                 footerHeight = 0,
                 elementHeight = elementHeight,
-                drawElementCallback = (rect, index, active, focused) => OnDraw?.Invoke(rect, index, active, focused),
+                drawElementCallback = (rect, index, active, focused) =>
+                {
+                    if (OnDraw == null) return;
+                    if (index < 0 || index > ElementHeights.Length - 1) return;
+
+                    Array.Resize(ref ElementHeights, elements.Count);
+                    var height = OnDraw.Invoke(rect, index, active, focused);
+                    ElementHeights[index] = height;
+                },
 
                 onSelectCallback = reorderableList => OnSelected?.Invoke(reorderableList.index),
-                onAddCallback = list => OnAdd?.Invoke(list),
+                onAddCallback = list =>
+                {
+                    OnAdd?.Invoke(list);
+                    Array.Resize(ref ElementHeights, elements.Count);
+                },
                 onRemoveCallback = reorderableList =>
                 {
                     OnRemoveBefore?.Invoke(reorderableList.index);
@@ -54,8 +78,21 @@ namespace Yueby.AvatarTools
                     OnRemove?.Invoke(reorderableList);
                     if (reorderableList.count > 0 && reorderableList.index != 0)
                         reorderableList.index--;
+
+                    Array.Resize(ref ElementHeights, elements.Count);
                 },
-                onChangedCallback = list => { OnChanged?.Invoke(list.index); }
+                onChangedCallback = list => { OnChanged?.Invoke(list.index); },
+                elementHeightCallback = index =>
+                {
+                    if (index < 0 || index > ElementHeights.Length - 1) return 0;
+                    _onRepaint?.Invoke();
+                    
+                    OnElementHeightCallback?.Invoke(index);
+                    Array.Resize(ref ElementHeights, elements.Count);
+                    var height = ElementHeights[index];
+
+                    return height;
+                }
             };
 
             if (elements.Count > 0)
@@ -158,6 +195,8 @@ namespace Yueby.AvatarTools
                 if (_dropRect.Contains(Event.current.mousePosition))
                 {
                     onDropped?.Invoke(DragAndDrop.objectReferences);
+                    Array.Resize(ref ElementHeights, _elements.Count);
+                    repaint?.Invoke();
                 }
             }
         }
