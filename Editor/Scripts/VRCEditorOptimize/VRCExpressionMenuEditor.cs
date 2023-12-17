@@ -25,7 +25,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
         private void OnEnable()
         {
             _controls = serializedObject.FindProperty("controls");
-            _menuRl = new YuebyReorderableList(serializedObject, _controls, true, true,false,Repaint);
+            _menuRl = new YuebyReorderableList(serializedObject, _controls, true, true, false, Repaint);
             _menuRl.OnDraw += OnDrawMenuElement;
             _menuRl.OnTitleDraw += () =>
             {
@@ -119,7 +119,6 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
                 var maxHeight = lastRect.y + lastRect.height;
                 height = maxHeight - firstRect.y;
             }
-
             return height;
         }
 
@@ -137,16 +136,31 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
 
         private string GetTypeToolTip(int type)
         {
-            var result = type switch
+            string result;
+            switch (type)
             {
-                (int)Control.ControlType.Button => Localization.Get("control_button_tip"),
-                (int)Control.ControlType.Toggle => Localization.Get("control_toggle_tip"),
-                (int)Control.ControlType.SubMenu => Localization.Get("control_submenu_tip"),
-                (int)Control.ControlType.TwoAxisPuppet => Localization.Get("control_two_axis_tip"),
-                (int)Control.ControlType.FourAxisPuppet => Localization.Get("control_four_axis_tip"),
-                (int)Control.ControlType.RadialPuppet => Localization.Get("control_radial_tip"),
-                _ => ""
-            };
+                case (int)Control.ControlType.Button:
+                    result = Localization.Get("control_button_tip");
+                    break;
+                case (int)Control.ControlType.Toggle:
+                    result = Localization.Get("control_toggle_tip");
+                    break;
+                case (int)Control.ControlType.SubMenu:
+                    result = Localization.Get("control_submenu_tip");
+                    break;
+                case (int)Control.ControlType.TwoAxisPuppet:
+                    result = Localization.Get("control_two_axis_tip");
+                    break;
+                case (int)Control.ControlType.FourAxisPuppet:
+                    result = Localization.Get("control_four_axis_tip");
+                    break;
+                case (int)Control.ControlType.RadialPuppet:
+                    result = Localization.Get("control_radial_tip");
+                    break;
+                default:
+                    result = "";
+                    break;
+            }
 
             return result;
         }
@@ -354,6 +368,8 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
                     nextIndex = 0;
                 if (nextIndex != currentIndex)
                     SelectAvatarDescriptor(descriptors[nextIndex]);
+
+                OnEnable();
             }
             else
                 SelectAvatarDescriptor(null);
