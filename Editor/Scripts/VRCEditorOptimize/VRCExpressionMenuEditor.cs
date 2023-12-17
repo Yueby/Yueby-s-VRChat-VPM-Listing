@@ -25,7 +25,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
         private void OnEnable()
         {
             _controls = serializedObject.FindProperty("controls");
-            _menuRl = new YuebyReorderableList(serializedObject, _controls, true, true, false, Repaint);
+            _menuRl = new YuebyReorderableList(serializedObject, _controls, true, true,false,Repaint);
             _menuRl.OnDraw += OnDrawMenuElement;
             _menuRl.OnTitleDraw += () =>
             {
@@ -119,6 +119,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
                 var maxHeight = lastRect.y + lastRect.height;
                 height = maxHeight - firstRect.y;
             }
+
             return height;
         }
 
@@ -368,8 +369,6 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
                     nextIndex = 0;
                 if (nextIndex != currentIndex)
                     SelectAvatarDescriptor(descriptors[nextIndex]);
-
-                OnEnable();
             }
             else
                 SelectAvatarDescriptor(null);

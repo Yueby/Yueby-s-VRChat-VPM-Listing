@@ -110,8 +110,8 @@ namespace Yueby.AvatarTools.ClothesManager
             _configureTabBarGroup = new TabBarGroup(new List<TabBarElement> { _categoryBar, _clothesBar, _clothesParameterBar, _clothesDriverBar });
             GetDescriptorOnEnable();
             InitSerializedObjects();
-            if (_avatarState == null)
-                _avatarState = new CMAvatarState(_descriptor.gameObject);
+            if(_avatarState==null)
+            _avatarState = new CMAvatarState(_descriptor.gameObject);
         }
 
         private void GetIcons()
@@ -523,7 +523,7 @@ namespace Yueby.AvatarTools.ClothesManager
 
         private float DrawParameterDriverElement(ref List<VRC_AvatarParameterDriver.Parameter> drivers, Rect rect, int index)
         {
-            var height = EditorGUIUtility.singleLineHeight+4;
+            var height = EditorGUIUtility.singleLineHeight + 2;
             var typeRect = new Rect(rect.x, rect.y + 2, 70, rect.height);
             var driver = drivers[index];
             driver.type = (VRC_AvatarParameterDriver.ChangeType)EditorGUI.Popup(typeRect, (int)driver.type, Enum.GetNames(typeof(VRC_AvatarParameterDriver.ChangeType)));

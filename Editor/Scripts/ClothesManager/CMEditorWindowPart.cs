@@ -387,7 +387,7 @@ namespace Yueby.AvatarTools.ClothesManager
             }
 
             var objFieldRect = new Rect(rect.x, rect.y + 2, rect.width / 2 - 1, height);
-            height += 3;
+            height += 4;
             if (target.Type == nameof(SkinnedMeshRenderer))
             {
                 var skinnedMeshRenderer = obj != null ? obj.GetComponent<SkinnedMeshRenderer>() : null;
