@@ -133,7 +133,7 @@ namespace Yueby.AvatarTools.DressingTools
             if (_window == null)
                 _window = GetWindow<DressingToolEditorWindow>();
             _window.titleContent = new GUIContent(_localization.Get("title_main_label"));
-            YuebyUtil.DrawEditorTitle(_localization.Get("title_main_label"));
+            EditorUI.DrawEditorTitle(_localization.Get("title_main_label"));
 
             _localization.DrawLanguageUI();
 
@@ -193,7 +193,7 @@ namespace Yueby.AvatarTools.DressingTools
             if (!_isFocusAvatar)
             {
                 if (_descriptor != null)
-                    YuebyUtil.WaitToDo(200, "FocusTarget", () => { YuebyUtil.FocusTarget(_descriptor.gameObject); });
+                    EditorUtils.WaitToDo(200, "FocusTarget", () => { EditorUtils.FocusTarget(_descriptor.gameObject); });
                 _isFocusAvatar = true;
             }
         }
@@ -208,28 +208,28 @@ namespace Yueby.AvatarTools.DressingTools
                     if (_avatarAnimator.runtimeAnimatorController == null)
                     {
                         _avatarAnimator.runtimeAnimatorController = _runtimeAnimatorController;
-                        YuebyUtil.FocusTarget(_descriptor.gameObject);
+                        EditorUtils.FocusTarget(_descriptor.gameObject);
                     }
                     else
                     {
                         if (_avatarAnimator.runtimeAnimatorController != _runtimeAnimatorController)
                         {
                             _avatarAnimator.runtimeAnimatorController = _runtimeAnimatorController;
-                            YuebyUtil.FocusTarget(_descriptor.gameObject);
+                            EditorUtils.FocusTarget(_descriptor.gameObject);
                         }
                     }
                 }
 
-                YuebyUtil.VerticalEGLTitled(_localization.Get("title_configure_label"), () =>
+                EditorUI.VerticalEGLTitled(_localization.Get("title_configure_label"), () =>
                 {
                     EditorGUI.BeginDisabledGroup(true);
-                    _descriptor = (VRCAvatarDescriptor)YuebyUtil.ObjectFieldVertical(_descriptor, _localization.Get("configure_avatar_label"), typeof(VRCAvatarDescriptor));
+                    _descriptor = (VRCAvatarDescriptor)EditorUI.ObjectFieldVertical(_descriptor, _localization.Get("configure_avatar_label"), typeof(VRCAvatarDescriptor));
                     EditorGUI.EndDisabledGroup();
 
                     EditorGUILayout.HelpBox(_localization.Get("option_test_testing_tip"), MessageType.Info);
                 });
 
-                YuebyUtil.VerticalEGLTitled(_localization.Get("title_setup_label"), () =>
+                EditorUI.VerticalEGLTitled(_localization.Get("title_setup_label"), () =>
                 {
                     if (_avatarAnimator != null && _avatarAnimator.runtimeAnimatorController != null)
                     {
@@ -335,7 +335,7 @@ namespace Yueby.AvatarTools.DressingTools
                 }
             }
 
-            YuebyUtil.FocusTarget(_descriptor.gameObject);
+            EditorUtils.FocusTarget(_descriptor.gameObject);
         }
 
         private void DrawSetupPage()
@@ -344,21 +344,21 @@ namespace Yueby.AvatarTools.DressingTools
 
             if (_clothes == null)
             {
-                YuebyUtil.VerticalEGLTitled(_localization.Get("title_setup_label"), () =>
+                EditorUI.VerticalEGLTitled(_localization.Get("title_setup_label"), () =>
                 {
-                    YuebyUtil.HorizontalEGL(() =>
+                    EditorUI.HorizontalEGL(() =>
                     {
                         if (GUILayout.Button(_localization.Get("option_test_change_path"), GUILayout.Width(100)))
                         {
                             var dressingToolsPath = GetDressingToolsAssetsPath();
-                            YuebyUtil.MoveFolderFromPath(ref dressingToolsPath, "DressingTools");
+                            EditorUtils.MoveFolderFromPath(ref dressingToolsPath, "DressingTools");
 
                             _path = $"{dressingToolsPath}/Animation/AvatarTest";
                         }
 
                         if (GUILayout.Button(_localization.Get("option_test_jump_path"), GUILayout.Width(100)))
                         {
-                            YuebyUtil.PingProject(_path);
+                            EditorUtils.PingProject(_path);
                         }
 
                         EditorGUI.BeginDisabledGroup(true);
@@ -373,16 +373,16 @@ namespace Yueby.AvatarTools.DressingTools
             else
             {
                 if (!_isSureDressing && _hasSameNameClothes) return;
-                YuebyUtil.VerticalEGLTitled(_localization.Get("title_setup_label"), () =>
+                EditorUI.VerticalEGLTitled(_localization.Get("title_setup_label"), () =>
                 {
-                    _isAutoParentKeywordObjectRoot = YuebyUtil.Radio(_isAutoParentKeywordObjectRoot, _localization.Get("option_auto_parent_keyword_radio"));
+                    _isAutoParentKeywordObjectRoot = EditorUI.Radio(_isAutoParentKeywordObjectRoot, _localization.Get("option_auto_parent_keyword_radio"));
 
                     if (_isAutoParentKeywordObjectRoot)
-                        YuebyUtil.DrawChildElement(1, () =>
+                        EditorUI.DrawChildElement(1, () =>
                         {
                             EditorGUI.BeginChangeCheck();
 
-                            _autoParentKeyword = YuebyUtil.TextField(_localization.Get("option_keyword_label"), _autoParentKeyword, 60);
+                            _autoParentKeyword = EditorUI.TextField(_localization.Get("option_keyword_label"), _autoParentKeyword, 60);
                             if (EditorGUI.EndChangeCheck())
                                 if (_clothes != null)
                                 {
@@ -397,7 +397,7 @@ namespace Yueby.AvatarTools.DressingTools
                             EditorGUILayout.HelpBox(string.Format(_localization.Get("option_none_keyword_object_tip"), _autoParentKeyword), MessageType.Info);
                         });
 
-                    _isDuplicateDress = YuebyUtil.Radio(_isDuplicateDress, _localization.Get("option_create_copy_radio"));
+                    _isDuplicateDress = EditorUI.Radio(_isDuplicateDress, _localization.Get("option_create_copy_radio"));
                     if (!_isDuplicateDress)
                     {
                         EditorGUILayout.HelpBox(_localization.Get("option_delete_undo_tip"), MessageType.Info);
@@ -405,7 +405,7 @@ namespace Yueby.AvatarTools.DressingTools
                     }
                     // YuebyUtil.Line();
 
-                    _isAutoCombinePb = YuebyUtil.Radio(_isAutoCombinePb, _localization.Get("option_combine_physbone_radio"));
+                    _isAutoCombinePb = EditorUI.Radio(_isAutoCombinePb, _localization.Get("option_combine_physbone_radio"));
                     if (!_isAutoCombinePb)
                     {
                         EditorGUILayout.HelpBox(_localization.Get("option_combine_physbone_tip"), MessageType.Info);
@@ -413,20 +413,20 @@ namespace Yueby.AvatarTools.DressingTools
                     }
                     else
                     {
-                        YuebyUtil.DrawChildElement(1, () =>
+                        EditorUI.DrawChildElement(1, () =>
                         {
-                            _isSplitCombine = YuebyUtil.Radio(_isSplitCombine, _localization.Get("option_split_physbone_radio"));
+                            _isSplitCombine = EditorUI.Radio(_isSplitCombine, _localization.Get("option_split_physbone_radio"));
                             if (!_isSplitCombine)
                                 EditorGUILayout.HelpBox(_localization.Get("option_split_physbone_tip"), MessageType.Info);
                         });
                     }
 
-                    _useClothesName = YuebyUtil.Radio(_useClothesName, _localization.Get("option_suffix_radio"));
+                    _useClothesName = EditorUI.Radio(_useClothesName, _localization.Get("option_suffix_radio"));
                     var beLikeName = _useClothesName ? $" ({_clothes.name})" : "";
                     EditorGUILayout.HelpBox($"{_localization.Get("option_bone_will_named_tip")} :\n Hips {beLikeName}", MessageType.Info);
 
                     EditorGUILayout.Space(5);
-                    YuebyUtil.HorizontalEGL(() =>
+                    EditorUI.HorizontalEGL(() =>
                     {
                         if (GUILayout.Button(_localization.Get("option_dress_button")))
                             Dress();
@@ -441,21 +441,21 @@ namespace Yueby.AvatarTools.DressingTools
 
         private void DrawDescriptorPage()
         {
-            YuebyUtil.VerticalEGLTitled(_localization.Get("title_configure_label"), () =>
+            EditorUI.VerticalEGLTitled(_localization.Get("title_configure_label"), () =>
             {
-                YuebyUtil.HorizontalEGL(() =>
+                EditorUI.HorizontalEGL(() =>
                 {
-                    YuebyUtil.DrawCheckChanged(() =>
+                    EditorUI.DrawCheckChanged(() =>
                     {
                         //
-                        _descriptor = (VRCAvatarDescriptor)YuebyUtil.ObjectFieldVertical(_descriptor, _localization.Get("configure_avatar_label"), typeof(VRCAvatarDescriptor));
+                        _descriptor = (VRCAvatarDescriptor)EditorUI.ObjectFieldVertical(_descriptor, _localization.Get("configure_avatar_label"), typeof(VRCAvatarDescriptor));
                     }, OnDescriptorChanged);
 
                     if (_descriptor != null)
                     {
-                        YuebyUtil.Line(LineType.Vertical);
+                        EditorUI.Line(LineType.Vertical);
                         EditorGUI.BeginChangeCheck();
-                        _clothes = (GameObject)YuebyUtil.ObjectFieldVertical(_clothes, _localization.Get("configure_clothes_label"), typeof(GameObject));
+                        _clothes = (GameObject)EditorUI.ObjectFieldVertical(_clothes, _localization.Get("configure_clothes_label"), typeof(GameObject));
                         if (EditorGUI.EndChangeCheck())
                             OnClothesChanged();
                     }
@@ -482,11 +482,11 @@ namespace Yueby.AvatarTools.DressingTools
                         {
                             if (_isSureDressing)
                                 if (_isValidClothes && !_isBoneNameWrong && _descriptor.gameObject != _clothes)
-                                    YuebyUtil.GoodHelpBox(_localization.Get("configure_check_over_tip"));
+                                    EditorUI.GoodHelpBox(_localization.Get("configure_check_over_tip"));
                         }
                         else
                         {
-                            if (_isValidClothes && !_isBoneNameWrong && _descriptor.gameObject != _clothes) YuebyUtil.GoodHelpBox(_localization.Get("configure_check_over_tip"));
+                            if (_isValidClothes && !_isBoneNameWrong && _descriptor.gameObject != _clothes) EditorUI.GoodHelpBox(_localization.Get("configure_check_over_tip"));
                         }
 
                         // if (_isValidClothes && !_isBoneNameWrong && _descriptor.gameObject != _clothes)
@@ -497,7 +497,7 @@ namespace Yueby.AvatarTools.DressingTools
                         if (_hasSameNameClothes && _isValidClothes)
                         {
                             EditorGUILayout.HelpBox(_localization.Get("configure_same_name_tip"), MessageType.Warning);
-                            _isSureDressing = YuebyUtil.Radio(_isSureDressing, _localization.Get("configure_sure_radio"));
+                            _isSureDressing = EditorUI.Radio(_isSureDressing, _localization.Get("configure_sure_radio"));
                         }
 
                         if (_descriptor.gameObject == _clothes)
@@ -598,8 +598,7 @@ namespace Yueby.AvatarTools.DressingTools
             if (_clothesArmature.childCount == 0)
                 Undo.DestroyObjectImmediate(_clothesArmature.gameObject);
 
-            YuebyUtil.FocusTarget(_descriptor.gameObject);
-
+            EditorUtils.FocusTarget(_descriptor.gameObject);
             _preClothes = dressClothes;
         }
 

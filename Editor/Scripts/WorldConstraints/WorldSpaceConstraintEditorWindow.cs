@@ -29,14 +29,14 @@ namespace Yueby.AvatarTools.WorldConstraints
                 _window = GetWindow<WorldSpaceConstraintEditorWindow>();
             _window.titleContent = new GUIContent(_localization.Get("title_main_label"));
 
-            YuebyUtil.DrawEditorTitle(_localization.Get("title_main_label"));
+            EditorUI.DrawEditorTitle(_localization.Get("title_main_label"));
             _localization.DrawLanguageUI();
 
             DrawStandard();
             DrawOption();
         }
 
-        [MenuItem("Tools/YuebyTools/Avatar/WorldSpaceConstraint", false, 12)]
+        [MenuItem("Tools/YuebyTools/Avatar/WorldSpaceConstraint", false, 13)]
         public static void OpenWindow()
         {
             if (_window == null)
@@ -47,14 +47,14 @@ namespace Yueby.AvatarTools.WorldConstraints
 
         private void DrawStandard()
         {
-            YuebyUtil.VerticalEGLTitled(_localization.Get("standard_title_label"), () =>
+            EditorUI.VerticalEGLTitled(_localization.Get("standard_title_label"), () =>
             {
-                YuebyUtil.HorizontalEGL(() =>
+                EditorUI.HorizontalEGL(() =>
                 {
-                    YuebyUtil.DrawCheckChanged(() =>
+                    EditorUI.DrawCheckChanged(() =>
                     {
                         // Draw
-                        _targetItem = (GameObject)YuebyUtil.ObjectFieldVertical(_targetItem, _localization.Get("standard_target_item_field"), typeof(GameObject));
+                        _targetItem = (GameObject)EditorUI.ObjectFieldVertical(_targetItem, _localization.Get("standard_target_item_field"), typeof(GameObject));
 
                         if (_targetItem && !_targetItem.activeSelf)
                             _targetItem.SetActive(true);
@@ -70,18 +70,18 @@ namespace Yueby.AvatarTools.WorldConstraints
         private void DrawOption()
         {
             if (_isHideOption) return;
-            YuebyUtil.VerticalEGLTitled(_localization.Get("option_title_label"), () =>
+            EditorUI.VerticalEGLTitled(_localization.Get("option_title_label"), () =>
             {
-                _isUseParent = YuebyUtil.Radio(_isUseParent, _localization.Get("option_use_parent_radio"));
+                _isUseParent = EditorUI.Radio(_isUseParent, _localization.Get("option_use_parent_radio"));
 
                 if (_isUseParent)
-                    YuebyUtil.DrawChildElement(1, () =>
+                    EditorUI.DrawChildElement(1, () =>
                     {
                         //
-                        _parentTransform = (Transform)YuebyUtil.ObjectField(_localization.Get("option_parent_field"), 60, _parentTransform, typeof(Transform), true);
+                        _parentTransform = (Transform)EditorUI.ObjectField(_localization.Get("option_parent_field"), 60, _parentTransform, typeof(Transform), true);
                     });
 
-                _isAutoRename = YuebyUtil.Radio(_isAutoRename, _localization.Get("option_auto_rename_radio"));
+                _isAutoRename = EditorUI.Radio(_isAutoRename, _localization.Get("option_auto_rename_radio"));
             });
 
             if (GUILayout.Button(_localization.Get("setup_apply_button"))) Apply();
@@ -109,7 +109,7 @@ namespace Yueby.AvatarTools.WorldConstraints
             Undo.RegisterCreatedObjectUndo(go, "Create WorldSpaceConstraint Prefab");
             var worldSpaceItem = go.GetComponent<WorldSpaceItem>();
             worldSpaceItem.SetParent(clonedTarget);
-            YuebyUtil.PingObject(clonedTarget);
+            EditorUtils.PingObject(clonedTarget);
 
             _targetItem = null;
         }

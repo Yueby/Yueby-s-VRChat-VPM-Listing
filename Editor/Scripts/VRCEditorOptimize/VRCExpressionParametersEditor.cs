@@ -29,7 +29,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
             var expressionParameters = target as ExpressionParameters;
             if (expressionParameters != null && expressionParameters.parameters == null)
                 InitExpressionParameters(true);
-            
+
             // Init Reorderable List
             _parametersProperty = serializedObject.FindProperty("parameters");
             _paramRl = new YuebyReorderableList(serializedObject, _parametersProperty, true, true, false, Repaint);
@@ -59,7 +59,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
             var style = new GUIStyle("Badge");
             style.clipping = TextClipping.Overflow;
 
-            YuebyUtil.HorizontalEGL(style, () =>
+            EditorUI.HorizontalEGL(style, () =>
             {
                 // EditorGUILayout.Space(30);
                 GUILayout.Space(20);
@@ -96,9 +96,9 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
             var offset = -28;
             var syncedRect = new Rect(_syncedRect.x + offset + 3, rect.y, _savedRect.width, rect.height);
             var savedRect = new Rect(_savedRect.x + offset + 3, rect.y, _savedRect.width, rect.height);
-            var defaultRect = new Rect(_defaultRect.x + offset + 3, rect.y, _defaultRect.width - 3, rect.height);
-            var typeRect = new Rect(_typeRect.x + offset, rect.y, _typeRect.width, rect.height);
-            var nameRect = new Rect(_nameRect.x + offset, rect.y, _nameRect.width, rect.height);
+            var defaultRect = new Rect(_defaultRect.x + offset + 3, rect.y + 2, _defaultRect.width - 3, EditorGUIUtility.singleLineHeight);
+            var typeRect = new Rect(_typeRect.x + offset, rect.y + 2, _typeRect.width, rect.height);
+            var nameRect = new Rect(_nameRect.x + offset, rect.y + 2, _nameRect.width, EditorGUIUtility.singleLineHeight);
 
             EditorGUI.PropertyField(syncedRect, synced, new GUIContent(""));
             EditorGUI.PropertyField(savedRect, saved, new GUIContent(""));
@@ -134,9 +134,9 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
                 _scrollPos = _paramRl.ScrollPos;
 
 
-                YuebyUtil.VerticalEGL(() =>
+                EditorUI.VerticalEGL(() =>
                 {
-                    YuebyUtil.VerticalEGL("Badge", () =>
+                    EditorUI.VerticalEGL("Badge", () =>
                     {
                         var cost = ((ExpressionParameters)target).CalcTotalCost();
                         if (cost > ExpressionParameters.MAX_PARAMETER_COST)
@@ -152,7 +152,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
                         EditorGUILayout.HelpBox(Localization.Get("parameters_tip_2"), MessageType.Info);
                         EditorGUILayout.HelpBox(Localization.Get("parameters_tip_3"), MessageType.Info);
 
-                        YuebyUtil.HorizontalEGL(() =>
+                        EditorUI.HorizontalEGL(() =>
                         {
                             //Clear
                             if (GUILayout.Button(Localization.Get("parameters_clear")))

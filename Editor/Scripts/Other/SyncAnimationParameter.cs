@@ -84,18 +84,18 @@ namespace Yueby.AvatarTools.Other
             _clipBsInfoSo?.Update();
 
 
-            YuebyUtil.DrawEditorTitle("动画内形态键同步工具");
-            YuebyUtil.VerticalEGLTitled("参数", () =>
+            EditorUI.DrawEditorTitle("动画内形态键同步工具");
+            EditorUI.VerticalEGLTitled("参数", () =>
             {
                 EditorGUI.BeginChangeCheck();
-                _meshRenderer = (SkinnedMeshRenderer)YuebyUtil.ObjectField("目标网格：", 50, _meshRenderer, typeof(SkinnedMeshRenderer), true);
+                _meshRenderer = (SkinnedMeshRenderer)EditorUI.ObjectField("目标网格：", 50, _meshRenderer, typeof(SkinnedMeshRenderer), true);
                 if (EditorGUI.EndChangeCheck())
                     GetMeshInfo();
                 if (_defaultAnimationBsHelper == null || _defaultAnimationBsHelper.Parameters.Count == 0 && _meshRenderer != null)
                     GetMeshInfo();
 
                 EditorGUI.BeginChangeCheck();
-                _animationClip = (AnimationClip)YuebyUtil.ObjectField("动画片段：", 50, _animationClip, typeof(AnimationClip), true);
+                _animationClip = (AnimationClip)EditorUI.ObjectField("动画片段：", 50, _animationClip, typeof(AnimationClip), true);
                 if (EditorGUI.EndChangeCheck())
                     GetAnimationInfo();
                 if (_clipAnimationBsHelper == null || _clipAnimationBsHelper.Parameters.Count == 0 && _animationClip != null)
@@ -109,14 +109,14 @@ namespace Yueby.AvatarTools.Other
             else
                 EditorGUILayout.LabelField("请选择你想要的动画片段(AnimationClip)!");
 
-            YuebyUtil.VerticalEGLTitled("设置", () =>
+            EditorUI.VerticalEGLTitled("设置", () =>
             {
-                _isAdditive = YuebyUtil.Radio(_isAdditive, "IsAdditive");
-                YuebyUtil.HorizontalEGL(() =>
+                _isAdditive = EditorUI.Radio(_isAdditive, "IsAdditive");
+                EditorUI.HorizontalEGL(() =>
                 {
-                    var bkgColor = GUI.backgroundColor;
+                    var bkgColor = UnityEngine.GUI.backgroundColor;
                     if (_isPreview)
-                        GUI.backgroundColor = Color.green;
+                        UnityEngine.GUI.backgroundColor = Color.green;
 
                     if (GUILayout.Button("预览"))
                     {
@@ -127,7 +127,7 @@ namespace Yueby.AvatarTools.Other
                         }
                     }
 
-                    GUI.backgroundColor = bkgColor;
+                    UnityEngine.GUI.backgroundColor = bkgColor;
 
                     if (GUILayout.Button("应用"))
                     {

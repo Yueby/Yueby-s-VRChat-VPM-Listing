@@ -40,7 +40,7 @@ namespace Yueby.AvatarTools
 
         public readonly List<ReorderableListDroppable> InverseRlList = new List<ReorderableListDroppable>();
 
-        public ReorderableListDroppable(IList elements, Type elementType, float elementHeight, UnityAction animBoolValueChangedRepaint, bool isShowAddButton = true, bool isShowRemoveButton = true,UnityAction onRepaint=null)
+        public ReorderableListDroppable(IList elements, Type elementType, float elementHeight, UnityAction animBoolValueChangedRepaint, bool isShowAddButton = true, bool isShowRemoveButton = true, UnityAction onRepaint = null)
         {
             _elements = elements;
             _isShowAddButton = isShowAddButton;
@@ -86,7 +86,7 @@ namespace Yueby.AvatarTools
                 {
                     if (index < 0 || index > ElementHeights.Length - 1) return 0;
                     _onRepaint?.Invoke();
-                    
+
                     OnElementHeightCallback?.Invoke(index);
                     Array.Resize(ref ElementHeights, elements.Count);
                     var height = ElementHeights[index];
@@ -133,13 +133,13 @@ namespace Yueby.AvatarTools
 
                 if (EditorGUILayout.BeginFadeGroup(AnimBool.faded))
                 {
-                    YuebyUtil.HorizontalEGL(() =>
+                    EditorUI.HorizontalEGL(() =>
                     {
                         EditorGUILayout.Space(5);
                         if (isNoBorder)
-                            YuebyUtil.VerticalEGL(() => { DrawContent(OnDrawTitle); }, maxWidth > 0 ? GUILayout.MaxWidth(maxWidth) : GUILayout.ExpandWidth(true));
+                            EditorUI.VerticalEGL(() => { DrawContent(OnDrawTitle); }, maxWidth > 0 ? GUILayout.MaxWidth(maxWidth) : GUILayout.ExpandWidth(true));
                         else
-                            YuebyUtil.VerticalEGL("Badge", () => { DrawContent(OnDrawTitle); }, maxWidth > 0 ? GUILayout.MaxWidth(maxWidth) : GUILayout.ExpandWidth(true));
+                            EditorUI.VerticalEGL("Badge", () => { DrawContent(OnDrawTitle); }, maxWidth > 0 ? GUILayout.MaxWidth(maxWidth) : GUILayout.ExpandWidth(true));
                         EditorGUILayout.Space(5);
                     }, GUILayout.MaxHeight(area.y), maxWidth > 0 ? GUILayout.MaxWidth(maxWidth) : GUILayout.ExpandWidth(true));
                     listRect = GUILayoutUtility.GetLastRect();
@@ -149,15 +149,15 @@ namespace Yueby.AvatarTools
             }
             else
             {
-                YuebyUtil.VerticalEGL(() =>
+                EditorUI.VerticalEGL(() =>
                 {
                     if (!string.IsNullOrEmpty(title))
-                        YuebyUtil.TitleLabelField(title, maxWidth > 0 ? GUILayout.MaxWidth(maxWidth) : GUILayout.ExpandWidth(true));
+                        EditorUI.TitleLabelField(title, maxWidth > 0 ? GUILayout.MaxWidth(maxWidth) : GUILayout.ExpandWidth(true));
 
                     if (isNoBorder)
-                        YuebyUtil.VerticalEGL(() => { DrawContent(OnDrawTitle); }, maxWidth > 0 ? GUILayout.MaxWidth(maxWidth) : GUILayout.ExpandWidth(true));
+                        EditorUI.VerticalEGL(() => { DrawContent(OnDrawTitle); }, maxWidth > 0 ? GUILayout.MaxWidth(maxWidth) : GUILayout.ExpandWidth(true));
                     else
-                        YuebyUtil.VerticalEGL("Badge", () => { DrawContent(OnDrawTitle); }, maxWidth > 0 ? GUILayout.MaxWidth(maxWidth) : GUILayout.ExpandWidth(true));
+                        EditorUI.VerticalEGL("Badge", () => { DrawContent(OnDrawTitle); }, maxWidth > 0 ? GUILayout.MaxWidth(maxWidth) : GUILayout.ExpandWidth(true));
                     EditorGUILayout.Space(5);
                 }, GUILayout.MaxHeight(area.y), maxWidth > 0 ? GUILayout.MaxWidth(maxWidth) : GUILayout.ExpandWidth(true));
                 listRect = GUILayoutUtility.GetLastRect();
@@ -203,12 +203,12 @@ namespace Yueby.AvatarTools
 
         private void DrawContent(UnityAction titleDraw = null)
         {
-            YuebyUtil.SpaceArea(() =>
+            EditorUI.SpaceArea(() =>
             {
                 // 绘制标题头
-                YuebyUtil.HorizontalEGL(() =>
+                EditorUI.HorizontalEGL(() =>
                 {
-                    YuebyUtil.HorizontalEGL("Badge", () =>
+                    EditorUI.HorizontalEGL("Badge", () =>
                     {
                         EditorGUILayout.LabelField($"{List.count}", EditorStyles.centeredGreyMiniLabel,
                             GUILayout.Width(25), GUILayout.Height(18));
@@ -228,9 +228,9 @@ namespace Yueby.AvatarTools
                 });
                 _dropRect = GUILayoutUtility.GetLastRect();
 
-                YuebyUtil.Line(LineType.Horizontal, 2, 0);
+                EditorUI.Line(LineType.Horizontal, 2, 0);
                 // 绘制列表内容
-                _scrollPos = YuebyUtil.ScrollViewEGL(() =>
+                _scrollPos = EditorUI.ScrollViewEGL(() =>
                 {
                     if (List.count == 0)
                         EditorGUILayout.HelpBox("List is null!", MessageType.Info);

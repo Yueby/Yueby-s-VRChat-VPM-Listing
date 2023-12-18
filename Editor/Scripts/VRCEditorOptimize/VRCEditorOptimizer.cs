@@ -17,7 +17,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
         private const string StyleSymbol = "YUEBY_AVATAR_STYLE";
 
 
-        [MenuItem(Path, priority = 10)]
+        [MenuItem(Path, priority = 50)]
         public static void Execute()
         {
 #if UNITY_2019

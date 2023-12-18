@@ -32,10 +32,10 @@ namespace Yueby.AvatarTools.Other
             var selections = Selection.gameObjects;
             var isSelectedObject = selections.Length > 0;
 
-            YuebyUtil.DrawEditorTitle("重命名工具");
-            YuebyUtil.VerticalEGLTitled("配置", () =>
+            EditorUI.DrawEditorTitle("重命名工具");
+            EditorUI.VerticalEGLTitled("配置", () =>
             {
-                YuebyUtil.HorizontalEGL(() =>
+                EditorUI.HorizontalEGL(() =>
                 {
                     EditorGUILayout.LabelField("重命名类型");
                     _renameType = (RenameType)EditorGUILayout.EnumPopup(_renameType);
@@ -44,17 +44,17 @@ namespace Yueby.AvatarTools.Other
                 switch (_renameType)
                 {
                     case RenameType.Additive:
-                        _renameText = YuebyUtil.TextField("添加的字符", _renameText, 70);
+                        _renameText = EditorUI.TextField("添加的字符", _renameText, 70);
                         break;
                     case RenameType.Replace:
-                        _keyword = YuebyUtil.TextField("关键字", _keyword, 60);
-                        _renameText = YuebyUtil.TextField("替换为", _renameText, 60);
+                        _keyword = EditorUI.TextField("关键字", _keyword, 60);
+                        _renameText = EditorUI.TextField("替换为", _renameText, 60);
                         EditorGUILayout.HelpBox("按关键字替换", MessageType.Info);
                         break;
                 }
             });
 
-            YuebyUtil.VerticalEGLTitled("操作", () =>
+            EditorUI.VerticalEGLTitled("操作", () =>
             {
                 if (GUILayout.Button("重命名") && selections.Length > 0)
                     switch (_renameType)
@@ -68,10 +68,10 @@ namespace Yueby.AvatarTools.Other
                     }
             });
 
-            YuebyUtil.VerticalEGLTitled("选中列表", () =>
+            EditorUI.VerticalEGLTitled("选中列表", () =>
             {
                 if (isSelectedObject)
-                    _pos = YuebyUtil.ScrollViewEGL(() =>
+                    _pos = EditorUI.ScrollViewEGL(() =>
                     {
                         foreach (var selection in selections) EditorGUILayout.ObjectField(selection, typeof(GameObject), true);
                     }, _pos, GUILayout.Height(200));

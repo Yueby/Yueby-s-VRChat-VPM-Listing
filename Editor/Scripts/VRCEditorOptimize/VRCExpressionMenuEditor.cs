@@ -60,7 +60,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
 
             Localization.DrawLanguageUI(Screen.width - 120, 55);
 
-            YuebyUtil.VerticalEGL("Badge", () =>
+            EditorUI.VerticalEGL("Badge", () =>
             {
                 SelectAvatarDescriptor();
 
@@ -70,7 +70,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
 
 
             //Controls
-            _menuRl.DoLayout(Localization.Get("controls"), 0, false, false);
+            _menuRl.DoLayout(Localization.Get("controls"), false, false);
             serializedObject.ApplyModifiedProperties();
         }
 
@@ -281,7 +281,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
             const float height = 240f;
             rect.height = height;
 
-            GUI.Box(rect, "", "Badge");
+            UnityEngine.GUI.Box(rect, "", "Badge");
             var center = new Rect(rect.center.x, rect.center.y - size.y / 4f, 10, 10);
 
             var upRect = new Rect(center.x - size.x / 2f, center.y - size.y / 2 - offset.y, size.x, size.y);
@@ -319,7 +319,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
             rect.y += height;
 
             var boxRect = new Rect(rect.x, rect.y, rect.width - 5f, height);
-            GUI.Box(boxRect, "");
+            UnityEngine.GUI.Box(boxRect, "");
             rect.y = boxRect.y + boxRect.height + height * 2;
 
             return rect;
@@ -328,7 +328,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
         private Rect DrawHelpBox(Rect rect, string text, MessageType messageType)
         {
             rect.y += rect.height + 4;
-            var textSize = GUI.skin.label.CalcSize(new GUIContent(text));
+            var textSize = UnityEngine.GUI.skin.label.CalcSize(new GUIContent(text));
 
             var helpBoxRect = new Rect(rect.x, rect.y, rect.width, textSize.y + EditorGUIUtility.singleLineHeight);
             EditorGUI.HelpBox(helpBoxRect, text, messageType);
@@ -344,7 +344,7 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
 
         private void DrawEditorGUI(Rect rect, string label, UnityAction<Rect> onDraw, string tooltip = "")
         {
-            var size = GUI.skin.label.CalcSize(new GUIContent(label + "\t"));
+            var size = UnityEngine.GUI.skin.label.CalcSize(new GUIContent(label + "\t"));
             var labelRect = new Rect(rect.x, rect.y, size.x, rect.height);
             var pRect = new Rect(labelRect.x + labelRect.width + 2, labelRect.y, rect.width - labelRect.width - 2 * 2, labelRect.height);
             EditorGUI.LabelField(labelRect, new GUIContent(label, tooltip));

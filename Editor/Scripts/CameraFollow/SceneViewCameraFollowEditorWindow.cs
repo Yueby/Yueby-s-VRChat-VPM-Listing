@@ -8,7 +8,7 @@ namespace Yueby.AvatarTools.CameraFollow
         private const string Path = "Tools/YuebyTools/Utils/Follow SceneView Camera %&X";
         private static bool IsEnabled;
 
-        [MenuItem(Path, priority = 10)]
+        [MenuItem(Path, priority = 51)]
         public static void Execute()
         {
             var cam = Camera.main;

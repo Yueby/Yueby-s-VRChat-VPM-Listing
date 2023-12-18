@@ -243,7 +243,7 @@ namespace Yueby.AvatarTools.ClothesManager
                 return;
             }
 
-            YuebyUtil.FocusTarget(_descriptor.gameObject);
+            EditorUtils.FocusTarget(_descriptor.gameObject);
             GetTargetParameter();
         }
 
@@ -443,7 +443,7 @@ namespace Yueby.AvatarTools.ClothesManager
                     EditorGUI.BeginDisabledGroup(target.SmrParameter.Index == -1);
 
 
-                    if (GUI.Button(addRect, "+"))
+                    if (UnityEngine.GUI.Button(addRect, "+"))
                     {
                         var parameter = AddNextSMRParameter(target, skinnedMeshRenderer);
 
@@ -766,7 +766,6 @@ namespace Yueby.AvatarTools.ClothesManager
             foreach (var remove in removeList)
                 newParameters.Remove(remove);
 
-
             foreach (var category in data.Categories)
             {
                 if (category.Clothes.Count == 0) continue;
@@ -794,72 +793,69 @@ namespace Yueby.AvatarTools.ClothesManager
             var currentExMenu = _dataReference.ParentMenu == null ? _expressionsMenu : _dataReference.ParentMenu;
 
             if (currentExMenu.controls.Count >= 8)
-                currentExMenu = GetLastNextSubMenu(currentExMenu, new FileInfo(AssetDatabase.GetAssetPath(currentExMenu)).DirectoryName, currentExMenu.name, 0);
+                currentExMenu = GetLastNextSubMenu(currentExMenu, AssetDatabase.GetAssetPath(currentExMenu).Replace($"/{currentExMenu.name}.asset", ""), currentExMenu.name, 0);
 
             if (currentExMenu != _expressionsMenu)
                 BackupFile(backupPath, currentExMenu, time);
+
 
             foreach (var category in data.Categories)
             {
                 if (category.Clothes.Count == 0) continue;
 
-                VRCExpressionsMenu currentMainMenu;
-
+                var currentMainMenu = mainMenu;
                 if (category.ParentMenu != null)
                 {
                     currentMainMenu = category.ParentMenu;
-                    BackupFile(backupPath, category.ParentMenu, time);
-                }
-                else
-                {
-                    currentMainMenu = mainMenu;
+                    BackupFile(backupPath, currentMainMenu, time);
                 }
 
                 var currentCategoryMenu = GetLastNextSubMenu(currentMainMenu, $"{menuDir}", currentMainMenu.name, 0, false, currentMainMenu);
 
-                Debug.Log(currentCategoryMenu);
                 var parameterName = $"YCM/{category.Name}/Switch";
-                var currentClothesMenu = CreateSubMenuAssets($"{menuDir}/Category_{category.Name}.asset");
 
-                var clothesPageIndex = 0;
-                foreach (var clothes in category.Clothes)
+                CreateSubMenuAssets($"{menuDir}/Category_{category.Name}.asset", menu =>
                 {
-                    if (currentClothesMenu.controls.Count > 7)
+                    var currentClothesMenu = menu;
+                    var clothesPageIndex = 0;
+                    foreach (var clothes in category.Clothes)
                     {
-                        currentClothesMenu = CreateSubMenuAssets("", currentClothesMenu, "下一页", null, true);
-                        currentClothesMenu.name = $"{category.Name}_Page {++clothesPageIndex}";
+                        if (currentClothesMenu.controls.Count > 7)
+                        {
+                            currentClothesMenu = CreateSubMenuAssets("", currentClothesMenu, Localization.Get("apply_next_page"), null, true);
+                            currentClothesMenu.name = $"{category.Name}_Page {++clothesPageIndex}";
+                        }
+
+                        var control = new VRCExpressionsMenu.Control
+                        {
+                            name = clothes.Name,
+                            icon = clothes.Icon,
+                            type = VRCExpressionsMenu.Control.ControlType.Toggle,
+                            parameter = new VRCExpressionsMenu.Control.Parameter
+                            {
+                                name = parameterName
+                            },
+                            value = category.Clothes.IndexOf(clothes)
+                        };
+                        currentClothesMenu.controls.Add(control);
                     }
 
-                    currentClothesMenu.controls.Add(new VRCExpressionsMenu.Control
-                    {
-                        name = clothes.Name,
-                        icon = clothes.Icon,
-                        type = VRCExpressionsMenu.Control.ControlType.Toggle,
-                        parameter = new VRCExpressionsMenu.Control.Parameter
-                        {
-                            name = parameterName
-                        },
-                        value = category.Clothes.IndexOf(clothes)
-                    });
-
                     EditorUtility.SetDirty(currentClothesMenu);
-                }
 
-                SetupSubMen(currentCategoryMenu, currentClothesMenu, category.Name, category.Icon);
-                if (currentCategoryMenu)
-                    EditorUtility.SetDirty(currentCategoryMenu);
+                    SetupSubMenu(currentCategoryMenu, currentClothesMenu, category.Name, category.Icon);
+                    if (currentCategoryMenu != null)
+                        EditorUtility.SetDirty(currentCategoryMenu);
+                });
             }
 
             if (mainMenu.controls.Count > 0)
-                SetupSubMen(currentExMenu, mainMenu, Localization.Get("window_title"), null);
+                SetupSubMenu(currentExMenu, mainMenu, Localization.Get("window_title"), null);
             else
                 AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(mainMenu));
             EditorUtility.SetDirty(currentExMenu);
 
-
             // 创建动画文件
             // 删除旧文件，替换为新文件
-
             var animDir = GetIDPath() + "/Animations";
             if (Directory.Exists(animDir))
                 Directory.Delete(animDir, true);
@@ -1002,7 +998,16 @@ namespace Yueby.AvatarTools.ClothesManager
             EditorUtility.DisplayDialog(Localization.Get("tips"), Localization.Get("apply_success_tip"), Localization.Get("ok"));
         }
 
-        private void SetupSubMen(VRCExpressionsMenu menu, VRCExpressionsMenu target, string targetName, Texture2D icon)
+        private void DeleteNullSubMenu(VRCExpressionsMenu current, string menuName)
+        {
+            foreach (var control in current.controls.ToList())
+            {
+                if (control.name == menuName && control.type == VRCExpressionsMenu.Control.ControlType.SubMenu)
+                    current.controls.Remove(control);
+            }
+        }
+
+        private void SetupSubMenu(VRCExpressionsMenu menu, VRCExpressionsMenu target, string targetName, Texture2D icon)
         {
             var isFindMenu = false;
             foreach (var control in menu.controls)
@@ -1028,6 +1033,8 @@ namespace Yueby.AvatarTools.ClothesManager
                     icon = icon
                 });
             }
+
+            DeleteNullSubMenu(menu, Localization.Get("window_title"));
         }
 
         private void BackupFile(string path, Object targetFile, string backupTime)
@@ -1049,7 +1056,7 @@ namespace Yueby.AvatarTools.ClothesManager
         {
             if (current.controls.Count < 8) return current;
 
-            var currentName = $"{menuName} (NextPage {index + 1})";
+            var currentName = $"[CM Generated] {menuName} (Next {index + 1})";
             var createPath = path + $"/{currentName}.asset";
 
             var control = current.controls[current.controls.Count - 1];
@@ -1068,6 +1075,7 @@ namespace Yueby.AvatarTools.ClothesManager
             }
 
             current.controls.Remove(control);
+
             var currentExMenu = CreateSubMenuAssets(createPath, current, Localization.Get("apply_next_page"), _nextIcon, isAddChild, parent);
             currentExMenu.name = currentName;
 
@@ -1077,6 +1085,17 @@ namespace Yueby.AvatarTools.ClothesManager
             }
 
             return currentExMenu;
+        }
+
+        private void CreateSubMenuAssets(string path, UnityAction<VRCExpressionsMenu> onAction)
+        {
+            var createdMenu = CreateInstance<VRCExpressionsMenu>();
+            onAction?.Invoke(createdMenu);
+
+            if (File.Exists(path))
+                File.Delete(path);
+            AssetDatabase.CreateAsset(createdMenu, path);
+            AssetDatabase.SaveAssets();
         }
 
         private VRCExpressionsMenu CreateSubMenuAssets(string path, VRCExpressionsMenu parentMenu = null, string createdMenuName = "", Texture2D icon = null, bool isAddToChild = false, VRCExpressionsMenu parentMenuToAdd = null)
@@ -1313,7 +1332,7 @@ namespace Yueby.AvatarTools.ClothesManager
                 _isStartCapture = false;
                 StopCapture(false);
 
-                YuebyUtil.WaitToDo(20, "Wait to setup capture", () =>
+                EditorUtils.WaitToDo(20, "Wait to setup capture", () =>
                 {
                     _isStartCapture = true;
                     SetupCapture(false);
@@ -1331,7 +1350,7 @@ namespace Yueby.AvatarTools.ClothesManager
                 _isStartCapture = false;
                 StopCapture(false);
 
-                YuebyUtil.WaitToDo(20, "Wait to setup capture", () =>
+                EditorUtils.WaitToDo(20, "Wait to setup capture", () =>
                 {
                     _isStartCapture = true;
                     SetupCapture(false);

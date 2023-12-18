@@ -26,18 +26,18 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
 
         private void OnGUI()
         {
-            YuebyUtil.DrawEditorTitle("Avatar材质动骨转移");
-            YuebyUtil.VerticalEGLTitled("配置", () =>
+            EditorUI.DrawEditorTitle("Avatar材质动骨转移");
+            EditorUI.VerticalEGLTitled("配置", () =>
             {
-                YuebyUtil.HorizontalEGL(() =>
+                EditorUI.HorizontalEGL(() =>
                 {
-                    _origin = (Transform)YuebyUtil.ObjectFieldVertical(_origin, "原Armature", typeof(Transform));
-                    YuebyUtil.Line(LineType.Vertical);
-                    _current = (Transform)YuebyUtil.ObjectFieldVertical(_current, "现Armature", typeof(Transform));
+                    _origin = (Transform)EditorUI.ObjectFieldVertical(_origin, "原Armature", typeof(Transform));
+                    EditorUI.Line(LineType.Vertical);
+                    _current = (Transform)EditorUI.ObjectFieldVertical(_current, "现Armature", typeof(Transform));
                 },GUILayout.MaxHeight(40));
             });
 
-            YuebyUtil.VerticalEGLTitled("设置", () =>
+            EditorUI.VerticalEGLTitled("设置", () =>
             {
                 if (GUILayout.Button("转移"))
                 {

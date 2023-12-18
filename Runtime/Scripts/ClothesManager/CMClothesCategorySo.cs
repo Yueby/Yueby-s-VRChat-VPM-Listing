@@ -30,7 +30,7 @@ namespace Yueby.AvatarTools.ClothesManager
         {
             foreach (var clothes in Clothes)
             {
-                if (clothes.HasParameterDriver && clothes.EnterParameter.Parameters.Count > 0 && clothes.ExitParameter.Parameters.Count > 0)
+                if (clothes.HasParameterDriver && (clothes.EnterParameter.Parameters.Count > 0 || clothes.ExitParameter.Parameters.Count > 0))
                     return true;
             }
 

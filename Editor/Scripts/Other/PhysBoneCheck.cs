@@ -40,11 +40,11 @@ namespace Yueby.AvatarTools.Other
 
             var isSelectedObject = SelectedClothes.Length > 0;
 
-            YuebyUtil.DrawEditorTitle("动骨组件检查");
-            YuebyUtil.VerticalEGLTitled("配置", () =>
+            EditorUI.DrawEditorTitle("动骨组件检查");
+            EditorUI.VerticalEGLTitled("配置", () =>
             {
                 EditorGUI.BeginChangeCheck();
-                _checkType = YuebyUtil.PopupVertical("检测类型", _checkType, 80, new[] { "全部", "骨架", "自身" });
+                _checkType = EditorUI.PopupVertical("检测类型", _checkType, 80, new[] { "全部", "骨架", "自身" });
 
                 if (EditorGUI.EndChangeCheck())
                 {
@@ -58,30 +58,30 @@ namespace Yueby.AvatarTools.Other
 
                 if (_checkType != 2)
                 {
-                    Target = (Transform)YuebyUtil.ObjectField("骨架（Armature）", 100, Target, typeof(Transform), true);
+                    Target = (Transform)EditorUI.ObjectField("骨架（Armature）", 100, Target, typeof(Transform), true);
 
                     if (IsUseByOtherTools)
-                        YuebyUtil.DisableGroupEGL(IsUseByOtherTools, () =>
+                        EditorUI.DisableGroupEGL(IsUseByOtherTools, () =>
                         {
-                            YuebyUtil.Radio(IsUseByOtherTools, "被其他工具使用");
+                            EditorUI.Radio(IsUseByOtherTools, "被其他工具使用");
                             EditorGUILayout.HelpBox("当显示此选项时，该工具被其他工具使用", MessageType.Info);
                         });
                 }
             });
 
-            YuebyUtil.VerticalEGLTitled("操作", () =>
+            EditorUI.VerticalEGLTitled("操作", () =>
             {
                 if (GUILayout.Button("检查") && SelectedClothes.Length > 0) Check(SelectedClothes, Target);
             });
 
-            YuebyUtil.VerticalEGLTitled("结果", () =>
+            EditorUI.VerticalEGLTitled("结果", () =>
             {
                 _toolBarIndex = GUILayout.Toolbar(_toolBarIndex, new[] { "选中列表", "检查结果" });
                 EditorGUILayout.Space();
                 if (_toolBarIndex == 0)
                 {
                     if (isSelectedObject)
-                        _selectPos = YuebyUtil.ScrollViewEGL(() =>
+                        _selectPos = EditorUI.ScrollViewEGL(() =>
                         {
                             foreach (var show in SelectedClothes) EditorGUILayout.ObjectField(show, typeof(GameObject), true);
                         }, _selectPos, GUILayout.Height(200));
@@ -91,20 +91,20 @@ namespace Yueby.AvatarTools.Other
                 else
                 {
                     if (_pbCheckedDic != null && _pbCheckedDic.Count > 0)
-                        _checkPos = YuebyUtil.ScrollViewEGL(() =>
+                        _checkPos = EditorUI.ScrollViewEGL(() =>
                         {
                             foreach (var pbCheck in _pbCheckedDic)
                             {
                                 if (pbCheck.Value.Count == 0) continue;
 
                                 var title = $"<b><i>{pbCheck.Key}</i></b>";
-                                var style = GUI.skin.label;
+                                var style = UnityEngine.GUI.skin.label;
                                 style.richText = true;
                                 style.alignment = TextAnchor.MiddleLeft;
 
-                                YuebyUtil.HorizontalEGL(() =>
+                                EditorUI.HorizontalEGL(() =>
                                 {
-                                    YuebyUtil.HorizontalEGL("Badge", () => { EditorGUILayout.LabelField($"{pbCheck.Value.Count}", EditorStyles.centeredGreyMiniLabel, GUILayout.Width(25), GUILayout.Height(18)); }, GUILayout.Width(25), GUILayout.Height(18));
+                                    EditorUI.HorizontalEGL("Badge", () => { EditorGUILayout.LabelField($"{pbCheck.Value.Count}", EditorStyles.centeredGreyMiniLabel, GUILayout.Width(25), GUILayout.Height(18)); }, GUILayout.Width(25), GUILayout.Height(18));
                                     EditorGUILayout.LabelField(title, style);
                                 });
 
@@ -113,9 +113,9 @@ namespace Yueby.AvatarTools.Other
                                     var type = i == pbCheck.Value.Count - 1 ? 1 : 0;
 
                                     var parameter = pbCheck.Value[i];
-                                    YuebyUtil.DrawChildElement(type, () =>
+                                    EditorUI.DrawChildElement(type, () =>
                                     {
-                                        YuebyUtil.HorizontalEGL(() =>
+                                        EditorUI.HorizontalEGL(() =>
                                         {
                                             EditorGUILayout.LabelField($"{parameter.Tag} : {parameter.Target.GetType().Name}");
                                             EditorGUILayout.ObjectField(parameter.Target, typeof(GameObject), true);
@@ -131,10 +131,10 @@ namespace Yueby.AvatarTools.Other
                     {
                         if (_pbCheckedDic.Count <= 0) return;
 
-                        var style = GUI.skin.label;
+                        var style = UnityEngine.GUI.skin.label;
                         style.richText = true;
 
-                        YuebyUtil.VerticalEGL(new GUIStyle("Badge"), () =>
+                        EditorUI.VerticalEGL(new GUIStyle("Badge"), () =>
                         {
                             EditorGUILayout.LabelField($"找到共<b>{GetDicListCount()}</b>个PhysBone组件!", style);
                             EditorGUILayout.LabelField(GetResultString(), style);

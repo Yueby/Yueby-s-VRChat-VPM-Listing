@@ -166,14 +166,14 @@ namespace Yueby.Utils
 
         public void Draw(float elementEdgeLength, Vector2 padding, Vector2 area)
         {
-            YuebyUtil.VerticalEGL("Badge", () =>
+            EditorUI.VerticalEGL("Badge", () =>
             {
-                YuebyUtil.SpaceArea(() =>
+                EditorUI.SpaceArea(() =>
                 {
                     // 绘制标题头
-                    YuebyUtil.HorizontalEGL(() =>
+                    EditorUI.HorizontalEGL(() =>
                     {
-                        YuebyUtil.HorizontalEGL("Badge", () => { EditorGUILayout.LabelField($"{_serializedProperty.arraySize}", EditorStyles.centeredGreyMiniLabel, GUILayout.Width(25), GUILayout.Height(18)); }, GUILayout.Width(25), GUILayout.Height(18));
+                        EditorUI.HorizontalEGL("Badge", () => { EditorGUILayout.LabelField($"{_serializedProperty.arraySize}", EditorStyles.centeredGreyMiniLabel, GUILayout.Width(25), GUILayout.Height(18)); }, GUILayout.Width(25), GUILayout.Height(18));
 
                         EditorGUILayout.Space();
                         OnTitleDraw?.Invoke();
@@ -203,13 +203,13 @@ namespace Yueby.Utils
                     });
 
                     OnHeaderBottomDraw?.Invoke();
-                    YuebyUtil.Line(LineType.Horizontal, 2, 0);
+                    EditorUI.Line(LineType.Horizontal, 2, 0);
                     
                     
                     if (_selectionGridButtons.Count > 0)
                     {
                         // 绘制列表内容
-                        _scrollPos = YuebyUtil.ScrollViewEGL(() =>
+                        _scrollPos = EditorUI.ScrollViewEGL(() =>
                         {
                             var width = area.x - 30;
                             var count = Mathf.Floor((width - padding.x) / (elementEdgeLength + padding.x));
@@ -267,7 +267,7 @@ namespace Yueby.Utils
             public void Draw(Rect rect, UnityAction<Rect, int> onArrayItemDraw)
             {
                 EditorGUI.BeginChangeCheck();
-                GUI.Toolbar(rect, IsSelected ? 0 : -1, new[] { "" });
+                UnityEngine.GUI.Toolbar(rect, IsSelected ? 0 : -1, new[] { "" });
                 if (EditorGUI.EndChangeCheck())
                 {
                     OnClick?.Invoke(Index);

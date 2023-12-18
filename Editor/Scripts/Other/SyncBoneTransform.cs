@@ -11,16 +11,16 @@ namespace Yueby.AvatarTools.Other
 
         private void OnGUI()
         {
-            YuebyUtil.DrawEditorTitle("同步骨骼Transform");
+            EditorUI.DrawEditorTitle("同步骨骼Transform");
 
-            YuebyUtil.VerticalEGLTitled("配置", () =>
+            EditorUI.VerticalEGLTitled("配置", () =>
             {
-                _origin = (Transform)YuebyUtil.ObjectField("源", 50, _origin, typeof(Transform), true);
-                _target = (Transform)YuebyUtil.ObjectField("当前", 50, _target, typeof(Transform), true);
-                _isUsingWorldSpace = YuebyUtil.Radio(_isUsingWorldSpace, "使用世界坐标");
+                _origin = (Transform)EditorUI.ObjectField("源", 50, _origin, typeof(Transform), true);
+                _target = (Transform)EditorUI.ObjectField("当前", 50, _target, typeof(Transform), true);
+                _isUsingWorldSpace = EditorUI.Radio(_isUsingWorldSpace, "使用世界坐标");
             });
 
-            YuebyUtil.VerticalEGLTitled("操作", () =>
+            EditorUI.VerticalEGLTitled("操作", () =>
             {
                 if (GUILayout.Button("同步"))
                 {

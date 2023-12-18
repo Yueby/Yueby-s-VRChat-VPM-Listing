@@ -25,22 +25,22 @@ namespace Yueby.AvatarTools.Other
             var selections = Selection.gameObjects;
             var isSelectedObject = selections.Length > 0;
 
-            YuebyUtil.DrawEditorTitle("衣服删除工具");
-            YuebyUtil.VerticalEGLTitled("配置", () =>
+            EditorUI.DrawEditorTitle("衣服删除工具");
+            EditorUI.VerticalEGLTitled("配置", () =>
             {
-                _target = (Transform)YuebyUtil.ObjectField("骨骼", 60, _target, typeof(Transform), true);
+                _target = (Transform)EditorUI.ObjectField("骨骼", 60, _target, typeof(Transform), true);
                 EditorGUILayout.HelpBox("按选中的衣服对象名删除目标骨骼中同名对象", MessageType.Info);
             });
 
-            YuebyUtil.VerticalEGLTitled("操作", () =>
+            EditorUI.VerticalEGLTitled("操作", () =>
             {
                 if (GUILayout.Button("删除") && selections.Length > 0 && _target != null) Remove(selections, _target);
             });
 
-            YuebyUtil.VerticalEGLTitled("选中列表", () =>
+            EditorUI.VerticalEGLTitled("选中列表", () =>
             {
                 if (isSelectedObject)
-                    _pos = YuebyUtil.ScrollViewEGL(() =>
+                    _pos = EditorUI.ScrollViewEGL(() =>
                     {
                         foreach (var selection in selections) EditorGUILayout.ObjectField(selection, typeof(GameObject), true);
                     }, _pos, GUILayout.Height(200));
