@@ -50,11 +50,15 @@ namespace Yueby.AvatarTools.DressingTools
         private int _toolBarSelectionIndex;
 
         private bool _useClothesName = true;
-
+        private readonly Texture2D[] _titleIcons = new Texture2D[2];
         private List<VRCPhysBone> _waitCombinePhysBones;
 
         private void OnEnable()
         {
+            _titleIcons[0] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/DressingTools/Sprites/icon_d.png");
+            _titleIcons[1] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/DressingTools/Sprites/icon_l.png");
+
+
             if (_descriptor == null)
             {
                 if (EditorPrefs.HasKey(DescriptorPrefs))
@@ -99,9 +103,9 @@ namespace Yueby.AvatarTools.DressingTools
         private const string DefaultControllerPath = "Packages/com.yueby.avatartools/Editor/Assets/DressingTools/Animation/AvatarTest";
         private static string _path = DefaultControllerPath;
 
-        private string GetDressingToolsAssetsPath()
+        private string GetAnimationAssetsPath()
         {
-            return _path.Replace("/Animation/AvatarTest", "");
+            return _path.Replace("/AvatarTest", "");
         }
 
         private string GetControllerFolder()
@@ -132,7 +136,7 @@ namespace Yueby.AvatarTools.DressingTools
         {
             if (_window == null)
                 _window = GetWindow<DressingToolEditorWindow>();
-            _window.titleContent = new GUIContent(_localization.Get("title_main_label"));
+            _window.titleContent = new GUIContent(_localization.Get("title_main_label"), _titleIcons[!EditorGUIUtility.isProSkin ? 1 : 0]);
             EditorUI.DrawEditorTitle(_localization.Get("title_main_label"));
 
             _localization.DrawLanguageUI();
@@ -350,10 +354,13 @@ namespace Yueby.AvatarTools.DressingTools
                     {
                         if (GUILayout.Button(_localization.Get("option_test_change_path"), GUILayout.Width(100)))
                         {
-                            var dressingToolsPath = GetDressingToolsAssetsPath();
-                            EditorUtils.MoveFolderFromPath(ref dressingToolsPath, "DressingTools");
+                            var animPath = GetAnimationAssetsPath();
 
-                            _path = $"{dressingToolsPath}/Animation/AvatarTest";
+                            // if (!Directory.Exists("DressingTools"))
+                            //     AssetDatabase.CreateFolder("Assets", "DressingTools");
+                            EditorUtils.MoveFolderFromPath(ref animPath, "DressingTools/Animation");
+
+                            _path = $"{animPath}/AvatarTest";
                         }
 
                         if (GUILayout.Button(_localization.Get("option_test_jump_path"), GUILayout.Width(100)))

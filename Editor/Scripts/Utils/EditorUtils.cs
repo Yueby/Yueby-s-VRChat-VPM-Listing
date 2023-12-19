@@ -240,8 +240,17 @@ namespace Yueby.Utils
             if (targetPath != folderPath)
             {
                 var lastPath = folderPath;
+
                 if (!Directory.Exists(lastPath))
                     return;
+
+                var parent = new DirectoryInfo(targetPath).Parent;
+
+                if (parent != null && !Directory.Exists(parent.FullName))
+                {
+                    Directory.CreateDirectory(parent.FullName);
+                    AssetDatabase.Refresh();
+                }
 
                 if (Directory.Exists(targetPath))
                 {
@@ -251,10 +260,12 @@ namespace Yueby.Utils
                         Directory.Delete(targetPath, true);
                 }
 
+                // 移动文件或目录
                 FileUtil.MoveFileOrDirectory(lastPath, targetPath);
 
-                if (File.Exists(lastPath + ".meta"))
-                    File.Delete(lastPath + ".meta");
+                // 移动 .meta 文件
+                FileUtil.MoveFileOrDirectory(lastPath + ".meta", targetPath + ".meta");
+
 
                 folderPath = targetPath;
 

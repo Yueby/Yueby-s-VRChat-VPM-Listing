@@ -71,6 +71,7 @@ namespace Yueby.AvatarTools.ClothesManager
         private readonly Texture2D[] _clothesIcons = new Texture2D[2];
         private readonly Texture2D[] _objectIcons = new Texture2D[2];
         private readonly Texture2D[] _listIcons = new Texture2D[2];
+        private readonly Texture2D[] _titleIcons = new Texture2D[2];
         private Texture2D _nextIcon;
 
         private List<CMClothesData.ClothesAnimParameter> _copiedSMRData;
@@ -110,8 +111,8 @@ namespace Yueby.AvatarTools.ClothesManager
             _configureTabBarGroup = new TabBarGroup(new List<TabBarElement> { _categoryBar, _clothesBar, _clothesParameterBar, _clothesDriverBar });
             GetDescriptorOnEnable();
             InitSerializedObjects();
-            if(_avatarState==null)
-            _avatarState = new CMAvatarState(_descriptor.gameObject);
+            if (_avatarState == null)
+                _avatarState = new CMAvatarState(_descriptor.gameObject);
         }
 
         private void GetIcons()
@@ -127,6 +128,10 @@ namespace Yueby.AvatarTools.ClothesManager
 
             _categoryIcons[0] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/DarkMode/category.png");
             _categoryIcons[1] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/LightMode/category.png");
+
+            _titleIcons[0] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/DarkMode/icon.png");
+            _titleIcons[1] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/LightMode/icon.png");
+
             _nextIcon = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/next.png");
         }
 
@@ -153,7 +158,7 @@ namespace Yueby.AvatarTools.ClothesManager
 
             if (_window == null)
                 _window = GetWindow<CMEditorWindow>();
-            _window.titleContent = new GUIContent(Localization.Get("window_title"));
+            _window.titleContent = new GUIContent(Localization.Get("window_title"), _titleIcons[!EditorGUIUtility.isProSkin ? 1 : 0]);
 
             EditorUI.DrawEditorTitle(Localization.Get("window_title"));
             Localization.DrawLanguageUI();

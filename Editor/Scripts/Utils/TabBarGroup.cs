@@ -52,7 +52,7 @@ namespace Yueby.AvatarTools
                             foreach (var c in element.Title)
                                 result += c + "\n";
 
-                            if (UnityEngine.GUI.Button(btnRect, result + label))
+                            if (GUI.Button(btnRect, result + label))
                                 element.ChangeDrawState(!element.IsDraw);
                         }
                         else
@@ -65,13 +65,13 @@ namespace Yueby.AvatarTools
                             var btnRect = new Rect(rect.x - 2, rect.y + elementHeight + element.Space, rect.width, currentHeight);
 
                       
-                             var toggleStyle = UnityEngine.GUI.skin.FindStyle("buttonright");
-                             element.ChangeDrawState(UnityEngine.GUI.Toggle(btnRect, element.IsDraw, "", toggleStyle));
+                             var toggleStyle = GUI.skin.FindStyle("buttonright");
+                             element.ChangeDrawState(GUI.Toggle(btnRect, element.IsDraw, "", toggleStyle));
                             var texHeight = btnRect.width - 4;
                             var texRect = new Rect(btnRect.x + 2, btnRect.y + btnRect.height / 2 - texHeight / 2, btnRect.width - 4, texHeight);
                      
              
-                            UnityEngine.GUI.DrawTexture(texRect, icon);
+                            GUI.DrawTexture(texRect, icon);
                         }
 
                         elementHeight += currentHeight + element.Space;
@@ -79,8 +79,8 @@ namespace Yueby.AvatarTools
                 }
 
 
-                UnityEngine.GUI.Box(new Rect(rect.x + rect.width + 2, rect.y, 1, rect.height), "");
-                UnityEngine.GUI.Box(new Rect(rect.x + rect.width + 2, rect.y, 1, rect.height), "");
+                GUI.Box(new Rect(rect.x + rect.width + 2, rect.y, 1, rect.height), "");
+                GUI.Box(new Rect(rect.x + rect.width + 2, rect.y, 1, rect.height), "");
             }, GUILayout.MaxWidth(width), GUILayout.MaxHeight(height));
         }
     }
