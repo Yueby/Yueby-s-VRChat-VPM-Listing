@@ -67,6 +67,17 @@ namespace Yueby.AvatarTools.ClothesManager
         private const float ConfigureListHeight = ConfigurePageHeight - 100;
         private const float ConfigureListWidth = 380f;
 
+        private RenderTexture _previewRT;
+        private bool _isStartCapture;
+        private GameObject _captureGo;
+        private GameObject _captureCameraGo;
+        private Camera _captureCamera;
+
+
+        private static int _clothesFoldoutIndex;
+        private static int _driverFoldoutIndex;
+
+
         private readonly Texture2D[] _categoryIcons = new Texture2D[2];
         private readonly Texture2D[] _clothesIcons = new Texture2D[2];
         private readonly Texture2D[] _objectIcons = new Texture2D[2];
@@ -356,9 +367,6 @@ namespace Yueby.AvatarTools.ClothesManager
                 _isGridInit = false;
         }
 
-
-        private static int _clothesFoldoutIndex;
-        private static int _driverFoldoutIndex;
 
         private void InitClothData()
         {
@@ -781,153 +789,6 @@ namespace Yueby.AvatarTools.ClothesManager
             }
         }
 
-
-        private RenderTexture _previewRT;
-        private bool _isStartCapture;
-        private GameObject _captureGo;
-        private GameObject _captureCameraGo;
-        private Camera _captureCamera;
-
-        private void SetupCapture(bool needFocus = true)
-        {
-            if (!_captureCameraGo)
-            {
-                _captureCameraGo = new GameObject(Localization.Get("capture_obj_camera"));
-                var follow = _captureCameraGo.AddComponent<CMCaptureCameraFollow>();
-                follow.OnPositionUpdate += Repaint;
-
-                _captureCamera = _captureCameraGo.AddComponent<Camera>();
-                _captureCamera.clearFlags = CameraClearFlags.SolidColor;
-                _captureCamera.backgroundColor = Color.clear;
-                _captureCamera.fieldOfView = 45;
-                _captureCamera.targetTexture = _previewRT;
-                _captureCamera.orthographic = true;
-                _captureCamera.orthographicSize = 0.5f;
-            }
-
-            _captureGo = Instantiate(_descriptor.gameObject);
-            _captureGo.name = Localization.Get("capture_obj_avatar") + _clothes.Name;
-
-            foreach (var component in _captureGo.GetComponentsInChildren<Component>(true))
-            {
-                if (component.GetType() == typeof(Transform) || component.GetType() == typeof(SkinnedMeshRenderer)) continue;
-                DestroyImmediate(component);
-            }
-
-            var map = GetClothesParameters(_currentClothesCategory, _clothesIndex);
-            var showList = map["Show"];
-            var hideList = map["Hide"];
-
-            var hideRenderers = new List<GameObject>();
-            foreach (var renderer in _captureGo.GetComponentsInChildren<Renderer>())
-            {
-                hideRenderers.Add(renderer.gameObject);
-            }
-
-            foreach (var show in showList)
-            {
-                var trans = _captureGo.transform.Find(show.Path);
-                if (!trans) continue;
-                var childRenderers = trans.GetComponentsInChildren<Renderer>();
-                foreach (var childRender in childRenderers)
-                {
-                    if (hideRenderers.Contains(childRender.gameObject))
-                        hideRenderers.Remove(childRender.gameObject);
-                }
-
-
-                trans.gameObject.SetActive(true);
-            }
-
-            foreach (var hide in hideRenderers)
-            {
-                // hide.SetActive(false);
-                DestroyImmediate(hide);
-            }
-
-            foreach (var hide in hideList)
-            {
-                var trans = _captureGo.transform.Find(hide.Path);
-                if (!trans) continue;
-                DestroyImmediate(trans.gameObject);
-            }
-
-            var capturePos = new Vector3(1000, 0, 100);
-            _captureGo.transform.position = capturePos;
-
-            if (needFocus)
-                EditorUtils.FocusTarget(_captureGo);
-        }
-
-
-        private Texture2D SaveRTToFile(string path)
-        {
-            var mRt = new RenderTexture(_previewRT.width, _previewRT.height, _previewRT.depth, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB)
-            {
-                antiAliasing = _previewRT.antiAliasing
-            };
-
-            mRt.Create();
-
-            var tex = new Texture2D(mRt.width, mRt.height, TextureFormat.ARGB32, false);
-            _captureCamera.targetTexture = mRt;
-            _captureCamera.Render();
-            RenderTexture.active = mRt;
-
-            tex.ReadPixels(new Rect(0, 0, mRt.width, mRt.height), 0, 0);
-            tex.Apply();
-
-            RenderTexture.active = null;
-            mRt.Release();
-
-
-            if (File.Exists(path))
-                File.Delete(path);
-            File.WriteAllBytes(path, tex.EncodeToPNG());
-
-            DestroyImmediate(tex);
-
-            _captureCamera.targetTexture = _previewRT;
-            _captureCamera.Render();
-
-
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-
-            var t2d = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-            if (EditorUtility.DisplayDialog(Localization.Get("tips"), Localization.Get("tip_success_save"), Localization.Get("yes"), Localization.Get("no")))
-            {
-                EditorUtils.PingProject(t2d);
-            }
-
-            return t2d;
-        }
-
-
-        private void GetClothesCapture()
-        {
-            var categoryPath = GetCapturePath() + "/" + _currentClothesCategory.Name + "/";
-            if (!Directory.Exists(categoryPath))
-                Directory.CreateDirectory(categoryPath);
-
-            var icon = SaveRTToFile(categoryPath + _clothes.Name + ".png");
-            if (_clothes != null)
-                _clothes.Icon = icon;
-        }
-
-        private void StopCapture(bool destroyCam = true, bool needBack = false)
-        {
-            if (destroyCam && _captureCameraGo)
-                DestroyImmediate(_captureCameraGo);
-
-            if (_captureGo)
-                DestroyImmediate(_captureGo);
-
-            if (needBack)
-            {
-                EditorUtils.FocusTarget(_descriptor.gameObject);
-            }
-        }
 
         private void DrawClothesAnimParameter()
         {

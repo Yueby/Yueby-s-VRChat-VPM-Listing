@@ -275,5 +275,45 @@ namespace Yueby.Utils
                 PingProject(targetPath);
             }
         }
+
+        public static Texture2D SaveRTToFile(string path, RenderTexture target, Camera camera)
+        {
+            var mRt = new RenderTexture(target.width, target.height, target.depth, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB)
+            {
+                antiAliasing = target.antiAliasing
+            };
+
+            mRt.Create();
+
+            var tex = new Texture2D(mRt.width, mRt.height, TextureFormat.ARGB32, false);
+            camera.targetTexture = mRt;
+            camera.Render();
+            RenderTexture.active = mRt;
+
+            tex.ReadPixels(new Rect(0, 0, mRt.width, mRt.height), 0, 0);
+            tex.Apply();
+
+            RenderTexture.active = null;
+            mRt.Release();
+
+
+            if (File.Exists(path))
+                File.Delete(path);
+            File.WriteAllBytes(path, tex.EncodeToPNG());
+
+            Object.DestroyImmediate(tex);
+
+            camera.targetTexture = target;
+            camera.Render();
+
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            var t2d = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+           
+
+            return t2d;
+        }
     }
 }

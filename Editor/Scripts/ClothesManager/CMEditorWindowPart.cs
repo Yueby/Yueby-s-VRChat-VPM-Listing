@@ -1488,6 +1488,109 @@ namespace Yueby.AvatarTools.ClothesManager
         {
             _avatarState?.ResetSMRs();
         }
+
+        private void SetupCapture(bool needFocus = true)
+        {
+            if (!_captureCameraGo)
+            {
+                _captureCameraGo = new GameObject(Localization.Get("capture_obj_camera"));
+                var follow = _captureCameraGo.AddComponent<CMCaptureCameraFollow>();
+                follow.OnPositionUpdate += Repaint;
+
+                _captureCamera = _captureCameraGo.AddComponent<Camera>();
+                _captureCamera.clearFlags = CameraClearFlags.SolidColor;
+                _captureCamera.backgroundColor = Color.clear;
+                _captureCamera.fieldOfView = 45;
+                _captureCamera.targetTexture = _previewRT;
+                _captureCamera.orthographic = true;
+                _captureCamera.orthographicSize = 0.5f;
+            }
+
+            _captureGo = Instantiate(_descriptor.gameObject);
+            _captureGo.name = Localization.Get("capture_obj_avatar") + _clothes.Name;
+
+            foreach (var component in _captureGo.GetComponentsInChildren<Component>(true))
+            {
+                if (component.GetType() == typeof(Transform) || component.GetType() == typeof(SkinnedMeshRenderer)) continue;
+                DestroyImmediate(component);
+            }
+
+            var map = GetClothesParameters(_currentClothesCategory, _clothesIndex);
+            var showList = map["Show"];
+            var hideList = map["Hide"];
+
+            var hideRenderers = new List<GameObject>();
+            foreach (var renderer in _captureGo.GetComponentsInChildren<Renderer>())
+            {
+                hideRenderers.Add(renderer.gameObject);
+            }
+
+            foreach (var show in showList)
+            {
+                var trans = _captureGo.transform.Find(show.Path);
+                if (!trans) continue;
+                var childRenderers = trans.GetComponentsInChildren<Renderer>();
+                foreach (var childRender in childRenderers)
+                {
+                    if (hideRenderers.Contains(childRender.gameObject))
+                        hideRenderers.Remove(childRender.gameObject);
+                }
+
+
+                trans.gameObject.SetActive(true);
+            }
+
+            foreach (var hide in hideRenderers)
+            {
+                // hide.SetActive(false);
+                DestroyImmediate(hide);
+            }
+
+            foreach (var hide in hideList)
+            {
+                var trans = _captureGo.transform.Find(hide.Path);
+                if (!trans) continue;
+                DestroyImmediate(trans.gameObject);
+            }
+
+            var capturePos = new Vector3(1000, 0, 100);
+            _captureGo.transform.position = capturePos;
+
+            if (needFocus)
+                EditorUtils.FocusTarget(_captureGo);
+        }
+
+
+        private void GetClothesCapture()
+        {
+            var categoryPath = GetCapturePath() + "/" + _currentClothesCategory.Name + "/";
+            if (!Directory.Exists(categoryPath))
+                Directory.CreateDirectory(categoryPath);
+
+            var icon = EditorUtils.SaveRTToFile(categoryPath + _clothes.Name + ".png", _previewRT, _captureCamera);
+
+            if (EditorUtility.DisplayDialog(Localization.Get("tips"), Localization.Get("tip_success_save"), Localization.Get("yes"), Localization.Get("no")))
+            {
+                EditorUtils.PingProject(icon);
+            }
+
+            if (_clothes != null)
+                _clothes.Icon = icon;
+        }
+
+        private void StopCapture(bool destroyCam = true, bool needBack = false)
+        {
+            if (destroyCam && _captureCameraGo)
+                DestroyImmediate(_captureCameraGo);
+
+            if (_captureGo)
+                DestroyImmediate(_captureGo);
+
+            if (needBack)
+            {
+                EditorUtils.FocusTarget(_descriptor.gameObject);
+            }
+        }
     }
 
     public class CMAvatarState
