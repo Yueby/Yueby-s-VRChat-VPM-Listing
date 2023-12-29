@@ -707,7 +707,9 @@ namespace Yueby.AvatarTools.ClothesManager
                             smr.SmrParameter.BlendShapeValue = state.GetBlendShapeWeight(smr.SmrParameter.Index);
                             break;
                         case SMRType.Materials:
-                            smr.SmrParameter.Material = state.GetMaterial(smr.SmrParameter.Index);
+                            var mat = state.GetMaterial(smr.SmrParameter.Index);
+                            if (mat != null)
+                                smr.SmrParameter.Material = mat;
                             break;
                     }
                 }
@@ -730,6 +732,11 @@ namespace Yueby.AvatarTools.ClothesManager
                     }
                 }
             }
+
+            // foreach (var item in list)
+            // {
+            //     Debug.Log(item.Path);
+            // }
 
             return list;
         }
@@ -1460,9 +1467,12 @@ namespace Yueby.AvatarTools.ClothesManager
                         break;
                     case SMRType.Materials:
                         var mats = skinnedMeshRenderer.sharedMaterials;
+                        if (parameter.SmrParameter.Index <= mats.Length - 1)
+                        {
+                            mats[parameter.SmrParameter.Index] = parameter.SmrParameter.Material;
+                            skinnedMeshRenderer.sharedMaterials = mats;
+                        }
 
-                        mats[parameter.SmrParameter.Index] = parameter.SmrParameter.Material;
-                        skinnedMeshRenderer.sharedMaterials = mats;
                         break;
                 }
             }
@@ -1671,13 +1681,13 @@ namespace Yueby.AvatarTools.ClothesManager
 
             public CMAvatarSMRState(SkinnedMeshRenderer skinnedMeshRenderer)
             {
-                SkinnedMeshRenderer = skinnedMeshRenderer;
                 if (skinnedMeshRenderer == null || skinnedMeshRenderer.sharedMesh == null)
                 {
-                    Debug.Log("ClothesManager: SkinnedMeshRenderer is null？");
+                    // Debug.Log("ClothesManager: SkinnedMeshRenderer is null？");
                     return;
                 }
 
+                SkinnedMeshRenderer = skinnedMeshRenderer;
                 for (var i = 0; i < skinnedMeshRenderer.sharedMesh.blendShapeCount; i++)
                 {
                     var weight = skinnedMeshRenderer.GetBlendShapeWeight(i);
@@ -1707,7 +1717,7 @@ namespace Yueby.AvatarTools.ClothesManager
 
             public void Reset()
             {
-                if (!SkinnedMeshRenderer) return;
+                if (SkinnedMeshRenderer == null) return;
                 foreach (var item in _blendShapes)
                     SkinnedMeshRenderer.SetBlendShapeWeight(item.Key, item.Value);
                 SkinnedMeshRenderer.sharedMaterials = _materials;
