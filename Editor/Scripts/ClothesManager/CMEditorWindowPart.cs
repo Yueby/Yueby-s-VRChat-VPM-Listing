@@ -1183,6 +1183,17 @@ namespace Yueby.AvatarTools.ClothesManager
             var hideList = parametersDic["Hide"];
             var smrList = category.Clothes[index].GetNotEmptyParameters(category.Clothes[index].SMRParameters);
 
+            foreach (var hideParameter in hideList)
+            {
+                var curve = new AnimationCurve { keys = new[] { new Keyframe { time = 0, value = 0 } } };
+                var bind = new EditorCurveBinding
+                {
+                    path = hideParameter.Path,
+                    propertyName = "m_IsActive",
+                    type = typeof(GameObject)
+                };
+                AnimationUtility.SetEditorCurve(clip, bind, curve);
+            }
 
             foreach (var showParameter in showList)
             {
@@ -1196,17 +1207,6 @@ namespace Yueby.AvatarTools.ClothesManager
                 AnimationUtility.SetEditorCurve(clip, bind, curve);
             }
 
-            foreach (var hideParameter in hideList)
-            {
-                var curve = new AnimationCurve { keys = new[] { new Keyframe { time = 0, value = 0 } } };
-                var bind = new EditorCurveBinding
-                {
-                    path = hideParameter.Path,
-                    propertyName = "m_IsActive",
-                    type = typeof(GameObject)
-                };
-                AnimationUtility.SetEditorCurve(clip, bind, curve);
-            }
 
             foreach (var smr in smrList)
             {
