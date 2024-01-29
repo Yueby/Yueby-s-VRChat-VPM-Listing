@@ -12,37 +12,6 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
             Languages = new Dictionary<string, Dictionary<string, string>>
             {
                 {
-                    "中文", new Dictionary<string, string>
-                    {
-                        { "no_active_avatar", "未在场景中找到活动的Avatar" },
-                        { "controls", "控件" },
-                        { "name", "名字" },
-                        { "type", "类型" },
-                        { "parameter", "参数" },
-                        { "value", "值" },
-                        { "parameter_rotation", "旋转参数" },
-                        { "control_button_tip", "单击或按住以激活。按钮保持激活状态至少0.2秒。\n激活时，（参数）设置为（值）。\n当处于非激活状态时，（参数）将重置为0。" },
-                        { "control_toggle_tip", "单击以打开或关闭。\n打开时，（参数）设置为（值）。\n关闭时，（参数）重置为0。" },
-                        { "control_submenu_tip", "打开其他子菜单。\n打开时，（参数）设置为（值）。\n关闭时（参数）重置为0。" },
-                        { "control_two_axis_tip", "将操纵杆映射到两个参数（-1到+1）的弹出菜单。\n打开时，（参数）设置为（值）。\n关闭时（参数）重置为0。" },
-                        { "control_four_axis_tip", "将操纵杆映射到四个参数（0到1）的弹出菜单。\n打开时，（参数）设置为（值）。\n关闭时（参数）重置为0。" },
-                        { "control_radial_tip", "根据操纵杆旋转设置值的弹出菜单。（0到1）\n打开时，（参数）设置为（值）。\n关闭时（参数）重置为0。" },
-                        { "up", "上" },
-                        { "down", "下" },
-                        { "left", "左" },
-                        { "right", "右" },
-                        { "horizontal", "横向" },
-                        { "vertical", "纵向" },
-                        { "submenu", "子菜单" },
-                        { "ex_menu_show", "菜单中显示内容" },
-                        { "active_avatar", "活动的Avatar" },
-                        { "none", "无" },
-                        { "parameter_not_found", "在活动的Avatar上未找到该参数。" },
-                        { "parameter_bool_not_valid", "该选项不可使用Bool参数。" },
-                    }
-                },
-
-                {
                     "English", new Dictionary<string, string>
                     {
                         { "no_active_avatar", "No active avatar descriptor found in scene." },
@@ -72,6 +41,36 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
                         { "parameter_bool_not_valid", "Bool parameters not valid for this choice." },
                     }
                 },
+                {
+                    "中文", new Dictionary<string, string>
+                    {
+                        { "no_active_avatar", "未在场景中找到活动的Avatar" },
+                        { "controls", "控件" },
+                        { "name", "名字" },
+                        { "type", "类型" },
+                        { "parameter", "参数" },
+                        { "value", "值" },
+                        { "parameter_rotation", "旋转参数" },
+                        { "control_button_tip", "单击或按住以激活。按钮保持激活状态至少0.2秒。\n激活时，（参数）设置为（值）。\n当处于非激活状态时，（参数）将重置为0。" },
+                        { "control_toggle_tip", "单击以打开或关闭。\n打开时，（参数）设置为（值）。\n关闭时，（参数）重置为0。" },
+                        { "control_submenu_tip", "打开其他子菜单。\n打开时，（参数）设置为（值）。\n关闭时（参数）重置为0。" },
+                        { "control_two_axis_tip", "将操纵杆映射到两个参数（-1到+1）的弹出菜单。\n打开时，（参数）设置为（值）。\n关闭时（参数）重置为0。" },
+                        { "control_four_axis_tip", "将操纵杆映射到四个参数（0到1）的弹出菜单。\n打开时，（参数）设置为（值）。\n关闭时（参数）重置为0。" },
+                        { "control_radial_tip", "根据操纵杆旋转设置值的弹出菜单。（0到1）\n打开时，（参数）设置为（值）。\n关闭时（参数）重置为0。" },
+                        { "up", "上" },
+                        { "down", "下" },
+                        { "left", "左" },
+                        { "right", "右" },
+                        { "horizontal", "横向" },
+                        { "vertical", "纵向" },
+                        { "submenu", "子菜单" },
+                        { "ex_menu_show", "菜单中显示内容" },
+                        { "active_avatar", "活动的Avatar" },
+                        { "none", "无" },
+                        { "parameter_not_found", "在活动的Avatar上未找到该参数。" },
+                        { "parameter_bool_not_valid", "该选项不可使用Bool参数。" },
+                    }
+                }
             };
         }
     }
