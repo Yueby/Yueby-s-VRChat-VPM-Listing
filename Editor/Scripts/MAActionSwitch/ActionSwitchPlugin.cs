@@ -8,10 +8,10 @@ using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
 using VRC.SDK3.Avatars.Components;
-using Yueby.MAActionSwitch;
+using Yueby.AvatarTools.MAActionSwitch;
 
 [assembly: ExportsPlugin(typeof(ActionSwitchPlugin))]
-namespace Yueby.MAActionSwitch
+namespace Yueby.AvatarTools.MAActionSwitch
 {
 
     public class ActionSwitchPlugin : Plugin<ActionSwitchPlugin>
@@ -26,7 +26,7 @@ namespace Yueby.MAActionSwitch
                 {
                     if (ctx.AvatarRootObject.GetComponentsInChildren<ActionSwitch>().Length > 0)
                     {
-                        ActionSwitchBuilder.SetPath(ctx.AvatarRootObject.GetComponentInChildren<ActionSwitch>());
+                        ActionSwitchBuilder.GeneratePath();
                         ActionSwitchBuilder.Build(ctx.AvatarRootObject);
                     }
                 });
@@ -35,18 +35,9 @@ namespace Yueby.MAActionSwitch
 
     class ActionSwitchBuilder
     {
-        private static string _selfPath;
-        private static string SelfPath
-        {
-            get
-            {
-                if (String.IsNullOrEmpty(_selfPath))
-                {
-                    throw new Exception("Path has not been set");
-                }
-                return _selfPath;
-            }
-        }
+
+        private static string AssetsPath => "Packages/com.yueby.avatartools/Editor/Assets/MAActionSwitch";
+        private static string EmptyClipPath => AssetsPath + "/Animations/Empty.anim";
 
         public static void Build(GameObject avatarRootObject)
         {
@@ -68,7 +59,7 @@ namespace Yueby.MAActionSwitch
             var transitionDuration = 0.1f;
             var writeDefault = true;
             var parameterName = actionSwitch.Name;
-            var animatorController = AnimatorController.CreateAnimatorControllerAtPath($"{SelfPath}/Generated/{actionSwitch.name}.controller");
+            var animatorController = AnimatorController.CreateAnimatorControllerAtPath($"{AssetsPath}/Generated/{actionSwitch.name}.controller");
             animatorController.AddParameter(name: parameterName, AnimatorControllerParameterType.Int);
 
             var layer = new AnimatorControllerLayer
@@ -85,7 +76,7 @@ namespace Yueby.MAActionSwitch
             var defaultStateTransition = layer.stateMachine.AddAnyStateTransition(defaultState);
             defaultStateTransition.AddCondition(AnimatorConditionMode.Equals, 0, parameterName);
             defaultState.writeDefaultValues = writeDefault;
-            defaultState.motion = AssetDatabase.LoadAssetAtPath<AnimationClip>(_selfPath + "/Animations/Empty.anim");
+            defaultState.motion = AssetDatabase.LoadAssetAtPath<AnimationClip>(EmptyClipPath);
             defaultStateTransition.duration = transitionDuration;
             AddTrackingControlStateBehaviour(defaultState, VRC.SDKBase.VRC_AnimatorTrackingControl.TrackingType.Tracking);
             animatorController.AddLayer(layer);
@@ -125,13 +116,12 @@ namespace Yueby.MAActionSwitch
             }
         }
 
-        public static void SetPath(MonoBehaviour mono)
+        public static void GeneratePath()
         {
-            _selfPath = AssetDatabase.GetAssetPath(MonoScript.FromMonoBehaviour(mono));
-            _selfPath = SelfPath.Substring(0, SelfPath.LastIndexOf("/"));
-            if (!AssetDatabase.IsValidFolder(SelfPath + "/Generated"))
+
+            if (!AssetDatabase.IsValidFolder(AssetsPath + "/Generated"))
             {
-                AssetDatabase.CreateFolder(SelfPath, "Generated");
+                AssetDatabase.CreateFolder(AssetsPath, "Generated");
             }
         }
 

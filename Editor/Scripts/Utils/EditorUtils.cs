@@ -191,6 +191,7 @@ namespace Yueby.Utils
             await Task.Yield();
             await Task.Delay(ms);
             action?.Invoke();
+            // Debug.Log("Do " + taskName);
             WaitToDoList.Remove(taskName);
         }
 
@@ -266,11 +267,9 @@ namespace Yueby.Utils
                 // 移动 .meta 文件
                 FileUtil.MoveFileOrDirectory(lastPath + ".meta", targetPath + ".meta");
 
-
                 folderPath = targetPath;
 
                 AssetDatabase.Refresh();
-
 
                 PingProject(targetPath);
             }
@@ -296,7 +295,6 @@ namespace Yueby.Utils
             RenderTexture.active = null;
             mRt.Release();
 
-
             if (File.Exists(path))
                 File.Delete(path);
             File.WriteAllBytes(path, tex.EncodeToPNG());
@@ -306,12 +304,10 @@ namespace Yueby.Utils
             camera.targetTexture = target;
             camera.Render();
 
-
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
             var t2d = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-           
 
             return t2d;
         }

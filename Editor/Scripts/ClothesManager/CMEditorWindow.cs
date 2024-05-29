@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor;
-using UnityEditor.IMGUI.Controls;
 using UnityEditorInternal;
 using UnityEngine;
 using VRC.SDK3.Avatars.Components;
@@ -30,11 +29,9 @@ namespace Yueby.AvatarTools.ClothesManager
 
         private bool _isFoldoutVrcConfigure;
 
-
         private AnimatorController _fxLayer;
         private VRCExpressionsMenu _expressionsMenu;
         private VRCExpressionParameters _parameters;
-
 
         // Serialized Objects
         private SerializedObject _serializedObject;
@@ -59,7 +56,7 @@ namespace Yueby.AvatarTools.ClothesManager
         private TabBarElement _clothesParameterBar;
         private TabBarElement _clothesDriverBar;
 
-        private VRC_AvatarParameterDriver.Parameter _currentDriverParameter;
+        private Parameter _currentDriverParameter;
         private bool IsClothesPreview => _previewIndex > 0;
         private static int _previewIndex = 1;
 
@@ -73,10 +70,8 @@ namespace Yueby.AvatarTools.ClothesManager
         private GameObject _captureCameraGo;
         private Camera _captureCamera;
 
-
         private static int _clothesFoldoutIndex;
         private static int _driverFoldoutIndex;
-
 
         private readonly Texture2D[] _categoryIcons = new Texture2D[2];
         private readonly Texture2D[] _clothesIcons = new Texture2D[2];
@@ -146,7 +141,6 @@ namespace Yueby.AvatarTools.ClothesManager
             _nextIcon = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/next.png");
         }
 
-
         private void OnDisable()
         {
             if (!IsClothesPreview)
@@ -158,7 +152,6 @@ namespace Yueby.AvatarTools.ClothesManager
                 StopCapture(true, true);
             }
         }
-
 
         private void OnGUI()
         {
@@ -179,7 +172,6 @@ namespace Yueby.AvatarTools.ClothesManager
             if (_descriptor != null && _dataReference != null)
                 DrawConfigure();
         }
-
 
         private void InitSerializedObjects()
         {
@@ -218,7 +210,6 @@ namespace Yueby.AvatarTools.ClothesManager
             if (!_clothesBar.IsDraw)
                 _clothesBar.ChangeDrawState(true);
         }
-
 
         private float OnCategoriesDraw(Rect rect, int index, bool isActive, bool isFocused)
         {
@@ -332,7 +323,7 @@ namespace Yueby.AvatarTools.ClothesManager
                     _clothes.Icon = (Texture2D)EditorGUILayout.ObjectField(_clothes.Icon, typeof(Texture2D), false, GUILayout.Width(40), GUILayout.Height(40));
 
                     EditorGUI.BeginChangeCheck();
-                    _clothes.Name = EditorUI.TextFieldVertical(Localization.Get("clothes_name"), _clothes.Name, 60);
+                    _clothes.Name = EditorUI.TextFieldVertical(Localization.Get("clothes_name"), _clothes.Name, 100);
                     if (EditorGUI.EndChangeCheck())
                         Undo.RegisterCompleteObjectUndo(_currentClothesCategory, "Category Undo Register");
                 });
@@ -341,16 +332,13 @@ namespace Yueby.AvatarTools.ClothesManager
                 _clothesGrid.Select(_currentClothesCategory.Selected);
         }
 
-
         private void OnClothesGridChangeSelected(SerializedProperty sp, int i)
         {
             _clothesIndex = i;
             _clothes = _clothesList[i];
 
-
             if (!_isGridInit)
                 _currentClothesCategory.Selected = i;
-
 
             InitClothData();
             UnityEngine.GUI.FocusControl(null);
@@ -367,7 +355,6 @@ namespace Yueby.AvatarTools.ClothesManager
                 _isGridInit = false;
         }
 
-
         private void InitClothData()
         {
             _clothesShowRl = new ReorderableListDroppable(_clothes.ShowParameters, typeof(GameObject), EditorGUIUtility.singleLineHeight + 5, Repaint);
@@ -376,7 +363,6 @@ namespace Yueby.AvatarTools.ClothesManager
             _clothesShowRl.InverseRlList.AddRange(new[] { _clothesHideRl, _clothesSmrRL });
             _clothesHideRl.InverseRlList.AddRange(new[] { _clothesShowRl, _clothesSmrRL });
             _clothesSmrRL.InverseRlList.AddRange(new[] { _clothesHideRl, _clothesShowRl });
-
 
             if (_clothesFoldoutIndex == 0) _clothesShowRl.ChangeAnimBool(true);
             else if (_clothesFoldoutIndex == 1) _clothesHideRl.ChangeAnimBool(true);
@@ -394,7 +380,6 @@ namespace Yueby.AvatarTools.ClothesManager
             {
                 if (value) _clothesFoldoutIndex = 2;
             };
-
 
             _clothesShowRl.OnAdd += _ =>
             {
@@ -433,15 +418,13 @@ namespace Yueby.AvatarTools.ClothesManager
                 }
             };
 
-
             _clothesShowRl.OnDraw += (rect, index, a, b) => { return RegisterClothPathListPanel(rect, index, ref _clothes.ShowParameters); };
             _clothesHideRl.OnDraw += (rect, index, a, b) => { return RegisterClothPathListPanel(rect, index, ref _clothes.HideParameters); };
             _clothesSmrRL.OnDraw += (rect, index, a, b) => { return RegisterClothPathListPanel(rect, index, ref _clothes.SMRParameters); };
 
-
             // Parameter Driver ReorderableList Init
-            _enterDriverRl = new ReorderableListDroppable(_clothes.EnterParameter.Parameters, typeof(VRC_AvatarParameterDriver.Parameter), EditorGUIUtility.singleLineHeight + 5, Repaint);
-            _exitDriverRl = new ReorderableListDroppable(_clothes.ExitParameter.Parameters, typeof(VRC_AvatarParameterDriver.Parameter), EditorGUIUtility.singleLineHeight + 5, Repaint);
+            _enterDriverRl = new ReorderableListDroppable(_clothes.EnterParameter.Parameters, typeof(Parameter), EditorGUIUtility.singleLineHeight + 5, Repaint);
+            _exitDriverRl = new ReorderableListDroppable(_clothes.ExitParameter.Parameters, typeof(Parameter), EditorGUIUtility.singleLineHeight + 5, Repaint);
             _enterDriverRl.InverseRlList.Add(_exitDriverRl);
             _exitDriverRl.InverseRlList.Add(_enterDriverRl);
 
@@ -457,10 +440,9 @@ namespace Yueby.AvatarTools.ClothesManager
                 if (value) _driverFoldoutIndex = 1;
             };
 
-
             _enterDriverRl.OnAdd += _ =>
             {
-                _clothes.EnterParameter.Parameters.Add(new VRC_AvatarParameterDriver.Parameter
+                _clothes.EnterParameter.Parameters.Add(new Parameter
                 {
                     type = VRC_AvatarParameterDriver.ChangeType.Set
                 });
@@ -468,7 +450,7 @@ namespace Yueby.AvatarTools.ClothesManager
 
             _exitDriverRl.OnAdd += _ =>
             {
-                _clothes.ExitParameter.Parameters.Add(new VRC_AvatarParameterDriver.Parameter
+                _clothes.ExitParameter.Parameters.Add(new Parameter
                 {
                     type = VRC_AvatarParameterDriver.ChangeType.Set
                 });
@@ -534,7 +516,7 @@ namespace Yueby.AvatarTools.ClothesManager
             }
         }
 
-        private float DrawParameterDriverElement(ref List<VRC_AvatarParameterDriver.Parameter> drivers, Rect rect, int index)
+        private float DrawParameterDriverElement(ref List<Parameter> drivers, Rect rect, int index)
         {
             var height = EditorGUIUtility.singleLineHeight + 2;
             var typeRect = new Rect(rect.x, rect.y + 2, 70, rect.height);
@@ -545,12 +527,24 @@ namespace Yueby.AvatarTools.ClothesManager
 
             var names = GetParameterNames();
             if (names.Length <= 0) return height;
-            var nameIndex = EditorGUI.Popup(nameRect, IndexInParameterNames(driver.name), names);
-            driver.name = nameIndex == -1 ? "" : names[nameIndex];
+            var indexInParameterNames = IndexInParameterNames(driver.name);
+            if (indexInParameterNames == 0 && !string.IsNullOrEmpty(driver.name))
+                names[0] = driver.name;
 
-            if (nameIndex == -1) return height;
+            EditorGUI.BeginChangeCheck();
+            var nameIndex = EditorGUI.Popup(nameRect, indexInParameterNames, names);
+            if (EditorGUI.EndChangeCheck())
+                driver.name = names[nameIndex];
+
+            if (nameIndex == 0 && driver.customType == 0)
+            {
+                return height;
+            }
             var valueRect = new Rect(nameRect.x + nameRect.width + 4, rect.y, rect.width - nameRect.width - typeRect.width - 6, nameRect.height - 2);
-            switch (GetParameterType(driver.name))
+            var type = GetParameterType(driver.name);
+            if (type == 0)
+                type = driver.customType;
+            switch (type)
             {
                 case AnimatorControllerParameterType.Int:
                     driver.value = EditorGUI.IntField(valueRect, (int)driver.value);
@@ -639,7 +633,6 @@ namespace Yueby.AvatarTools.ClothesManager
             }
         }
 
-
         private void DrawClothConfigArea()
         {
             if (_categorySerializedObject != null && _categorySerializedObject.targetObject != null && _clothes != null)
@@ -703,7 +696,6 @@ namespace Yueby.AvatarTools.ClothesManager
                             }
                         });
 
-
                         if (_dataReference.ParentMenu == null)
                         {
                             EditorGUILayout.HelpBox(Localization.Get("parent_menu_tip"), MessageType.Warning);
@@ -721,7 +713,6 @@ namespace Yueby.AvatarTools.ClothesManager
                             EditorGUILayout.TextField(_dataReference.SavePath);
                             EditorGUI.EndDisabledGroup();
                         });
-
 
                         var backupPath = GetIDPath() + "/Backups";
                         if (Directory.Exists(backupPath) && GUILayout.Button(Localization.Get("open_backup_path")))
@@ -762,7 +753,6 @@ namespace Yueby.AvatarTools.ClothesManager
                                     StopCapture(true, true);
                                 }
 
-
                                 if (GUILayout.Button(EditorGUIUtility.IconContent("d_SceneViewCamera"), GUILayout.Height(EditorGUIUtility.singleLineHeight - 1)))
                                 {
                                     if (_captureCamera)
@@ -788,7 +778,6 @@ namespace Yueby.AvatarTools.ClothesManager
                 EditorUtility.SetDirty(_categorySerializedObject.targetObject);
             }
         }
-
 
         private void DrawClothesAnimParameter()
         {
@@ -839,17 +828,35 @@ namespace Yueby.AvatarTools.ClothesManager
                     }
 
                     var nameIndex = IndexInParameterNames(_currentDriverParameter.name);
+
+                    var type = AnimatorControllerParameterType.Bool;
                     EditorUI.HorizontalEGL(() =>
                     {
                         _currentDriverParameter.type = (VRC_AvatarParameterDriver.ChangeType)EditorGUILayout.Popup((int)_currentDriverParameter.type, Enum.GetNames(typeof(VRC_AvatarParameterDriver.ChangeType)), GUILayout.Width(70));
 
                         var names = GetParameterNames();
                         if (names.Length <= 0) return;
+                        if (nameIndex == 0 && !string.IsNullOrEmpty(_currentDriverParameter.name))
+                            names[0] = _currentDriverParameter.name;
+
+                        EditorGUI.BeginChangeCheck();
                         nameIndex = EditorGUILayout.Popup(nameIndex, names);
-                        _currentDriverParameter.name = nameIndex == -1 ? "" : names[nameIndex];
+                        if (EditorGUI.EndChangeCheck())
+                        {
+                            _currentDriverParameter.name = names[nameIndex];
+                        }
+
                         _currentDriverParameter.name = EditorGUILayout.TextField(_currentDriverParameter.name);
+
+                        if (nameIndex == 0)
+                        {
+                            _currentDriverParameter.customType = (AnimatorControllerParameterType)EditorGUILayout.EnumPopup(_currentDriverParameter.customType);
+                            type = _currentDriverParameter.customType;
+                        }
+                        else
+                            type = GetParameterType(_currentDriverParameter.name);
                     });
-                    var type = GetParameterType(_currentDriverParameter.name);
+
                     switch (_currentDriverParameter.type)
                     {
                         case VRC_AvatarParameterDriver.ChangeType.Set:
@@ -957,7 +964,8 @@ namespace Yueby.AvatarTools.ClothesManager
 
                 var names = GetParameterNames();
                 var sourceIndex = IndexInParameterNames(_currentDriverParameter.source);
-
+                if (sourceIndex == 0 && !string.IsNullOrEmpty(_currentDriverParameter.source))
+                    names[0] = _currentDriverParameter.source;
                 EditorUI.HorizontalEGL(() =>
                 {
                     EditorGUILayout.LabelField(Localization.Get("driver_source"), GUILayout.Width(50));
@@ -967,7 +975,7 @@ namespace Yueby.AvatarTools.ClothesManager
                         _currentDriverParameter.convertRange = EditorUI.Toggle(_currentDriverParameter.convertRange, Localization.Get("driver_convert_range"), 60);
                 });
 
-                _currentDriverParameter.source = sourceIndex == -1 ? "" : names[sourceIndex];
+                _currentDriverParameter.source = names[sourceIndex];
 
                 var sourceValueType = sourceIndex >= 0 ? parameters[sourceIndex].type : AnimatorControllerParameterType.Float;
 
@@ -991,9 +999,9 @@ namespace Yueby.AvatarTools.ClothesManager
                             {
                                 EditorGUILayout.LabelField(Localization.Get("driver_source"), GUILayout.Width(50));
                                 EditorGUILayout.Space();
-                                EditorGUILayout.LabelField(Localization.Get("driver_min_value"), GUILayout.Width(40));
+                                EditorGUILayout.LabelField(Localization.Get("driver_min_value"), GUILayout.Width(50));
                                 _currentDriverParameter.sourceMin = EditorGUILayout.FloatField(_currentDriverParameter.sourceMin);
-                                EditorGUILayout.LabelField(Localization.Get("driver_max_value"), GUILayout.Width(40));
+                                EditorGUILayout.LabelField(Localization.Get("driver_max_value"), GUILayout.Width(50));
                                 _currentDriverParameter.sourceMax = EditorGUILayout.FloatField(_currentDriverParameter.sourceMax);
                             });
 
@@ -1001,14 +1009,13 @@ namespace Yueby.AvatarTools.ClothesManager
                             {
                                 EditorGUILayout.LabelField(Localization.Get("driver_destination"), GUILayout.Width(50));
                                 EditorGUILayout.Space();
-                                EditorGUILayout.LabelField(Localization.Get("driver_min_value"), GUILayout.Width(40));
+                                EditorGUILayout.LabelField(Localization.Get("driver_min_value"), GUILayout.Width(50));
                                 _currentDriverParameter.destMin = EditorGUILayout.FloatField(_currentDriverParameter.destMin);
-                                EditorGUILayout.LabelField(Localization.Get("driver_max_value"), GUILayout.Width(40));
+                                EditorGUILayout.LabelField(Localization.Get("driver_max_value"), GUILayout.Width(50));
                                 _currentDriverParameter.destMax = EditorGUILayout.FloatField(_currentDriverParameter.destMax);
                             });
                             EditorGUI.indentLevel -= 1;
                         }
-
 
                         break;
                     case AnimatorControllerParameterType.Trigger:
@@ -1019,7 +1026,6 @@ namespace Yueby.AvatarTools.ClothesManager
                 }
             }
         }
-
 
         private void DrawSelectedCategory()
         {
@@ -1047,14 +1053,12 @@ namespace Yueby.AvatarTools.ClothesManager
                     _clothesGrid?.Draw(50, new Vector2(5, 5), new Vector2(200, ConfigurePageHeight - 20));
                 });
 
-
                 // Debug.Log("1");
                 _categorySerializedObject.ApplyModifiedProperties();
 
                 EditorUtility.SetDirty(_categorySerializedObject.targetObject);
             }
         }
-
 
         /// <summary>
         /// 绘制配置UI
@@ -1069,7 +1073,6 @@ namespace Yueby.AvatarTools.ClothesManager
                     _descriptor = (VRCAvatarDescriptor)EditorUI.ObjectFieldVertical(_descriptor, Localization.Get("tool_init_avatar"), typeof(VRCAvatarDescriptor));
                     if (EditorGUI.EndChangeCheck())
                         OnDescriptorValueChanged();
-
 
                     if (_descriptor != null)
                     {

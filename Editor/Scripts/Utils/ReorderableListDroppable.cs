@@ -49,7 +49,6 @@ namespace Yueby.AvatarTools
 
             _onRepaint = onRepaint;
 
-
             List = new ReorderableList(elements, elementType, true, false, false, false)
             {
                 headerHeight = 0,
@@ -135,12 +134,12 @@ namespace Yueby.AvatarTools
                 {
                     EditorUI.HorizontalEGL(() =>
                     {
-                        EditorGUILayout.Space(5);
+                        // EditorGUILayout.Space(5);
                         if (isNoBorder)
                             EditorUI.VerticalEGL(() => { DrawContent(OnDrawTitle); }, maxWidth > 0 ? GUILayout.MaxWidth(maxWidth) : GUILayout.ExpandWidth(true));
                         else
                             EditorUI.VerticalEGL("Badge", () => { DrawContent(OnDrawTitle); }, maxWidth > 0 ? GUILayout.MaxWidth(maxWidth) : GUILayout.ExpandWidth(true));
-                        EditorGUILayout.Space(5);
+                        // EditorGUILayout.Space(5);
                     }, GUILayout.MaxHeight(area.y), maxWidth > 0 ? GUILayout.MaxWidth(maxWidth) : GUILayout.ExpandWidth(true));
                     listRect = GUILayoutUtility.GetLastRect();
                 }
@@ -175,10 +174,11 @@ namespace Yueby.AvatarTools
 
             if (_isEnterListArea)
             {
-                var label = "→";
+                var label = "↓";
                 if (_dropRect.Contains(Event.current.mousePosition))
                 {
-                    label = "↓";
+                    label = "";
+                    DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
                 }
 
                 GUI.Box(_dropRect, label);
@@ -194,6 +194,8 @@ namespace Yueby.AvatarTools
                 _isEnterListArea = false;
                 if (_dropRect.Contains(Event.current.mousePosition))
                 {
+                    DragAndDrop.AcceptDrag();
+
                     onDropped?.Invoke(DragAndDrop.objectReferences);
                     Array.Resize(ref ElementHeights, _elements.Count);
                     repaint?.Invoke();
@@ -213,7 +215,6 @@ namespace Yueby.AvatarTools
                         EditorGUILayout.LabelField($"{List.count}", EditorStyles.centeredGreyMiniLabel,
                             GUILayout.Width(25), GUILayout.Height(18));
                     }, GUILayout.Width(25), GUILayout.Height(18));
-
 
                     EditorGUILayout.Space();
                     titleDraw?.Invoke();

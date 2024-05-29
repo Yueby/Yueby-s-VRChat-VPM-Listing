@@ -5,21 +5,21 @@ using nadena.dev.modular_avatar.core;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
+using Yueby.Utils;
 using Editor = UnityEditor.Editor;
 using Object = UnityEngine.Object;
 
-namespace Yueby.MAActionSwitch
+namespace Yueby.AvatarTools.MAActionSwitch
 {
     [CustomEditor(typeof(ActionSwitch))]
     public class ActionSwitchEditor : Editor
     {
-
         private ActionSwitch _target;
-        private ReorderableList _reorderableList;
         private SerializedProperty _actionsProperty;
         private SerializedProperty _nameProperty;
         private SerializedProperty _iconProperty;
         private ModularAvatarMenuItem _menuItem;
+        private ReorderableListDroppable _reorderableListDroppable;
 
         private void OnEnable()
         {
@@ -29,7 +29,7 @@ namespace Yueby.MAActionSwitch
             _iconProperty = serializedObject.FindProperty(nameof(ActionSwitch.Icon));
             _actionsProperty = serializedObject.FindProperty(nameof(ActionSwitch.Actions));
 
-            _reorderableList = CreateReorderableList();
+            // _reorderableList = CreateReorderableList();
 
             if (_menuItem == null)
             {
@@ -39,59 +39,59 @@ namespace Yueby.MAActionSwitch
                 menuItem.MenuSource = SubmenuSource.Children;
             }
 
+            _reorderableListDroppable = CreateDroppableList();
+            _reorderableListDroppable.AnimBool.value = true;
+
         }
 
-        private ReorderableList CreateReorderableList()
+        private ReorderableListDroppable CreateDroppableList()
         {
-            _reorderableList = new ReorderableList(serializedObject, _actionsProperty, true, true, true, true)
+            var list = new ReorderableListDroppable(_target.Actions, typeof(ActionElement), EditorGUIUtility.singleLineHeight + 5, Repaint)
             {
-                headerHeight = 0,
-
-                drawElementCallback = (rect, index, isActive, isFocused) =>
+                OnDraw = (rect, index, isActive, isFocused) =>
                 {
-                    var element = _actionsProperty.GetArrayElementAtIndex(index);
-                    var clip = element.FindPropertyRelative(nameof(ActionElement.Clip));
-                    var name = element.FindPropertyRelative(nameof(ActionElement.Name));
-                    var useCustomName = element.FindPropertyRelative(nameof(ActionElement.UseCustomName));
+                    var actionElement = _target.Actions[index];
+
                     rect.y += 2;
-                    var clipFieldRect = new Rect(rect.x, rect.y, rect.width / 3, EditorGUIUtility.singleLineHeight);
-                    clip.objectReferenceValue = EditorGUI.ObjectField(clipFieldRect, clip.objectReferenceValue, typeof(AnimationClip), false);
+                    var clipFieldRect = new Rect(rect.x, rect.y, rect.width / 2, EditorGUIUtility.singleLineHeight);
+                    actionElement.Clip = (AnimationClip)EditorGUI.ObjectField(clipFieldRect, actionElement.Clip, typeof(AnimationClip), false);
 
                     var lastWidth = rect.width - clipFieldRect.width;
-                    var toggleWidth = 40f;
+                    var toggleWidth = 20f;
 
                     var nameFieldRect = new Rect(clipFieldRect.x + clipFieldRect.width + 5, rect.y, lastWidth - toggleWidth, EditorGUIUtility.singleLineHeight);
-                    if (useCustomName.boolValue)
+                    if (actionElement.UseCustomName)
                     {
-                        name.stringValue = EditorGUI.TextField(nameFieldRect, name.stringValue);
+                        actionElement.Name = EditorGUI.TextField(nameFieldRect, actionElement.Name);
                     }
                     else
                     {
-                        name.stringValue = $"Action {index + 1}";
-                        EditorGUI.LabelField(nameFieldRect, name.stringValue);
+                        actionElement.Name = $"Action {index + 1}";
+                        EditorGUI.LabelField(nameFieldRect, actionElement.Name);
                     }
 
                     var toggleRect = new Rect(nameFieldRect.x + nameFieldRect.width + 2, rect.y, toggleWidth, EditorGUIUtility.singleLineHeight);
-                    useCustomName.boolValue = EditorGUI.Toggle(toggleRect, useCustomName.boolValue);
+                    actionElement.UseCustomName = EditorGUI.Toggle(toggleRect, actionElement.UseCustomName);
 
-                    // EditorGUI.PropertyField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), element);
+                    return EditorGUIUtility.singleLineHeight + 5;
                 },
 
-                onAddCallback = list =>
+                OnAdd = list =>
                 {
-                    _actionsProperty.arraySize++;
-                    serializedObject.ApplyModifiedProperties();
+                    _target.Actions.Add(new ActionElement());
+                    // _actionsProperty.arraySize++;
+                    // serializedObject.ApplyModifiedProperties();
                 },
 
-                onRemoveCallback = list =>
+                OnRemove = list =>
                 {
-                    _actionsProperty.DeleteArrayElementAtIndex(list.index);
-                    serializedObject.ApplyModifiedProperties();
-                }
+                    // _actionsProperty.DeleteArrayElementAtIndex(list.index);
+                    // serializedObject.ApplyModifiedProperties();
+                },
 
             };
 
-            return _reorderableList;
+            return list;
         }
 
         public override void OnInspectorGUI()
@@ -124,8 +124,79 @@ namespace Yueby.MAActionSwitch
 
             EditorGUILayout.Space();
 
-            DropAreaGUI();
-            _reorderableList.DoLayoutList();
+            // DropAreaGUI();
+            // _reorderableList.DoLayoutList();
+            _reorderableListDroppable.DoLayoutList("Actions", new Vector2(0, 0), false, true, true, DropObjects, Repaint);
+        }
+
+        private void DropObjects(Object[] objects)
+        {
+            foreach (Object dragged_object in objects)
+            {
+                // Do On Drag Stuff here
+                if (dragged_object is not AnimationClip)
+                    continue;
+
+                // Debug.Log("Animation Clip Dropped");
+
+                var actionElement = new ActionElement
+                {
+                    Clip = (AnimationClip)dragged_object,
+                    Name = dragged_object.name,
+                    UseCustomName = true
+                };
+
+                // check if the clip is already in the list
+                bool alreadyExists = false;
+                for (int i = 0; i < _target.Actions.Count; i++)
+                {
+                    var element = _target.Actions[i];
+
+                    if (element.Clip == actionElement.Clip)
+                    {
+                        alreadyExists = true;
+                        break;
+                    }
+                }
+
+                if (alreadyExists)
+                {
+                    // Debug.Log("Already Exists: " + alreadyExists);
+                    // serializedObject.ApplyModifiedProperties();
+                    continue;
+                }
+
+                // check other element is null
+                var addInNull = false;
+                for (int i = 0; i < _target.Actions.Count; i++)
+                {
+                    var element = _target.Actions[i];
+
+                    if (element.Clip == null)
+                    {
+                        element.Clip = actionElement.Clip;
+                        addInNull = true;
+                        break;
+                    }
+                }
+
+                if (addInNull)
+                {
+                    // Debug.Log("Add in Null: " + addInNull);
+                    // serializedObject.ApplyModifiedProperties();
+                    continue;
+                }
+
+                _target.Actions.Add(actionElement);
+                // _actionsProperty.arraySize++;
+                // var action = _actionsProperty.GetArrayElementAtIndex(_actionsProperty.arraySize - 1);
+                // action.FindPropertyRelative(nameof(ActionElement.Clip)).objectReferenceValue = actionElement.Clip;
+                // action.FindPropertyRelative(nameof(ActionElement.Name)).stringValue = actionElement.Name;
+                // action.FindPropertyRelative(nameof(ActionElement.UseCustomName)).boolValue = actionElement.UseCustomName;
+
+                // // Debug.Log("Animation Clip Added");
+                // serializedObject.ApplyModifiedProperties();
+            }
         }
 
         public void DropAreaGUI()

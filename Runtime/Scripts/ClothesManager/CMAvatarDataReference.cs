@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using VRC.SDK3.Avatars.ScriptableObjects;
 using VRC.SDKBase;
 
@@ -15,5 +16,11 @@ namespace Yueby.AvatarTools.ClothesManager
         public CMCDataSo Data;
         public VRCExpressionsMenu ParentMenu;
         public string SavePath = "Assets/ClothesManager";
+    }
+
+    [Serializable]
+    public class Parameter : VRC_AvatarParameterDriver.Parameter
+    {
+        public AnimatorControllerParameterType customType;
     }
 }

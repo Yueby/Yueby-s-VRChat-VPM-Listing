@@ -10,6 +10,7 @@ using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using VRC.SDK3.Avatars.Components;
 using VRC.SDK3.Avatars.ScriptableObjects;
+using VRC.SDKBase;
 using Yueby.Utils;
 using static Yueby.AvatarTools.ClothesManager.CMClothesData.ClothesAnimParameter.SMRParameter;
 using Object = UnityEngine.Object;
@@ -80,7 +81,6 @@ namespace Yueby.AvatarTools.ClothesManager
         {
             _dataReference = _descriptor.gameObject.AddComponent<CMAvatarDataReference>();
             _dataReference.ID = GenerateId();
-
 
             var asset = CreateInstance<CMCDataSo>();
 
@@ -158,7 +158,6 @@ namespace Yueby.AvatarTools.ClothesManager
                     currentExMenu.controls.Remove(control);
             }
 
-
             var path = GetIDPath();
             if (Directory.Exists(path))
             {
@@ -174,7 +173,6 @@ namespace Yueby.AvatarTools.ClothesManager
             }
             else
                 EditorUtility.DisplayDialog("提示", "删除失败!不存在数据目录", "Ok");
-
 
             if (_expressionsMenu)
                 EditorUtility.SetDirty(_expressionsMenu);
@@ -256,7 +254,6 @@ namespace Yueby.AvatarTools.ClothesManager
             _parameters = _descriptor.expressionParameters;
             _fxLayer = _descriptor.baseAnimationLayers[4].animatorController as AnimatorController;
 
-
             _dataReference = _descriptor.GetComponent<CMAvatarDataReference>();
             if (_dataReference != null)
             {
@@ -294,7 +291,6 @@ namespace Yueby.AvatarTools.ClothesManager
                 objects = list.ToArray();
             }
 
-
             var paths = new List<CMClothesData.ClothesAnimParameter>();
             if (objects != null)
             {
@@ -325,7 +321,6 @@ namespace Yueby.AvatarTools.ClothesManager
 
                             obj = sm;
                         }
-
 
                         if (obj is SkinnedMeshRenderer skinnedMeshRenderer)
                         {
@@ -400,7 +395,6 @@ namespace Yueby.AvatarTools.ClothesManager
                     {
                         var path = VRC.Core.ExtensionMethods.GetHierarchyPath(skinnedMeshRenderer.transform).Replace(_descriptor.name + "/", "");
 
-
                         if (skinnedMeshRenderer.sharedMesh.blendShapeCount == 0)
                         {
                             var message = string.Format(Localization.Get("clothes_none_bs_tip"), $"{nameof(SkinnedMeshRenderer)}:{skinnedMeshRenderer.name}");
@@ -442,7 +436,6 @@ namespace Yueby.AvatarTools.ClothesManager
                     height += addRect.height + 1;
                     EditorGUI.BeginDisabledGroup(target.SmrParameter.Index == -1);
 
-
                     if (UnityEngine.GUI.Button(addRect, "+"))
                     {
                         var parameter = AddNextSMRParameter(target, skinnedMeshRenderer);
@@ -483,7 +476,6 @@ namespace Yueby.AvatarTools.ClothesManager
 
                             if (target.SmrParameter.Index > blendShapeNames.Count - 1)
                                 target.SmrParameter.Index = -1;
-
 
                             var lastIndex = target.SmrParameter.Index;
                             EditorGUI.BeginChangeCheck();
@@ -633,7 +625,6 @@ namespace Yueby.AvatarTools.ClothesManager
                 }
             }
 
-
             if (_clothes.ContainsInList(addParameter, _clothes.SMRParameters))
             {
                 return AddNextSMRParameter(addParameter, renderer);
@@ -741,7 +732,6 @@ namespace Yueby.AvatarTools.ClothesManager
             return list;
         }
 
-
         private void Apply(CMCDataSo data)
         {
             var backupPath = GetBackupsPath();
@@ -750,7 +740,6 @@ namespace Yueby.AvatarTools.ClothesManager
             BackupFile(backupPath, _parameters, time);
             BackupFile(backupPath, _fxLayer, time);
             PrefabUtility.SaveAsPrefabAsset(_descriptor.gameObject, backupPath + "/" + _descriptor.name + ".prefab");
-
 
             if (_parameters == null || _parameters.parameters == null)
             {
@@ -805,7 +794,6 @@ namespace Yueby.AvatarTools.ClothesManager
             if (currentExMenu != _expressionsMenu)
                 BackupFile(backupPath, currentExMenu, time);
 
-
             foreach (var category in data.Categories)
             {
                 if (category.Clothes.Count == 0) continue;
@@ -843,11 +831,11 @@ namespace Yueby.AvatarTools.ClothesManager
                             AddControlToSubMenu(clothes.Name, parameterName, clothes.Icon, category.Clothes.IndexOf(clothes), currentClothesMenu);
                     }
 
-                    EditorUtility.SetDirty(currentClothesMenu);
+                    // EditorUtility.SetDirty(currentClothesMenu);
 
                     SetupSubMenu(currentCategoryMenu, firstMenu, category.Name, category.Icon);
-                    if (currentCategoryMenu != null)
-                        EditorUtility.SetDirty(currentCategoryMenu);
+                    // if (currentCategoryMenu != null)
+                    //     EditorUtility.SetDirty(currentCategoryMenu);
                 });
             }
 
@@ -859,6 +847,7 @@ namespace Yueby.AvatarTools.ClothesManager
                 AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(mainMenu));
 
             EditorUtility.SetDirty(currentExMenu);
+            AssetDatabase.SaveAssets();
 
             // 创建动画文件
             // 删除旧文件，替换为新文件
@@ -967,18 +956,17 @@ namespace Yueby.AvatarTools.ClothesManager
                             enterToExitTransition.duration = 0;
                             exitTransition.duration = 0;
 
-
                             if (clothes.EnterParameter.Parameters.Count > 0)
                             {
                                 var showDriver = enterState.AddStateMachineBehaviour<VRCAvatarParameterDriver>();
-                                showDriver.parameters = clothes.EnterParameter.Parameters;
+                                showDriver.parameters = clothes.EnterParameter.Convert();
                                 showDriver.localOnly = clothes.EnterParameter.IsLocal;
                             }
 
                             if (clothes.ExitParameter.Parameters.Count > 0)
                             {
                                 var exitDriver = exitState.AddStateMachineBehaviour<VRCAvatarParameterDriver>();
-                                exitDriver.parameters = clothes.ExitParameter.Parameters;
+                                exitDriver.parameters = clothes.ExitParameter.Convert();
                                 exitDriver.localOnly = clothes.ExitParameter.IsLocal;
                             }
                         }
@@ -996,7 +984,6 @@ namespace Yueby.AvatarTools.ClothesManager
             EditorUtility.SetDirty(_fxLayer);
             EditorUtility.SetDirty(_expressionsMenu);
             EditorUtility.SetDirty(_parameters);
-
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -1059,11 +1046,17 @@ namespace Yueby.AvatarTools.ClothesManager
             foreach (var control in menu.controls)
             {
                 if (control.name != targetName) continue;
+
                 isFindMenu = true;
                 if (EditorUtility.DisplayDialog(Localization.Get("tips"), string.Format(Localization.Get("apply_menu_find_tip"), targetName), Localization.Get("yes"), Localization.Get("no")))
                 {
                     control.subMenu = target;
                     control.icon = icon;
+                }
+                else
+                {
+                    isFindMenu = false;
+                    targetName += " (1)";
                 }
 
                 break;
@@ -1078,10 +1071,10 @@ namespace Yueby.AvatarTools.ClothesManager
                     subMenu = target,
                     icon = icon
                 });
+
             }
 
-
-            DeleteNullSubMenu(menu, targetName, target);
+            // DeleteNullSubMenu(menu, targetName, target);
         }
 
         private void BackupFile(string path, Object targetFile, string backupTime)
@@ -1170,7 +1163,7 @@ namespace Yueby.AvatarTools.ClothesManager
                 EditorUtility.SetDirty(parentMenu);
             }
 
-            AssetDatabase.SaveAssets();
+            // AssetDatabase.SaveAssets();
             return createdMenu;
         }
 
@@ -1207,11 +1200,9 @@ namespace Yueby.AvatarTools.ClothesManager
                 AnimationUtility.SetEditorCurve(clip, bind, curve);
             }
 
-
             foreach (var smr in smrList)
             {
                 if (string.IsNullOrEmpty(smr.Path)) continue;
-
 
                 if (smr.SmrParameter.Index < 0) continue;
 
@@ -1238,10 +1229,8 @@ namespace Yueby.AvatarTools.ClothesManager
                 }
             }
 
-
             return clip;
         }
-
 
         private Dictionary<string, List<CMClothesData.ClothesAnimParameter>> GetClothesParameters(CMClothesCategorySo category, int index)
         {
@@ -1264,7 +1253,6 @@ namespace Yueby.AvatarTools.ClothesManager
             showList = CombineCAPList(showList, currentClothes.GetNotEmptyParameters(currentClothes.ShowParameters));
             hideList = CombineCAPList(hideList, currentClothes.GetNotEmptyParameters(currentClothes.HideParameters));
 
-
             foreach (var showParameter in currentClothes.ShowParameters)
             {
                 var removeList = hideList.Where(hide => hide.Path == showParameter.Path).ToList();
@@ -1284,13 +1272,11 @@ namespace Yueby.AvatarTools.ClothesManager
                 }
             }
 
-
             var dic = new Dictionary<string, List<CMClothesData.ClothesAnimParameter>>()
             {
                 { "Show", showList },
                 { "Hide", hideList }
             };
-
 
             return dic;
         }
@@ -1309,11 +1295,13 @@ namespace Yueby.AvatarTools.ClothesManager
                     return parameter.type;
             }
 
-            return AnimatorControllerParameterType.Bool;
+            return default;
         }
 
         private int IndexInParameterNames(string driverName)
         {
+            if (string.IsNullOrEmpty(driverName)) return 0;
+
             var names = GetParameterNames();
             for (var i = 0; i < names.Length; i++)
             {
@@ -1322,12 +1310,14 @@ namespace Yueby.AvatarTools.ClothesManager
                     return i;
             }
 
-            return -1;
+            return 0;
         }
 
         private string[] GetParameterNames()
         {
-            return GetAnimatorParametersWithTool().Select(param => param.name).ToArray();
+            var list = GetAnimatorParametersWithTool().Select(param => param.name).ToList();
+            list.Insert(0, "-");
+            return list.ToArray();
         }
 
         private List<AnimatorControllerParameter> GetAnimatorParametersWithTool()
@@ -1407,7 +1397,6 @@ namespace Yueby.AvatarTools.ClothesManager
                     // Debug.Log(parameter.Path);
                 }
 
-
                 foreach (var trans in showList.Select(parameter => _descriptor.transform.Find(parameter.Path)).Where(trans => trans))
                 {
                     // Undo.RegisterCompleteObjectUndo(trans.gameObject, "Preview Show GameObject");
@@ -1419,7 +1408,6 @@ namespace Yueby.AvatarTools.ClothesManager
                 foreach (var category in _dataReference.Data.Categories)
                 {
                     if (category.Clothes.Count == 0) continue;
-
 
                     var parameters = GetClothesParameters(category, category.Selected);
                     var showList = parameters["Show"];
@@ -1434,7 +1422,6 @@ namespace Yueby.AvatarTools.ClothesManager
 
                         // Debug.Log(parameter.Path);
                     }
-
 
                     foreach (var trans in showList.Select(parameter => _descriptor.transform.Find(parameter.Path)).Where(trans => trans))
                     {
@@ -1477,7 +1464,6 @@ namespace Yueby.AvatarTools.ClothesManager
                 }
             }
         }
-
 
         private void RecordAvatarState()
         {
@@ -1546,7 +1532,6 @@ namespace Yueby.AvatarTools.ClothesManager
                         hideRenderers.Remove(childRender.gameObject);
                 }
 
-
                 trans.gameObject.SetActive(true);
             }
 
@@ -1569,7 +1554,6 @@ namespace Yueby.AvatarTools.ClothesManager
             if (needFocus)
                 EditorUtils.FocusTarget(_captureGo);
         }
-
 
         private void GetClothesCapture()
         {
@@ -1653,7 +1637,6 @@ namespace Yueby.AvatarTools.ClothesManager
                 smr.Reset();
         }
 
-
         private class CMAvatarGameObjectState
         {
             private readonly GameObject _gameObject;
@@ -1677,7 +1660,6 @@ namespace Yueby.AvatarTools.ClothesManager
             public SkinnedMeshRenderer SkinnedMeshRenderer { get; }
             private readonly Dictionary<int, float> _blendShapes = new Dictionary<int, float>();
             private readonly Material[] _materials;
-
 
             public CMAvatarSMRState(SkinnedMeshRenderer skinnedMeshRenderer)
             {
@@ -1714,7 +1696,6 @@ namespace Yueby.AvatarTools.ClothesManager
                 return null;
             }
 
-
             public void Reset()
             {
                 if (SkinnedMeshRenderer == null) return;
@@ -1723,5 +1704,6 @@ namespace Yueby.AvatarTools.ClothesManager
                 SkinnedMeshRenderer.sharedMaterials = _materials;
             }
         }
+
     }
 }

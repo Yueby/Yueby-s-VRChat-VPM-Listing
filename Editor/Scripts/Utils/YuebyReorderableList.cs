@@ -103,13 +103,20 @@ namespace Yueby.Utils
                 }
             };
 
+            // Debug.Log(serializedProperty.arraySize);
+
             if (serializedProperty.arraySize > 0)
             {
                 List.index = 0;
                 List.onMouseUpCallback?.Invoke(List);
-            }
-        }
 
+                // EditorWindow.focusedWindow.ShowNotification(new GUIContent(""));
+            }
+
+            // List.ClearSelection();
+
+            // EditorUtils.WaitToDo(10, "Repaint", _onRepaint);
+        }
 
         public void DoLayout(string title, Vector2 area, bool isNoBorder = false, bool hasFoldout = true)
         {
@@ -175,7 +182,6 @@ namespace Yueby.Utils
             }
         }
 
-
         private void DrawContent()
         {
             EditorUI.SpaceArea(() =>
@@ -208,7 +214,6 @@ namespace Yueby.Utils
                         EditorGUI.EndDisabledGroup();
                     }
 
-
                     EditorGUI.BeginDisabledGroup(List.count == 0 || List.index == -1);
 
                     if (_isShowRemoveButton)
@@ -227,7 +232,6 @@ namespace Yueby.Utils
                     EditorUI.Line(LineType.Horizontal, 2, 0);
                     OnHeaderBottomDraw.Invoke();
                 }
-
 
                 EditorUI.Line(LineType.Horizontal, 2, 0);
                 // 绘制列表内容
@@ -273,7 +277,6 @@ namespace Yueby.Utils
                         EditorGUI.EndDisabledGroup();
                     }
 
-
                     EditorGUI.BeginDisabledGroup(List.count == 0 || List.index == -1);
 
                     if (_isShowRemoveButton)
@@ -293,7 +296,6 @@ namespace Yueby.Utils
                     OnHeaderBottomDraw.Invoke();
                 }
 
-
                 EditorUI.Line(LineType.Horizontal, 2, 0);
                 // 绘制列表内容
                 if (List.count == 0)
@@ -302,7 +304,6 @@ namespace Yueby.Utils
                     List?.DoLayoutList();
             });
         }
-
 
         private void OnListAdd()
         {

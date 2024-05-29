@@ -6,7 +6,7 @@ using nadena.dev.modular_avatar.core;
 using UnityEngine;
 using VRC.SDKBase;
 
-namespace Yueby.MAActionSwitch
+namespace Yueby.AvatarTools.MAActionSwitch
 {
     [RequireComponent(typeof(ModularAvatarMenuItem))]
     [AddComponentMenu("MA Action Switch")]

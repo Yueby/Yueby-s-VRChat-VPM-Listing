@@ -79,7 +79,6 @@ namespace Yueby.AvatarTools.ClothesManager
             return HasParameterDriver && (EnterParameter.Parameters.Count > 0 || ExitParameter.Parameters.Count > 0);
         }
 
-
         public bool ContainsInList(ClothesAnimParameter clothesAnimParameter, List<ClothesAnimParameter> animParameters)
         {
             foreach (var parameter in animParameters)
@@ -107,12 +106,16 @@ namespace Yueby.AvatarTools.ClothesManager
             }
         }
 
-
         [Serializable]
         public class ParameterDriver
         {
             public bool IsLocal = true;
-            public List<VRC_AvatarParameterDriver.Parameter> Parameters;
+            public List<Parameter> Parameters;
+
+            public List<VRC_AvatarParameterDriver.Parameter> Convert()
+            {
+                return Parameters.Cast<VRC_AvatarParameterDriver.Parameter>().ToList();
+            }
         }
 
         [Serializable]
