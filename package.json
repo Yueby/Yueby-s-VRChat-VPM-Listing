@@ -1,7 +1,7 @@
 {
   "name": "com.yueby.avatartools",
   "displayName": "Yueby Avatar Tools",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "unity": "2022.3",
   "description": "An avatar tools for VRChat",
   "author": {
@@ -13,9 +13,9 @@
     "avatar",
     "tool"
   ],
-  "type": "tool",
   "unityRelease": "22f1",
   "vpmDependencies": {
-    "com.vrchat.avatars": ">=3.2.0"
+    "com.vrchat.avatars": ">=3.6.0",
+    "nadena.dev.modular-avatar": ">=1.9.13"
   }
 }
