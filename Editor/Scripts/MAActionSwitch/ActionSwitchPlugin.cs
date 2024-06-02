@@ -77,12 +77,19 @@ namespace Yueby.AvatarTools.MAActionSwitch
             var waitState = CreateAnimatorState(layer.stateMachine, "Wait", emptyClip, writeDefault);
             var readyState = CreateAnimatorState(layer.stateMachine, "Ready", emptyClip, writeDefault);
             var endState = CreateAnimatorState(layer.stateMachine, "End", emptyClip, writeDefault);
+            var overState = CreateAnimatorState(layer.stateMachine, "Over", emptyClip, writeDefault);
 
             AddTrackingControlStateBehaviour(readyState, VRC.SDKBase.VRC_AnimatorTrackingControl.TrackingType.Animation);
             AddTrackingControlStateBehaviour(endState, VRC.SDKBase.VRC_AnimatorTrackingControl.TrackingType.Tracking);
             AddPlayableLayerControl(readyState, 1);
             AddPlayableLayerControl(endState, 0);
 
+            overState.AddStateMachineBehaviour<VRCAvatarParameterDriver>().parameters.Add(new VRC.SDKBase.VRC_AvatarParameterDriver.Parameter
+            {
+                name = parameterName,
+                value = 0,
+                type = VRC.SDKBase.VRC_AvatarParameterDriver.ChangeType.Set
+            });
             // var driver = endState.AddStateMachineBehaviour<VRCAvatarParameterDriver>();
             // driver.parameters.Add(new VRC.SDKBase.VRC_AvatarParameterDriver.Parameter
             // {
@@ -90,6 +97,18 @@ namespace Yueby.AvatarTools.MAActionSwitch
             //     value = 0,
             //     type = VRC.SDKBase.VRC_AvatarParameterDriver.ChangeType.Set
             // });
+
+            var anyToOverTransition = layer.stateMachine.AddAnyStateTransition(overState);
+            anyToOverTransition.AddCondition(AnimatorConditionMode.NotEqual, 0, parameterName);
+            anyToOverTransition.AddCondition(AnimatorConditionMode.If, 1, "Seated");
+            anyToOverTransition.hasExitTime = false;
+            anyToOverTransition.duration = transitionDuration;
+
+            var overToEndTransition = overState.AddTransition(endState);
+            overToEndTransition.hasExitTime = true;
+            overToEndTransition.exitTime = 0.9f;
+            overToEndTransition.duration = transitionDuration;
+            overToEndTransition.hasFixedDuration = true;
 
             layer.stateMachine.defaultState = waitState;
             AddIntTransition(waitState, readyState, AnimatorConditionMode.NotEqual, parameterName, 0, transitionDuration);
