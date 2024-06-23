@@ -799,6 +799,7 @@ namespace Yueby.AvatarTools.ClothesManager
                 if (category.Clothes.Count == 0) continue;
 
                 var currentMainMenu = mainMenu;
+                // Debug.Log(currentMainMenu.controls.Count);
                 if (category.ParentMenu != null)
                 {
                     currentMainMenu = category.ParentMenu;
@@ -836,6 +837,8 @@ namespace Yueby.AvatarTools.ClothesManager
                     SetupSubMenu(currentCategoryMenu, firstMenu, category.Name, category.Icon);
                     // if (currentCategoryMenu != null)
                     //     EditorUtility.SetDirty(currentCategoryMenu);
+                    EditorUtility.SetDirty(currentMainMenu);
+                    AssetDatabase.SaveAssets();
                 });
             }
 
@@ -1096,7 +1099,7 @@ namespace Yueby.AvatarTools.ClothesManager
         {
             if (current.controls.Count < 8) return current;
 
-            var currentName = $"[CM Generated] {menuName} (Next {index + 1})";
+            var currentName = $"{menuName} (Next {index + 1})";
             var createPath = path + $"/{currentName}.asset";
 
             var control = current.controls[current.controls.Count - 1];
@@ -1123,6 +1126,8 @@ namespace Yueby.AvatarTools.ClothesManager
             {
                 currentExMenu.controls.Add(control);
             }
+
+            EditorUtility.SetDirty(current);
 
             return currentExMenu;
         }
