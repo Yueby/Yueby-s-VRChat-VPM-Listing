@@ -86,7 +86,7 @@ namespace Yueby.AvatarTools.ClothesManager
 
         #endregion
 
-        [MenuItem("Tools/YuebyTools/VRChat/Avatar/Clothes Manager", false, -21)]
+        [MenuItem("Tools/YuebyTools/VRChat/Avatar/Clothes Manager", false, -22)]
         public static void OpenWindow()
         {
             _window = GetWindow<CMEditorWindow>();

@@ -155,7 +155,7 @@ namespace Yueby.AvatarTools.DressingTools
             FocusAvatarWhenGetDescriptor();
         }
 
-        [MenuItem("Tools/YuebyTools/VRChat/Avatar/DressingTool", false, -20)]
+        [MenuItem("Tools/YuebyTools/VRChat/Avatar/DressingTool", false, -23)]
         public static void OpenWindow()
         {
             _window = GetWindow<DressingToolEditorWindow>();
