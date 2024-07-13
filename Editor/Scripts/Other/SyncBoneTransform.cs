@@ -30,7 +30,7 @@ namespace Yueby.AvatarTools.Other
             });
         }
 
-        [MenuItem("Tools/YuebyTools/Avatar/Other/Sync Bone Transform", false, 41)]
+        [MenuItem("Tools/YuebyTools/VRChat/Avatar/Sync Bone Transform", false, 41)]
         private static void Open()
         {
             var window = GetWindow<SyncBoneTransform>();
@@ -48,25 +48,25 @@ namespace Yueby.AvatarTools.Other
             }
 
             foreach (var originTrans in origin.GetComponentsInChildren<Transform>(true))
-            foreach (var targetTrans in target.GetComponentsInChildren<Transform>())
-            {
-                if (!targetTrans.name.Equals(originTrans.name)) continue;
-
-                if (!_isUsingWorldSpace)
+                foreach (var targetTrans in target.GetComponentsInChildren<Transform>())
                 {
-                    targetTrans.localPosition = originTrans.localPosition;
-                    targetTrans.localRotation = originTrans.localRotation;
-                    targetTrans.localScale = originTrans.localScale;
-                }
-                else
-                {
-                    targetTrans.position = originTrans.position;
-                    targetTrans.rotation = originTrans.rotation;
-                    targetTrans.localScale = originTrans.localScale;
-                }
+                    if (!targetTrans.name.Equals(originTrans.name)) continue;
 
-                break;
-            }
+                    if (!_isUsingWorldSpace)
+                    {
+                        targetTrans.localPosition = originTrans.localPosition;
+                        targetTrans.localRotation = originTrans.localRotation;
+                        targetTrans.localScale = originTrans.localScale;
+                    }
+                    else
+                    {
+                        targetTrans.position = originTrans.position;
+                        targetTrans.rotation = originTrans.rotation;
+                        targetTrans.localScale = originTrans.localScale;
+                    }
+
+                    break;
+                }
         }
     }
 }

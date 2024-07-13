@@ -8,7 +8,7 @@
 //     {
 //         private static TMEditorWindow _window;
 //
-//         [MenuItem("Tools/YuebyTools/Avatar/Toggle Manager", false, 12)]
+//         [MenuItem("Tools/YuebyTools/VRChat/Avatar/Toggle Manager", false, 12)]
 //         public static void ShowWindow()
 //         {
 //             _window = GetWindow<TMEditorWindow>();

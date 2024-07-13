@@ -36,7 +36,7 @@ namespace Yueby.AvatarTools.WorldConstraints
             DrawOption();
         }
 
-        [MenuItem("Tools/YuebyTools/Avatar/WorldSpaceConstraint", false, 13)]
+        [MenuItem("Tools/YuebyTools/VRChat/Avatar/WorldSpaceConstraint", false, -23)]
         public static void OpenWindow()
         {
             if (_window == null)

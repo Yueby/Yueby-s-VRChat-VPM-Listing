@@ -46,7 +46,7 @@ namespace Yueby.AvatarTools.Other
 
         private YuebyReorderableList _bsRL;
 
-        [MenuItem("Tools/YuebyTools/Avatar/Other/Sync BlendShapes", false, 40)]
+        [MenuItem("Tools/YuebyTools/VRChat/Avatar/Sync BlendShapes", false, 40)]
         public static void OpenWindow()
         {
             _window = GetWindow<SyncAnimationParameter>();

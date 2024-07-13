@@ -58,7 +58,6 @@ namespace Yueby.AvatarTools.DressingTools
             _titleIcons[0] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/DressingTools/Sprites/icon_d.png");
             _titleIcons[1] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/DressingTools/Sprites/icon_l.png");
 
-
             if (_descriptor == null)
             {
                 if (EditorPrefs.HasKey(DescriptorPrefs))
@@ -98,7 +97,6 @@ namespace Yueby.AvatarTools.DressingTools
             _path = string.IsNullOrEmpty(path) ? DefaultControllerPath : path;
             _runtimeAnimatorController = AssetDatabase.LoadMainAssetAtPath($"{_path}/AvatarTest.controller") as RuntimeAnimatorController;
         }
-
 
         private const string DefaultControllerPath = "Packages/com.yueby.avatartools/Editor/Assets/DressingTools/Animation/AvatarTest";
         private static string _path = DefaultControllerPath;
@@ -157,7 +155,7 @@ namespace Yueby.AvatarTools.DressingTools
             FocusAvatarWhenGetDescriptor();
         }
 
-        [MenuItem("Tools/YuebyTools/Avatar/DressingTool", false, 10)]
+        [MenuItem("Tools/YuebyTools/VRChat/Avatar/DressingTool", false, -20)]
         public static void OpenWindow()
         {
             _window = GetWindow<DressingToolEditorWindow>();

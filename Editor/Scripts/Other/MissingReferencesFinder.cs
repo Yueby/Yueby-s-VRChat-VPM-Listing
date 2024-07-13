@@ -16,19 +16,18 @@ public class MissingReferencesFinder : MonoBehaviour
     /// <summary>
     /// Finds all missing references to objects in the currently loaded scene.
     /// </summary>
-    [MenuItem(MENU_ROOT + "Search in scene", false, 50)]
+    [MenuItem(MENU_ROOT + "Search in scene", false, 100)]
     public static void FindMissingReferencesInCurrentScene()
     {
         var sceneObjects = GetSceneObjects();
         FindMissingReferences(EditorSceneManager.GetActiveScene().path, sceneObjects);
     }
 
-
     /// <summary>
     /// Finds all missing references to objects in all enabled scenes in the project.
     /// This works by loading the scenes one by one and checking for missing object references.
     /// </summary>
-    [MenuItem(MENU_ROOT + "Search in all scenes", false, 51)]
+    [MenuItem(MENU_ROOT + "Search in all scenes", false, 101)]
     public static void FindMissingReferencesInAllScenes()
     {
         foreach (var scene in EditorBuildSettings.scenes.Where(s => s.enabled))
@@ -41,7 +40,7 @@ public class MissingReferencesFinder : MonoBehaviour
     /// <summary>
     /// Finds all missing references to objects in assets (objects from the project window).
     /// </summary>
-    [MenuItem(MENU_ROOT + "Search in assets", false, 52)]
+    [MenuItem(MENU_ROOT + "Search in assets", false, 102)]
     public static void FindMissingReferencesInAssets()
     {
         var allAssets = AssetDatabase.GetAllAssetPaths().Where(path => path.StartsWith("Assets/")).ToArray();
@@ -50,7 +49,7 @@ public class MissingReferencesFinder : MonoBehaviour
         FindMissingReferences("Project", objs);
     }
 
-    [MenuItem(MENU_ROOT + "Missing Script", false, 53)]
+    [MenuItem(MENU_ROOT + "Missing Script", false, 103)]
     static void SelectGameObjects()
     {
         //Get the current scene and all top-level GameObjects in the scene hierarchy

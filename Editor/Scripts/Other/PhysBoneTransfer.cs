@@ -15,7 +15,7 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
         private Transform _origin;
         private Transform _current;
 
-        [MenuItem("Tools/YuebyTools/Avatar/Other/PhysBone Transfer", false, 21)]
+        [MenuItem("Tools/YuebyTools/VRChat/Avatar/PhysBone Transfer", false, 21)]
         public static void OpenWindow()
         {
             _window = GetWindow<PhysboneTransfer>();
@@ -91,7 +91,6 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
                 targetGo.transform.localPosition = transform.localPosition;
                 targetGo.transform.localRotation = transform.localRotation;
 
-
                 if (targetGo.GetComponent<VRCPhysBone>() != null)
                     ComponentUtility.PasteComponentValues(targetGo.GetComponent<VRCPhysBone>());
                 else
@@ -106,7 +105,6 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
                 }
                 else
                     targetPhysBone.rootTransform = targetGo.transform;
-
 
                 // targetPhysBone.ignoreTransforms = GetIgnoreTransforms(targetPhysBone.ignoreTransforms);
                 targetPhysBone.colliders = GetColliders(targetPhysBone.colliders);

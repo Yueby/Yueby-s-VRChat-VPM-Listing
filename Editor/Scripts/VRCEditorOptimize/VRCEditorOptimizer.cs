@@ -12,19 +12,18 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
 {
     public static class VRCEditorOptimizer
     {
-        private const string Path = "Tools/YuebyTools/Utils/Change Style (VRC Expressions Inspector)";
+        private const string Path = "Tools/YuebyTools/VRChat/Avatar/Change Style (VRC Expressions Inspector)";
         private static bool _isEnabled;
         private const string StyleSymbol = "YUEBY_AVATAR_STYLE";
 
-
-        [MenuItem(Path, priority = 50)]
+        [MenuItem(Path, priority = 60)]
         public static void Execute()
         {
-//#if UNITY_2019
+            //#if UNITY_2019
             var symbols = PlayerSettings.GetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone);
-// #elif UNITY_2022
-//             var symbols = PlayerSettings.GetScriptingDefineSymbols(NamedBuildTarget.Standalone);
-// #endif
+            // #elif UNITY_2022
+            //             var symbols = PlayerSettings.GetScriptingDefineSymbols(NamedBuildTarget.Standalone);
+            // #endif
             var list = symbols.Split(';').ToList();
             var result = "";
             if (_isEnabled)
@@ -38,15 +37,14 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
                     list.Add(StyleSymbol);
             }
 
-
             foreach (var item in list)
                 result += item + ";";
 
-//#if UNITY_2019
+            //#if UNITY_2019
             PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone, result);
-//#elif UNITY_2022
-//            PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.Standalone, result);
-//#endif
+            //#elif UNITY_2022
+            //            PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.Standalone, result);
+            //#endif
 
             EditorUtility.DisplayDialog("Tips", "Waiting for editor recompile scripts.\n请等待编辑器重新编译脚本。", "Ok");
             CompilationPipeline.RequestScriptCompilation();
@@ -65,11 +63,11 @@ namespace Yueby.AvatarTools.VRCEditorOptimize
 
         private static bool GetEnable()
         {
-//#if UNITY_2019
+            //#if UNITY_2019
             var symbols = PlayerSettings.GetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone);
-//#elif UNITY_2022
-//            var symbols = PlayerSettings.GetScriptingDefineSymbols(NamedBuildTarget.Standalone);
-//#endif
+            //#elif UNITY_2022
+            //            var symbols = PlayerSettings.GetScriptingDefineSymbols(NamedBuildTarget.Standalone);
+            //#endif
             var list = symbols.Split(';').ToList();
             return list.Contains(StyleSymbol);
         }

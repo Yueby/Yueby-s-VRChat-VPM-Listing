@@ -144,7 +144,7 @@ namespace Yueby.AvatarTools.Other
             });
         }
 
-        [MenuItem("Tools/YuebyTools/Avatar/Other/PhysBone Check", false, 20)]
+        [MenuItem("Tools/YuebyTools/VRChat/Avatar/PhysBone Check", false, 20)]
         private static void Open()
         {
             var window = GetWindow<PhysBoneCheck>();
