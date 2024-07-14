@@ -55,8 +55,8 @@ namespace Yueby.AvatarTools.DressingTools
 
         private void OnEnable()
         {
-            _titleIcons[0] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/DressingTools/Sprites/icon_d.png");
-            _titleIcons[1] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/DressingTools/Sprites/icon_l.png");
+            _titleIcons[0] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/yueby.tools.avatar-tools/Editor/Assets/DressingTools/Sprites/icon_d.png");
+            _titleIcons[1] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/yueby.tools.avatar-tools/Editor/Assets/DressingTools/Sprites/icon_l.png");
 
             if (_descriptor == null)
             {
@@ -98,7 +98,7 @@ namespace Yueby.AvatarTools.DressingTools
             _runtimeAnimatorController = AssetDatabase.LoadMainAssetAtPath($"{_path}/AvatarTest.controller") as RuntimeAnimatorController;
         }
 
-        private const string DefaultControllerPath = "Packages/com.yueby.avatartools/Editor/Assets/DressingTools/Animation/AvatarTest";
+        private const string DefaultControllerPath = "Packages/yueby.tools.avatar-tools/Editor/Assets/DressingTools/Animation/AvatarTest";
         private static string _path = DefaultControllerPath;
 
         private string GetAnimationAssetsPath()

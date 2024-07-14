@@ -226,7 +226,7 @@ namespace Yueby.AvatarTools.ClothesManager
 
         private string GetPreviewPath()
         {
-            var path = "Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Preview.renderTexture";
+            var path = "Packages/yueby.tools.avatar-tools/Editor/Assets/ClothesManager/Preview.renderTexture";
             return path;
         }
 

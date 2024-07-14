@@ -123,22 +123,22 @@ namespace Yueby.AvatarTools.ClothesManager
 
         private void GetIcons()
         {
-            _objectIcons[0] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/DarkMode/object.png");
-            _objectIcons[1] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/LightMode/object.png");
+            _objectIcons[0] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/yueby.tools.avatar-tools/Editor/Assets/ClothesManager/Sprites/DarkMode/object.png");
+            _objectIcons[1] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/yueby.tools.avatar-tools/Editor/Assets/ClothesManager/Sprites/LightMode/object.png");
 
-            _listIcons[0] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/DarkMode/list.png");
-            _listIcons[1] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/LightMode/list.png");
+            _listIcons[0] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/yueby.tools.avatar-tools/Editor/Assets/ClothesManager/Sprites/DarkMode/list.png");
+            _listIcons[1] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/yueby.tools.avatar-tools/Editor/Assets/ClothesManager/Sprites/LightMode/list.png");
 
-            _clothesIcons[0] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/DarkMode/clothes.png");
-            _clothesIcons[1] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/LightMode/clothes.png");
+            _clothesIcons[0] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/yueby.tools.avatar-tools/Editor/Assets/ClothesManager/Sprites/DarkMode/clothes.png");
+            _clothesIcons[1] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/yueby.tools.avatar-tools/Editor/Assets/ClothesManager/Sprites/LightMode/clothes.png");
 
-            _categoryIcons[0] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/DarkMode/category.png");
-            _categoryIcons[1] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/LightMode/category.png");
+            _categoryIcons[0] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/yueby.tools.avatar-tools/Editor/Assets/ClothesManager/Sprites/DarkMode/category.png");
+            _categoryIcons[1] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/yueby.tools.avatar-tools/Editor/Assets/ClothesManager/Sprites/LightMode/category.png");
 
-            _titleIcons[0] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/DarkMode/icon.png");
-            _titleIcons[1] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/LightMode/icon.png");
+            _titleIcons[0] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/yueby.tools.avatar-tools/Editor/Assets/ClothesManager/Sprites/DarkMode/icon.png");
+            _titleIcons[1] = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/yueby.tools.avatar-tools/Editor/Assets/ClothesManager/Sprites/LightMode/icon.png");
 
-            _nextIcon = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.yueby.avatartools/Editor/Assets/ClothesManager/Sprites/next.png");
+            _nextIcon = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/yueby.tools.avatar-tools/Editor/Assets/ClothesManager/Sprites/next.png");
         }
 
         private void OnDisable()

@@ -20,7 +20,7 @@ namespace Yueby.AvatarTools.WorldConstraints
         private void OnEnable()
         {
             if (_prefab == null)
-                _prefab = AssetDatabase.LoadMainAssetAtPath("Packages/com.yueby.avatartools/Editor/Assets/WorldConstraints/Prefabs/WorldSpaceItem.prefab") as GameObject;
+                _prefab = AssetDatabase.LoadMainAssetAtPath("Packages/yueby.tools.avatar-tools/Editor/Assets/WorldConstraints/Prefabs/WorldSpaceItem.prefab") as GameObject;
         }
 
         private void OnGUI()
