@@ -8,7 +8,6 @@ using VRC.SDKBase;
 
 namespace Yueby.AvatarTools.MAActionSwitch
 {
-    [RequireComponent(typeof(ModularAvatarMenuItem))]
     [AddComponentMenu("MA Action Switch")]
     [DisallowMultipleComponent]
     public class ActionSwitch : MonoBehaviour, IEditorOnly

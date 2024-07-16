@@ -23,6 +23,7 @@ namespace Yueby.AvatarTools.MAActionSwitch
 
         private void OnEnable()
         {
+
             _target = (ActionSwitch)target;
 
             _nameProperty = serializedObject.FindProperty(nameof(ActionSwitch.Name));
