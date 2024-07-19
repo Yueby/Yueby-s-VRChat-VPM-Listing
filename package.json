@@ -17,6 +17,6 @@
   "vpmDependencies": {
     "com.vrchat.avatars": ">=3.6.0",
     "nadena.dev.modular-avatar": ">=1.9.13",
-    "yueby.tools.core": ">=0.0.1"
+    "yueby.tools.core": ">=0.0.5"
   }
 }

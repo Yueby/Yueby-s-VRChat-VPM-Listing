@@ -25,6 +25,20 @@ namespace Yueby.AvatarTools.Other
             Extract(drawer);
         }
 
+        [MenuItem("GameObject/YuebyTools/PhysBone Extractor", false, 20)]
+        public static void ExtractOnObject()
+        {
+            var drawer = new PhysBoneExtractorDrawer();
+            drawer.Data.Target = Selection.activeGameObject;
+            Extract(drawer);
+        }
+
+        [MenuItem("GameObject/YuebyTools/PhysBone Extractor", true)]
+        public static bool ExtractOnObjectValidate()
+        {
+            return Selection.activeGameObject != null;
+        }
+
         public static void Extract(PhysBoneExtractorDrawer drawer, bool isModel = false)
         {
             if (isModel)
@@ -103,7 +117,6 @@ namespace Yueby.AvatarTools.Other
                     pb.colliders[i] = component;
                 }
 
-
                 if (physBoneParent == null)
                     physBoneParent = new GameObject("PhysBones") { transform = { parent = root.transform } };
 
@@ -139,7 +152,6 @@ namespace Yueby.AvatarTools.Other
                 CopyComponentToNewGameObject<VRCContactSender>(sender, senderParent.transform);
             }
 
-
             // Receivers
             foreach (var receiver in receivers)
             {
@@ -163,7 +175,6 @@ namespace Yueby.AvatarTools.Other
             ComponentUtility.CopyComponent(component);
             ComponentUtility.PasteComponentAsNew(go);
 
-
             if (destroyOriginal)
                 Object.DestroyImmediate(component);
             return go.GetComponents<T>()[^1];
@@ -178,7 +189,6 @@ namespace Yueby.AvatarTools.Other
         {
             return mapper.Find(m => m.InstanceID == id);
         }
-
 
         public class PhysBoneColliderMapper
         {
