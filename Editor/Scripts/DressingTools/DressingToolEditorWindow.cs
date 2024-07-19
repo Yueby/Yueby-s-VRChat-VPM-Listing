@@ -8,6 +8,8 @@ using UnityEngine.Animations;
 using UnityEngine.Events;
 using VRC.SDK3.Avatars.Components;
 using VRC.SDK3.Dynamics.PhysBone.Components;
+using Yueby.AvatarTools.Other;
+using Yueby.AvatarTools.Other.ModalWindow;
 using Yueby.Utils;
 
 namespace Yueby.AvatarTools.DressingTools
@@ -34,13 +36,11 @@ namespace Yueby.AvatarTools.DressingTools
         private GameObject _clothes, _preClothes;
         private bool _hasSameNameClothes;
 
-        private bool _isAutoCombinePb;
+        private bool _isExtractPb;
         private bool _isAutoParentKeywordObjectRoot;
         private bool _isDuplicateDress = true;
 
         private bool _isFocusAvatar;
-        private bool _isMergeBone;
-        private bool _isSplitCombine;
 
         private bool _isSureDressing;
         private bool _isValidClothes, _isBoneNameWrong;
@@ -90,8 +90,8 @@ namespace Yueby.AvatarTools.DressingTools
             _isFocusAvatar = false;
             _isAutoParentKeywordObjectRoot = true;
             _toolBarSelectionIndex = 0;
-            _isAutoCombinePb = false;
-            _isSplitCombine = true;
+            _isExtractPb = false;
+
 
             var path = GetControllerFolder();
             _path = string.IsNullOrEmpty(path) ? DefaultControllerPath : path;
@@ -410,20 +410,11 @@ namespace Yueby.AvatarTools.DressingTools
                     }
                     // YuebyUtil.Line();
 
-                    _isAutoCombinePb = EditorUI.Radio(_isAutoCombinePb, _localization.Get("option_combine_physbone_radio"));
-                    if (!_isAutoCombinePb)
+                    _isExtractPb = EditorUI.Radio(_isExtractPb, _localization.Get("option_combine_physbone_radio"));
+                    if (!_isExtractPb)
                     {
                         EditorGUILayout.HelpBox(_localization.Get("option_combine_physbone_tip"), MessageType.Info);
                         EditorGUILayout.Space();
-                    }
-                    else
-                    {
-                        EditorUI.DrawChildElement(1, () =>
-                        {
-                            _isSplitCombine = EditorUI.Radio(_isSplitCombine, _localization.Get("option_split_physbone_radio"));
-                            if (!_isSplitCombine)
-                                EditorGUILayout.HelpBox(_localization.Get("option_split_physbone_tip"), MessageType.Info);
-                        });
                     }
 
                     _useClothesName = EditorUI.Radio(_useClothesName, _localization.Get("option_suffix_radio"));
@@ -491,7 +482,8 @@ namespace Yueby.AvatarTools.DressingTools
                         }
                         else
                         {
-                            if (_isValidClothes && !_isBoneNameWrong && _descriptor.gameObject != _clothes) EditorUI.GoodHelpBox(_localization.Get("configure_check_over_tip"));
+                            if (_isValidClothes && !_isBoneNameWrong && _descriptor.gameObject != _clothes)
+                                EditorUI.GoodHelpBox(_localization.Get("configure_check_over_tip"));
                         }
 
                         // if (_isValidClothes && !_isBoneNameWrong && _descriptor.gameObject != _clothes)
@@ -536,6 +528,7 @@ namespace Yueby.AvatarTools.DressingTools
 
             var dressClothes = Instantiate(_clothes, dressAvatar.transform, true);
             dressClothes.name = _clothes.name;
+           
 
             if (_isAutoParentKeywordObjectRoot)
             {
@@ -597,14 +590,17 @@ namespace Yueby.AvatarTools.DressingTools
                 _waitCombinePhysBones.Add(pb);
             }
 
-            MoveBone(_avatarArmature, _clothesArmature, dressClothes.name);
             CombinePhysBone(dressClothes.transform);
+            MoveBone(_avatarArmature, _clothesArmature, dressClothes.name);
+           
 
             if (_clothesArmature.childCount == 0)
                 Undo.DestroyObjectImmediate(_clothesArmature.gameObject);
 
             EditorUtils.FocusTarget(_descriptor.gameObject);
             _preClothes = dressClothes;
+            
+            GUIUtility.ExitGUI();
         }
 
         private void TestAvatar()
@@ -730,31 +726,34 @@ namespace Yueby.AvatarTools.DressingTools
 
         private void CombinePhysBone(Transform clothes)
         {
-            if (_isAutoCombinePb)
+            if (_isExtractPb)
             {
-                var pbGoName = "_Physbones_";
-                var pbTrans = clothes.Find(pbGoName);
-                if (!pbTrans)
-                {
-                    pbTrans = new GameObject(pbGoName) { transform = { parent = clothes } }.transform;
-                    Undo.RegisterCreatedObjectUndo(pbTrans.gameObject, "Pb Trans go");
-                }
+                var drawer = new PhysBoneExtractorDrawer();
+                drawer.Data.Target = clothes.gameObject;
+                PhysBoneExtractor.Extract(drawer, true);
 
-                foreach (var physbone in _waitCombinePhysBones)
-                {
-                    var pasteTarget = pbTrans.gameObject;
-
-                    Debug.Log(_isSplitCombine);
-                    if (_isSplitCombine)
-                    {
-                        Debug.Log("111");
-                        pasteTarget = new GameObject(physbone.name + "_PB") { transform = { parent = pbTrans } };
-                    }
-
-                    ComponentUtility.CopyComponent(physbone);
-                    ComponentUtility.PasteComponentAsNew(pasteTarget);
-                    DestroyImmediate(physbone);
-                }
+                // var pbTrans = clothes.Find(PhysBoneExtractor.PhyBoneRootName);
+                // if (!pbTrans)
+                // {
+                //     pbTrans = new GameObject(PhysBoneExtractor.PhyBoneRootName) { transform = { parent = clothes } }.transform;
+                //     Undo.RegisterCreatedObjectUndo(pbTrans.gameObject, "Pb Trans go");
+                // }
+                //
+                // foreach (var physbone in _waitCombinePhysBones)
+                // {
+                //     var pasteTarget = pbTrans.gameObject;
+                //
+                //     Debug.Log(_isSplitCombine);
+                //     if (_isSplitCombine)
+                //     {
+                //         Debug.Log("111");
+                //         pasteTarget = new GameObject(physbone.name + "_PB") { transform = { parent = pbTrans } };
+                //     }
+                //
+                //     ComponentUtility.CopyComponent(physbone);
+                //     ComponentUtility.PasteComponentAsNew(pasteTarget);
+                //     DestroyImmediate(physbone);
+                // }
             }
         }
 
