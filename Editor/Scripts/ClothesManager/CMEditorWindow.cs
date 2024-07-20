@@ -1094,7 +1094,7 @@ namespace Yueby.AvatarTools.ClothesManager
                             {
                                 var isOk = EditorUtility.DisplayDialog(Localization.Get("warning"), Localization.Get("tool_init_tip_delete_warning"), Localization.Get("ok"), "Cancel");
                                 if (isOk)
-                                    DeletePersistantData();
+                                    DeletePersistentData();
                             }
                         }
                     }

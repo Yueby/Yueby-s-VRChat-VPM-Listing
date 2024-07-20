@@ -97,7 +97,7 @@ namespace Yueby.AvatarTools.ClothesManager
             OnEnable();
         }
 
-        private void DeletePersistantData()
+        private void DeletePersistentData()
         {
             if (string.IsNullOrEmpty(_dataReference.ID))
                 return;
@@ -845,6 +845,7 @@ namespace Yueby.AvatarTools.ClothesManager
             if (mainMenu.controls.Count > 0)
             {
                 SetupSubMenu(currentExMenu, mainMenu, Localization.Get("window_title"), null);
+                EditorUtility.SetDirty(mainMenu);
             }
             else
                 AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(mainMenu));
@@ -1029,6 +1030,7 @@ namespace Yueby.AvatarTools.ClothesManager
                 value = value
             };
             parent.controls.Add(control);
+            EditorUtility.SetDirty(parent);
         }
 
         private void DeleteNullSubMenu(VRCExpressionsMenu current, string menuName, VRCExpressionsMenu exclude)
@@ -1074,9 +1076,9 @@ namespace Yueby.AvatarTools.ClothesManager
                     subMenu = target,
                     icon = icon
                 });
-
             }
 
+            // EditorUtility.SetDirty(menu);
             // DeleteNullSubMenu(menu, targetName, target);
         }
 
@@ -1709,6 +1711,5 @@ namespace Yueby.AvatarTools.ClothesManager
                 SkinnedMeshRenderer.sharedMaterials = _materials;
             }
         }
-
     }
 }
