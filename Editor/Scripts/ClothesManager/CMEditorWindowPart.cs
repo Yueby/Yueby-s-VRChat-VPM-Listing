@@ -780,8 +780,13 @@ namespace Yueby.AvatarTools.ClothesManager
             // 删除文件夹重新创建文件
             var menuDir = GetIDPath() + "/Expressions";
             if (Directory.Exists(menuDir))
+            {
                 Directory.Delete(menuDir, true);
+                Debug.Log($"Delete {menuDir}");
+            }
+
             Directory.CreateDirectory(menuDir);
+            AssetDatabase.Refresh();
 
             // 生成衣服菜单
             var mainMenu = CreateSubMenuAssets($"{menuDir}/ClothesMenu.asset");
@@ -832,13 +837,13 @@ namespace Yueby.AvatarTools.ClothesManager
                             AddControlToSubMenu(clothes.Name, parameterName, clothes.Icon, category.Clothes.IndexOf(clothes), currentClothesMenu);
                     }
 
-                    // EditorUtility.SetDirty(currentClothesMenu);
 
                     SetupSubMenu(currentCategoryMenu, firstMenu, category.Name, category.Icon);
-                    // if (currentCategoryMenu != null)
-                    //     EditorUtility.SetDirty(currentCategoryMenu);
+                    if (currentCategoryMenu != null)
+                        EditorUtility.SetDirty(currentCategoryMenu);
+                    EditorUtility.SetDirty(currentClothesMenu);
                     EditorUtility.SetDirty(currentMainMenu);
-                    AssetDatabase.SaveAssets();
+                    // AssetDatabase.SaveAssets();
                 });
             }
 
@@ -851,7 +856,7 @@ namespace Yueby.AvatarTools.ClothesManager
                 AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(mainMenu));
 
             EditorUtility.SetDirty(currentExMenu);
-            AssetDatabase.SaveAssets();
+            // AssetDatabase.SaveAssets();
 
             // 创建动画文件
             // 删除旧文件，替换为新文件
@@ -1167,7 +1172,7 @@ namespace Yueby.AvatarTools.ClothesManager
                     AssetDatabase.AddObjectToAsset(createdMenu, parentMenuToAdd);
                 }
 
-                EditorUtility.SetDirty(parentMenu);
+                // EditorUtility.SetDirty(parentMenu);
             }
 
             // AssetDatabase.SaveAssets();

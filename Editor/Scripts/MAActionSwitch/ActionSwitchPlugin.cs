@@ -13,7 +13,6 @@ using Yueby.AvatarTools.MAActionSwitch;
 [assembly: ExportsPlugin(typeof(ActionSwitchPlugin))]
 namespace Yueby.AvatarTools.MAActionSwitch
 {
-
     public class ActionSwitchPlugin : Plugin<ActionSwitchPlugin>
     {
         public override string DisplayName => "MA Action Switch";
@@ -22,7 +21,7 @@ namespace Yueby.AvatarTools.MAActionSwitch
         {
             InPhase(BuildPhase.Generating)
                 .BeforePlugin("nadena.dev.modular-avatar")
-                .Run("Build AddAction", ctx =>
+                .Run("Build ActionSwitch", ctx =>
                 {
                     if (ctx.AvatarRootObject.GetComponentsInChildren<ActionSwitch>().Length > 0)
                     {
@@ -33,9 +32,9 @@ namespace Yueby.AvatarTools.MAActionSwitch
         }
     }
 
-    class ActionSwitchBuilder
+    internal static class ActionSwitchBuilder
     {
-        private static string ToolLabel = "MA Action Switch/";
+        private static string _toolLabel = "MA Action Switch/";
         private static string AssetsPath => "Packages/yueby.tools.avatar-tools/Editor/Assets/MAActionSwitch";
         private static string EmptyClipPath => AssetsPath + "/Animations/Empty.anim";
 
@@ -58,7 +57,7 @@ namespace Yueby.AvatarTools.MAActionSwitch
         {
             var transitionDuration = 0.1f;
             var writeDefault = true;
-            var parameterName = ToolLabel + actionSwitch.Name;
+            var parameterName = _toolLabel + actionSwitch.Name;
             var emptyClip = new AnimationClip();
             var animatorController = AnimatorController.CreateAnimatorControllerAtPath($"{AssetsPath}/Generated/{actionSwitch.name}.controller");
 
@@ -191,7 +190,7 @@ namespace Yueby.AvatarTools.MAActionSwitch
 
         private static void MakeMAComponents(GameObject avatarRootObject, RuntimeAnimatorController animator, ActionSwitch actionSwitch)
         {
-            var parameterName = ToolLabel + actionSwitch.Name;
+            var parameterName = _toolLabel + actionSwitch.Name;
             var maParam = avatarRootObject.GetComponent<ModularAvatarParameters>() ?? avatarRootObject.AddComponent<ModularAvatarParameters>();
             maParam.parameters.Add(new ParameterConfig
             {
