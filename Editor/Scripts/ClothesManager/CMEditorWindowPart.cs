@@ -798,7 +798,7 @@ namespace Yueby.AvatarTools.ClothesManager
             if (Directory.Exists(menuDir))
             {
                 Directory.Delete(menuDir, true);
-                Debug.Log($"Delete {menuDir}");
+                // Debug.Log($"Delete {menuDir}");
             }
 
             Directory.CreateDirectory(menuDir);
@@ -830,38 +830,38 @@ namespace Yueby.AvatarTools.ClothesManager
                 var currentCategoryMenu = GetLastNextSubMenu(currentMainMenu, $"{menuDir}", currentMainMenu.name, 0, false, currentMainMenu);
 
                 var parameterName = $"YCM/{category.Name}/Switch";
+                // Debug.Log(parameterName);
 
-                VRCExpressionsMenu firstMenu;
-                CreateSubMenuAssets($"{menuDir}/Category_{category.Name}.asset", menu =>
+                var firstMenu = CreateSubMenuAssets($"{menuDir}/Category_{category.Name}.asset");
+
+                var currentClothesMenu = firstMenu;
+                var clothesPageIndex = 0;
+                foreach (var clothes in category.Clothes)
                 {
-                    firstMenu = menu;
-
-                    var currentClothesMenu = menu;
-                    var clothesPageIndex = 0;
-                    foreach (var clothes in category.Clothes)
+                    if (currentClothesMenu.controls.Count >= 7)
                     {
-                        if (currentClothesMenu.controls.Count >= 7)
-                        {
-                            CreateSubMenuAssets($"{menuDir}/Category_{category.Name}_Page {++clothesPageIndex}.asset", nextMenu =>
-                            {
-                                ReplaceControlOnSubMenu(Localization.Get("apply_next_page"), _nextIcon, currentClothesMenu, nextMenu);
-                                currentClothesMenu = nextMenu;
-                                AddControlToSubMenu(clothes.Name, parameterName, clothes.Icon, category.Clothes.IndexOf(clothes), currentClothesMenu);
-                            });
-                        }
-                        else
-                            AddControlToSubMenu(clothes.Name, parameterName, clothes.Icon, category.Clothes.IndexOf(clothes), currentClothesMenu);
+                        // Debug.Log(currentClothesMenu.controls.Count);
+                        var nextMenu = CreateSubMenuAssets($"{menuDir}/Category_{category.Name}_Page {++clothesPageIndex}.asset");
+
+                        ReplaceControlOnSubMenu(Localization.Get("apply_next_page"), _nextIcon, currentClothesMenu, nextMenu);
+                        currentClothesMenu = nextMenu;
                     }
 
+                    AddControlToSubMenu(clothes.Name, parameterName, clothes.Icon, category.Clothes.IndexOf(clothes), currentClothesMenu);
+                }
 
-                    SetupSubMenu(currentCategoryMenu, firstMenu, category.Name, category.Icon);
-                    if (currentCategoryMenu != null)
-                        EditorUtility.SetDirty(currentCategoryMenu);
-                    EditorUtility.SetDirty(currentClothesMenu);
-                    EditorUtility.SetDirty(currentMainMenu);
-                    // AssetDatabase.SaveAssets();
-                });
+
+                SetupSubMenu(currentCategoryMenu, firstMenu, category.Name, category.Icon);
+                EditorUtility.SetDirty(currentClothesMenu);
+
+
+                // EditorUtility.SetDirty(firstMenu);
+
+                EditorUtility.SetDirty(currentMainMenu);
+                // AssetDatabase.SaveAssets();
             }
+
+            // Debug.Log(mainMenu.controls.Count);
 
             if (mainMenu.controls.Count > 0)
             {
@@ -872,7 +872,7 @@ namespace Yueby.AvatarTools.ClothesManager
                 AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(mainMenu));
 
             EditorUtility.SetDirty(currentExMenu);
-            // AssetDatabase.SaveAssets();
+            AssetDatabase.SaveAssets();
 
             // 创建动画文件
             // 删除旧文件，替换为新文件
@@ -1018,7 +1018,9 @@ namespace Yueby.AvatarTools.ClothesManager
 
         private void ReplaceControlOnSubMenu(string replaceMenuName, Texture2D icon, VRCExpressionsMenu menu, VRCExpressionsMenu targetMenu)
         {
-            var control = menu.controls[menu.controls.Count - 1];
+            // Debug.Log(menu.controls.Count);
+            // if(menu.controls.Count == 0) return;
+            var control = menu.controls[^1];
             if (control.name == replaceMenuName && control.type == VRCExpressionsMenu.Control.ControlType.SubMenu)
             {
                 control.name = replaceMenuName;
@@ -1035,6 +1037,9 @@ namespace Yueby.AvatarTools.ClothesManager
                     icon = icon
                 });
             }
+
+
+            EditorUtility.SetDirty(menu);
         }
 
         private void AddControlToSubMenu(string controlName, string parameterName, Texture2D icon, float value, VRCExpressionsMenu parent)
@@ -1099,7 +1104,9 @@ namespace Yueby.AvatarTools.ClothesManager
                 });
             }
 
-            // EditorUtility.SetDirty(menu);
+            EditorUtility.SetDirty(menu);
+            EditorUtility.SetDirty(target);
+
             // DeleteNullSubMenu(menu, targetName, target);
         }
 
@@ -1125,11 +1132,11 @@ namespace Yueby.AvatarTools.ClothesManager
             var currentName = $"{menuName} (Next {index + 1})";
             var createPath = path + $"/{currentName}.asset";
 
-            var control = current.controls[current.controls.Count - 1];
-            bool isNullSubMenu = false;
+            var control = current.controls[^1];
+            var isNullSubMenu = false;
             if (control.type == VRCExpressionsMenu.Control.ControlType.SubMenu)
             {
-                if (control.name == "下一页" || control.name == "下一个" || control.name == "Next" || control.name == "Next Page")
+                if (control.name is "下一页" or "下一个" or "Next" or "Next Page")
                 {
                     if (control.subMenu != null)
                     {
@@ -1155,18 +1162,20 @@ namespace Yueby.AvatarTools.ClothesManager
             return currentExMenu;
         }
 
-        private void CreateSubMenuAssets(string path, UnityAction<VRCExpressionsMenu> onAction)
+        private VRCExpressionsMenu CreateSubMenuAssets(string path)
         {
             var createdMenu = CreateInstance<VRCExpressionsMenu>();
-            onAction?.Invoke(createdMenu);
+
 
             if (File.Exists(path))
                 File.Delete(path);
             AssetDatabase.CreateAsset(createdMenu, path);
             AssetDatabase.SaveAssets();
+
+            return createdMenu;
         }
 
-        private VRCExpressionsMenu CreateSubMenuAssets(string path, VRCExpressionsMenu parentMenu = null, string createdMenuName = "", Texture2D icon = null, bool isAddToChild = false, VRCExpressionsMenu parentMenuToAdd = null)
+        private VRCExpressionsMenu CreateSubMenuAssets(string path, VRCExpressionsMenu parentMenu, string createdMenuName = "", Texture2D icon = null, bool isAddToChild = false, VRCExpressionsMenu parentMenuToAdd = null)
         {
             var createdMenu = CreateInstance<VRCExpressionsMenu>();
 
@@ -1191,7 +1200,8 @@ namespace Yueby.AvatarTools.ClothesManager
                 // EditorUtility.SetDirty(parentMenu);
             }
 
-            // AssetDatabase.SaveAssets();
+            AssetDatabase.SaveAssets();
+            // AssetDatabase.Refresh();
             return createdMenu;
         }
 
@@ -1273,13 +1283,13 @@ namespace Yueby.AvatarTools.ClothesManager
                     continue;
                 var clothes = category.Clothes[i];
 
-                hideList = CombineCAPList(hideList, clothes.GetNotEmptyParameters(clothes.ShowParameters));
-                showList = CombineCAPList(showList, clothes.GetNotEmptyParameters(clothes.HideParameters));
+                hideList = CombineCapList(hideList, clothes.GetNotEmptyParameters(clothes.ShowParameters));
+                showList = CombineCapList(showList, clothes.GetNotEmptyParameters(clothes.HideParameters));
             }
 
             var currentClothes = category.Clothes[index];
-            showList = CombineCAPList(showList, currentClothes.GetNotEmptyParameters(currentClothes.ShowParameters));
-            hideList = CombineCAPList(hideList, currentClothes.GetNotEmptyParameters(currentClothes.HideParameters));
+            showList = CombineCapList(showList, currentClothes.GetNotEmptyParameters(currentClothes.ShowParameters));
+            hideList = CombineCapList(hideList, currentClothes.GetNotEmptyParameters(currentClothes.HideParameters));
 
             foreach (var showParameter in currentClothes.ShowParameters)
             {
@@ -1309,7 +1319,7 @@ namespace Yueby.AvatarTools.ClothesManager
             return dic;
         }
 
-        private List<CMClothesData.ClothesAnimParameter> CombineCAPList(List<CMClothesData.ClothesAnimParameter> list1, List<CMClothesData.ClothesAnimParameter> list2)
+        private List<CMClothesData.ClothesAnimParameter> CombineCapList(List<CMClothesData.ClothesAnimParameter> list1, List<CMClothesData.ClothesAnimParameter> list2)
         {
             list1.AddRange(list2);
             return list1.Union(list2).ToList();
