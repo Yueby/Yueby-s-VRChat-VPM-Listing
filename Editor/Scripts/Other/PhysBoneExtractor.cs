@@ -30,7 +30,7 @@ namespace Yueby.AvatarTools.Other
         {
             var drawer = new PhysBoneExtractorDrawer();
             drawer.Data.Target = Selection.activeGameObject;
-            Extract(drawer);
+            Extract(drawer, isShowFocusCenter: true);
         }
 
         [MenuItem("GameObject/YuebyTools/PhysBone Extractor", true)]
@@ -39,12 +39,12 @@ namespace Yueby.AvatarTools.Other
             return Selection.activeGameObject != null;
         }
 
-        public static void Extract(PhysBoneExtractorDrawer drawer, bool isModel = false)
+        public static void Extract(PhysBoneExtractorDrawer drawer, bool isModel = false, bool isShowFocusCenter = false)
         {
             if (isModel)
-                ModalEditorWindow.Show(drawer, () => { StartExtract(drawer); });
+                ModalEditorWindow.Show(drawer, () => { StartExtract(drawer); }, showFocusCenter: isShowFocusCenter);
             else
-                ModalEditorWindow.ShowUtility(drawer, () => { StartExtract(drawer); });
+                ModalEditorWindow.ShowUtility(drawer, () => { StartExtract(drawer); }, showFocusCenter: isShowFocusCenter);
         }
 
         private static void StartExtract(PhysBoneExtractorDrawer drawer)
