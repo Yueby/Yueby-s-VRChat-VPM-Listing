@@ -269,14 +269,14 @@ namespace Yueby.AvatarTools.ClothesManager
 
         private void ListenToDrop(Type allowType, ref List<CMClothesData.ClothesAnimParameter> parameters, UnityAction<CMClothesData.ClothesAnimParameter> handler, Object[] objects)
         {
-            foreach (var showAnimParameter in parameters)
+            foreach (var showAnimParameter in parameters.ToList())
             {
                 if (string.IsNullOrEmpty(showAnimParameter.Path))
                     parameters.Remove(showAnimParameter);
             }
 
             // 自动获取后缀为 (objectName) 的对象
-            if (parameters.Count <= 0 && objects != null && objects.Length == 1)
+            if (parameters.Count <= 0 && objects is { Length: 1 })
             {
                 var objName = objects[0].name;
                 var list = objects.ToList();
@@ -298,14 +298,15 @@ namespace Yueby.AvatarTools.ClothesManager
                 {
                     var obj = objReference;
                     var path = string.Empty;
-                    var type = string.Empty;
+                    var type = allowType.Name;
                     var smrType = SMRType.BlendShapes;
                     if (allowType == typeof(GameObject))
                     {
                         if (obj is GameObject gameObject)
                         {
-                            path = VRC.Core.ExtensionMethods.GetHierarchyPath(gameObject.transform).Replace(_descriptor.name + "/", "");
-                            type = nameof(GameObject);
+                            var hierarchyPath = VRC.Core.ExtensionMethods.GetHierarchyPath(gameObject.transform);
+                            path = hierarchyPath.Substring(_descriptor.name.Length + 1, hierarchyPath.Length - _descriptor.name.Length - 1);
+                            // type = nameof(GameObject);
                         }
                     }
                     else if (allowType == typeof(SkinnedMeshRenderer))
@@ -333,8 +334,9 @@ namespace Yueby.AvatarTools.ClothesManager
                                 // continue;
                             }
 
-                            path = VRC.Core.ExtensionMethods.GetHierarchyPath(skinnedMeshRenderer.transform).Replace(_descriptor.name + "/", "");
-                            type = nameof(SkinnedMeshRenderer);
+                            var hierarchyPath = VRC.Core.ExtensionMethods.GetHierarchyPath(skinnedMeshRenderer.transform);
+                            path = hierarchyPath.Substring(_descriptor.name.Length + 1, hierarchyPath.Length - _descriptor.name.Length - 1);
+                            // type = nameof(SkinnedMeshRenderer);
 
                             // var count = parameters.Count(animParameter => animParameter.Type == nameof(SkinnedMeshRenderer) && animParameter.Path == path);
 
@@ -360,6 +362,8 @@ namespace Yueby.AvatarTools.ClothesManager
 
                     if (!_clothes.ContainsInList(parameter, parameters))
                         paths.Add(parameter);
+
+                    Debug.Log($"Add {parameter.Path} {parameter.Type} {parameter.SmrParameter.Type}");
                 }
             }
 
@@ -371,12 +375,16 @@ namespace Yueby.AvatarTools.ClothesManager
             var height = EditorGUIUtility.singleLineHeight;
             GameObject obj = null;
 
+
             if (index > animParameters.Count - 1) return height;
             var target = animParameters[index];
+
+            // Debug.Log(animParameters.Count);
 
             if (!string.IsNullOrEmpty(target.Path))
             {
                 var pathTrans = _descriptor.transform.Find(target.Path);
+                // Debug.Log(target.Path);
                 if (pathTrans)
                     obj = pathTrans.gameObject;
             }
@@ -387,13 +395,19 @@ namespace Yueby.AvatarTools.ClothesManager
             {
                 var skinnedMeshRenderer = obj != null ? obj.GetComponent<SkinnedMeshRenderer>() : null;
 
+                // Debug.Log(skinnedMeshRenderer);
+
                 EditorGUI.BeginChangeCheck();
                 skinnedMeshRenderer = (SkinnedMeshRenderer)EditorGUI.ObjectField(objFieldRect, skinnedMeshRenderer, typeof(SkinnedMeshRenderer), true);
                 if (EditorGUI.EndChangeCheck())
                 {
                     if (skinnedMeshRenderer)
                     {
-                        var path = VRC.Core.ExtensionMethods.GetHierarchyPath(skinnedMeshRenderer.transform).Replace(_descriptor.name + "/", "");
+                        var hierarchyPath = VRC.Core.ExtensionMethods.GetHierarchyPath(skinnedMeshRenderer.transform);
+                        var path = hierarchyPath.Substring(_descriptor.name.Length + 1, hierarchyPath.Length - _descriptor.name.Length - 1);
+
+
+                        // var path = [.._descriptor.name.Length];
 
                         if (skinnedMeshRenderer.sharedMesh.blendShapeCount == 0)
                         {
@@ -436,7 +450,7 @@ namespace Yueby.AvatarTools.ClothesManager
                     height += addRect.height + 1;
                     EditorGUI.BeginDisabledGroup(target.SmrParameter.Index == -1);
 
-                    if (UnityEngine.GUI.Button(addRect, "+"))
+                    if (GUI.Button(addRect, "+"))
                     {
                         var parameter = AddNextSMRParameter(target, skinnedMeshRenderer);
 
@@ -597,7 +611,9 @@ namespace Yueby.AvatarTools.ClothesManager
                 obj = (GameObject)EditorGUI.ObjectField(objFieldRect, obj, typeof(GameObject), true);
                 if (EditorGUI.EndChangeCheck())
                 {
-                    target.Path = VRC.Core.ExtensionMethods.GetHierarchyPath(obj.transform).Replace(_descriptor.name + "/", "");
+                    var hierarchyPath = VRC.Core.ExtensionMethods.GetHierarchyPath(obj.transform);
+                    var path = hierarchyPath.Substring(_descriptor.name.Length + 1, hierarchyPath.Length - _descriptor.name.Length - 1);
+                    target.Path = path;
                     PreviewConfig();
                 }
             }
