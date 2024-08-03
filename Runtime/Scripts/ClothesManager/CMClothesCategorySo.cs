@@ -122,6 +122,7 @@ namespace Yueby.AvatarTools.ClothesManager
         public class ClothesAnimParameter
         {
             public string Path;
+            public GameObject CurrentReference;
             public string Type;
 
             public SMRParameter SmrParameter = new SMRParameter();

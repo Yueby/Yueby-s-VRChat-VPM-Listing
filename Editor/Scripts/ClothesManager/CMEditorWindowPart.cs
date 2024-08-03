@@ -77,7 +77,7 @@ namespace Yueby.AvatarTools.ClothesManager
             }
         }
 
-        private void CreatePersistantData()
+        private void CreatePersistentData()
         {
             _dataReference = _descriptor.gameObject.AddComponent<CMAvatarDataReference>();
             _dataReference.ID = GenerateId();
@@ -363,7 +363,7 @@ namespace Yueby.AvatarTools.ClothesManager
                     if (!_clothes.ContainsInList(parameter, parameters))
                         paths.Add(parameter);
 
-                    Debug.Log($"Add {parameter.Path} {parameter.Type} {parameter.SmrParameter.Type}");
+                    // Debug.Log($"Add {parameter.Path} {parameter.Type} {parameter.SmrParameter.Type}");
                 }
             }
 
@@ -373,27 +373,35 @@ namespace Yueby.AvatarTools.ClothesManager
         private float RegisterClothPathListPanel(Rect rect, int index, ref List<CMClothesData.ClothesAnimParameter> animParameters)
         {
             var height = EditorGUIUtility.singleLineHeight;
-            GameObject obj = null;
-
 
             if (index > animParameters.Count - 1) return height;
             var target = animParameters[index];
 
+
             // Debug.Log(animParameters.Count);
 
-            if (!string.IsNullOrEmpty(target.Path))
+            if (target.CurrentReference != null)
             {
-                var pathTrans = _descriptor.transform.Find(target.Path);
+                var hierarchyPath = VRC.Core.ExtensionMethods.GetHierarchyPath(target.CurrentReference.transform);
+                var path = hierarchyPath.Substring(_descriptor.name.Length + 1, hierarchyPath.Length - _descriptor.name.Length - 1);
+
+                if (!path.Equals(target.Path))
+                    target.Path = path;
+                // var pathTrans = _descriptor.transform.Find(target.Path);
                 // Debug.Log(target.Path);
-                if (pathTrans)
-                    obj = pathTrans.gameObject;
+                // if (pathTrans)
+                // obj = pathTrans.gameObject;
+            }
+            else
+            {
+                target.CurrentReference = _descriptor.transform.Find(target.Path)?.gameObject;
             }
 
             var objFieldRect = new Rect(rect.x, rect.y + 2, rect.width / 2 - 1, height);
             height += 4;
             if (target.Type == nameof(SkinnedMeshRenderer))
             {
-                var skinnedMeshRenderer = obj != null ? obj.GetComponent<SkinnedMeshRenderer>() : null;
+                var skinnedMeshRenderer = target.CurrentReference != null ? target.CurrentReference.GetComponent<SkinnedMeshRenderer>() : null;
 
                 // Debug.Log(skinnedMeshRenderer);
 
@@ -608,10 +616,10 @@ namespace Yueby.AvatarTools.ClothesManager
             {
                 EditorGUI.BeginChangeCheck();
                 objFieldRect.width = rect.width;
-                obj = (GameObject)EditorGUI.ObjectField(objFieldRect, obj, typeof(GameObject), true);
+                target.CurrentReference = (GameObject)EditorGUI.ObjectField(objFieldRect, target.CurrentReference, typeof(GameObject), true);
                 if (EditorGUI.EndChangeCheck())
                 {
-                    var hierarchyPath = VRC.Core.ExtensionMethods.GetHierarchyPath(obj.transform);
+                    var hierarchyPath = VRC.Core.ExtensionMethods.GetHierarchyPath(target.CurrentReference.transform);
                     var path = hierarchyPath.Substring(_descriptor.name.Length + 1, hierarchyPath.Length - _descriptor.name.Length - 1);
                     target.Path = path;
                     PreviewConfig();
@@ -1272,8 +1280,7 @@ namespace Yueby.AvatarTools.ClothesManager
 
         private Dictionary<string, List<CMClothesData.ClothesAnimParameter>> GetClothesParameters(CMClothesCategorySo category, int index)
         {
-            if (index < 0 || index > category.Clothes.Count)
-                return null;
+            if (index < 0 || index > category.Clothes.Count) return null;
             var showList = new List<CMClothesData.ClothesAnimParameter>();
             var hideList = new List<CMClothesData.ClothesAnimParameter>();
 
@@ -1427,6 +1434,7 @@ namespace Yueby.AvatarTools.ClothesManager
 
                 Undo.RegisterFullObjectHierarchyUndo(_descriptor.gameObject, "Record Descriptor GameObjects State");
 
+
                 foreach (var trans in hideList.Select(parameter => _descriptor.transform.Find(parameter.Path)).Where(trans => trans))
                 {
                     // Undo.RegisterCompleteObjectUndo(trans.gameObject, "Preview Hide GameObject");
@@ -1453,17 +1461,15 @@ namespace Yueby.AvatarTools.ClothesManager
 
                     Undo.RegisterFullObjectHierarchyUndo(_descriptor.gameObject, "Record Descriptor GameObjects State");
 
-                    foreach (var trans in hideList.Select(parameter => _descriptor.transform.Find(parameter.Path)).Where(trans => trans))
+                    foreach (var trans in hideList.Select(parameter => _descriptor.transform.Find(parameter.Path)).Where(trans => trans != null))
                     {
                         // Undo.RegisterCompleteObjectUndo(trans.gameObject, "Preview Hide GameObject");
                         trans.gameObject.SetActive(false);
-
-                        // Debug.Log(parameter.Path);
                     }
 
-                    foreach (var trans in showList.Select(parameter => _descriptor.transform.Find(parameter.Path)).Where(trans => trans))
+                    // Debug.Log(showList.Count);
+                    foreach (var trans in showList.Select(parameter => _descriptor.transform.Find(parameter.Path)).Where(trans => trans != null))
                     {
-                        // Undo.RegisterCompleteObjectUndo(trans.gameObject, "Preview Show GameObject");
                         trans.gameObject.SetActive(true);
                     }
                 }

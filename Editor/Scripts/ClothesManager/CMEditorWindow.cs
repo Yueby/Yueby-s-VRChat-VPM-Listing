@@ -188,6 +188,7 @@ namespace Yueby.AvatarTools.ClothesManager
             if (_categoriesRl.List.count > 0)
             {
                 var obj = _categoriesProperty.GetArrayElementAtIndex(_categoriesRl.List.index).objectReferenceValue;
+                // Debug.Log(_categoriesRl.List.count);
                 _categoriesRl.OnSelected?.Invoke(obj, _categoriesRl.List.index);
             }
         }
@@ -213,6 +214,10 @@ namespace Yueby.AvatarTools.ClothesManager
 
         private float OnCategoriesDraw(Rect rect, int index, bool isActive, bool isFocused)
         {
+            // Debug.Log("OnCategoriesDraw"+ index);
+            // check don't out of range
+            if (index < 0 || index >= _categoriesRl.List.count ) return EditorGUIUtility.singleLineHeight;
+
             var categorySo = new SerializedObject(_categoriesProperty.GetArrayElementAtIndex(index).objectReferenceValue);
 
             var categoryIcon = categorySo.FindProperty(nameof(CMClothesCategorySo.Icon));
@@ -418,9 +423,9 @@ namespace Yueby.AvatarTools.ClothesManager
                 }
             };
 
-            _clothesShowRl.OnDraw += (rect, index, a, b) => { return RegisterClothPathListPanel(rect, index, ref _clothes.ShowParameters); };
-            _clothesHideRl.OnDraw += (rect, index, a, b) => { return RegisterClothPathListPanel(rect, index, ref _clothes.HideParameters); };
-            _clothesSmrRL.OnDraw += (rect, index, a, b) => { return RegisterClothPathListPanel(rect, index, ref _clothes.SMRParameters); };
+            _clothesShowRl.OnDraw += (rect, index, a, b) => RegisterClothPathListPanel(rect, index, ref _clothes.ShowParameters);
+            _clothesHideRl.OnDraw += (rect, index, a, b) => RegisterClothPathListPanel(rect, index, ref _clothes.HideParameters);
+            _clothesSmrRL.OnDraw += (rect, index, a, b) => RegisterClothPathListPanel(rect, index, ref _clothes.SMRParameters);
 
             // Parameter Driver ReorderableList Init
             _enterDriverRl = new ReorderableListDroppable(_clothes.EnterParameter.Parameters, typeof(Parameter), EditorGUIUtility.singleLineHeight + 5, Repaint);
@@ -540,6 +545,7 @@ namespace Yueby.AvatarTools.ClothesManager
             {
                 return height;
             }
+
             var valueRect = new Rect(nameRect.x + nameRect.width + 4, rect.y, rect.width - nameRect.width - typeRect.width - 6, nameRect.height - 2);
             var type = GetParameterType(driver.name);
             if (type == 0)
@@ -1082,7 +1088,7 @@ namespace Yueby.AvatarTools.ClothesManager
                             EditorGUILayout.HelpBox(Localization.Get("tool_init_none_data_tip"), MessageType.Info);
                             if (GUILayout.Button(Localization.Get("tool_init_create_btn"), GUILayout.Height(EditorGUIUtility.singleLineHeight * 2)))
                             {
-                                CreatePersistantData();
+                                CreatePersistentData();
                             }
                         }
                         else

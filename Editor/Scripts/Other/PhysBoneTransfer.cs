@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
+using UnityEngine.Animations;
 using VRC.Dynamics;
 using VRC.SDK3.Dynamics.PhysBone.Components;
 using Yueby.Utils;
@@ -34,7 +36,7 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
                     _origin = (Transform)EditorUI.ObjectFieldVertical(_origin, "原Armature", typeof(Transform));
                     EditorUI.Line(LineType.Vertical);
                     _current = (Transform)EditorUI.ObjectFieldVertical(_current, "现Armature", typeof(Transform));
-                },GUILayout.MaxHeight(40));
+                }, GUILayout.MaxHeight(40));
             });
 
             EditorUI.VerticalEGLTitled("设置", () =>
@@ -71,25 +73,117 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
             foreach (Transform child in parent)
             {
                 TransferPhysBone(child);
-
+                TransferConstraint(child);
                 Recursive(child);
                 // Debug.Log(child);
+            }
+        }
+
+        private void TransferConstraint(Transform child)
+        {
+            var targetPath = VRC.Core.ExtensionMethods.GetHierarchyPath(child).Replace($"{_origin.name}", $"{_current.name}");
+            var targetGo = GameObject.Find(targetPath);
+            if (targetGo == null) return;
+
+            var parentConstraints = child.GetComponents<ParentConstraint>();
+            var rotationConstraints = child.GetComponents<RotationConstraint>();
+            var positionConstraints = child.GetComponents<PositionConstraint>();
+            CopyConstraint(parentConstraints, (c, t) =>
+            {
+                t.rotationAtRest = c.rotationAtRest;
+                t.translationAtRest = c.translationAtRest;
+
+                // t.rotationOffsets = c.rotationOffsets;
+                // t.translationOffsets = c.translationOffsets;
+                t.weight = c.weight;
+            });
+
+            CopyConstraint(rotationConstraints, (c, t) =>
+            {
+                t.rotationAtRest = c.rotationAtRest;
+                t.rotationOffset = c.rotationOffset;
+                t.weight = c.weight;
+            });
+
+
+            CopyConstraint(positionConstraints, (c, t) =>
+            {
+                t.translationAtRest = c.translationAtRest;
+                t.translationOffset = c.translationOffset;
+                t.weight = c.weight;
+            });
+
+            return;
+
+            void CopyConstraint<T>(T[] constraints, System.Action<T, T> action) where T : Component
+            {
+                foreach (var constraint in constraints)
+                {
+                    if (constraint == null)
+                        continue;
+
+                    ComponentUtility.CopyComponent(constraint);
+                    var targetConstraint = targetGo.GetComponent<T>();
+                    if (targetConstraint != null)
+                    {
+                        ComponentUtility.PasteComponentValues(targetConstraint);
+                    }
+                    else
+                    {
+                        ComponentUtility.PasteComponentAsNew(targetGo);
+                        targetConstraint = targetGo.GetComponent<T>();
+                    }
+
+                    action?.Invoke(constraint, targetConstraint);
+                    ApplySource(constraint as IConstraint, targetConstraint as IConstraint);
+                }
+            }
+
+            void ApplySource(IConstraint current, IConstraint target)
+            {
+                if (current.sourceCount <= 0) return;
+
+                //clear target source
+                for (var i = 0; i < current.sourceCount; i++)
+                {
+                    var source = current.GetSource(i);
+                    var targetSourceObject = GameObject.Find(VRC.Core.ExtensionMethods.GetHierarchyPath(source.sourceTransform).Replace($"{_origin.name}", $"{_current.name}"));
+                    if (targetSourceObject == null) continue;
+
+                    // Debug.Log(targetSourceObject.name);
+
+                    // target.RemoveSource(i);
+                    target.SetSource(i, new ConstraintSource()
+                    {
+                        sourceTransform = targetSourceObject.transform,
+                        weight = source.weight
+                    });
+                }
+                
+                target.locked = current.locked;
+                target.constraintActive = current.constraintActive;
+                
             }
         }
 
         private void TransferPhysBone(Transform child)
         {
             var physBone = child.GetComponent<VRCPhysBone>();
+            // var constraints = child.GetComponents<ParentConstraint>();
+
             if (physBone == null) return;
-            var targetPath = VRC.Core.ExtensionMethods.GetHierarchyPath(child).Replace($"{_origin.name}", $"{_current.name}");
+
+            if (physBone.rootTransform == null)
+                physBone.rootTransform = physBone.transform;
+
+            var targetPath = VRC.Core.ExtensionMethods.GetHierarchyPath(physBone.rootTransform).Replace($"{_origin.name}", $"{_current.name}");
             var targetGo = GameObject.Find(targetPath);
+
             if (targetGo != null)
             {
                 ComponentUtility.CopyComponent(physBone);
 
-                var transform = child.transform;
-                targetGo.transform.localPosition = transform.localPosition;
-                targetGo.transform.localRotation = transform.localRotation;
+                // var transform = child.transform;
 
                 if (targetGo.GetComponent<VRCPhysBone>() != null)
                     ComponentUtility.PasteComponentValues(targetGo.GetComponent<VRCPhysBone>());
@@ -128,52 +222,106 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
 
         private List<VRCPhysBoneColliderBase> GetColliders(List<VRCPhysBoneColliderBase> colliders)
         {
+            // 如果collider的rootTransform为空，则将rootTransform设置为自己，放到另一边avatar，collider对应parent对象下
+            // 如果collider的rootTransform不为空,则保留rootTransform, 将rootTransform不变，放入rootTransform对应对象下
             var list = new List<VRCPhysBoneColliderBase>();
-            foreach (var col in colliders)
+            foreach (var originCollider in colliders)
             {
-                var targetPath = VRC.Core.ExtensionMethods.GetHierarchyPath(col.transform).Replace($"{_origin.name}", $"{_current.name}");
-                var targetGo = GameObject.Find(targetPath);
+                // 获得collider的RootTransform的路径
+                if (originCollider.rootTransform == null)
+                    originCollider.rootTransform = originCollider.transform;
 
-                if (targetGo != null)
+                // 
+
+                var colliderRootTransformPath = VRC.Core.ExtensionMethods.GetHierarchyPath(originCollider.rootTransform).Replace($"{_origin.name}", $"{_current.name}");
+                var colRootTransGo = GameObject.Find(colliderRootTransformPath);
+
+                // 如果RootTransform底下没有collider，则创建collider对象，并复制collider的属性到新创建的collider对象上
+                // 如果RootTransform底下有collider，则直接复制collider的属性到底下的collider对象上
+                if (colRootTransGo != null)
                 {
-                    ComponentUtility.CopyComponent(col);
+                    // create a new gameObject as target gameObject child for the collider
+                    var optionColTransform = colRootTransGo.transform;
+                    if (colRootTransGo.transform.childCount > 0)
+                        optionColTransform = colRootTransGo.transform.Find(colRootTransGo.name + "_PBC_Transfer");
 
-                    var transform = col.transform;
-                    targetGo.transform.localPosition = transform.localPosition;
-                    targetGo.transform.localRotation = transform.localRotation;
+                    // var pbcBase = colRootTransGo.GetComponent<VRCPhysBoneColliderBase>();
 
-                    if (targetGo.GetComponent<VRCPhysBoneColliderBase>() != null)
-                        ComponentUtility.PasteComponentValues(targetGo.GetComponent<VRCPhysBoneColliderBase>());
-                    else
-                        ComponentUtility.PasteComponentAsNew(targetGo);
-
-                    Undo.RegisterFullObjectHierarchyUndo(targetGo, "CopyComponent");
-                }
-                else
-                {
-                    var parentPath = VRC.Core.ExtensionMethods.GetHierarchyPath(col.transform.parent).Replace($"{_origin.name}", $"{_current.name}");
-                    var parent = GameObject.Find(parentPath);
-
-                    if (parent != null)
+                    if (optionColTransform != null)
                     {
-                        var transform = col.transform;
-                        targetGo = new GameObject(col.name)
+                        optionColTransform.transform.position = originCollider.transform.position;
+                        optionColTransform.transform.rotation = originCollider.transform.rotation;
+
+
+                        var colBase = optionColTransform.GetComponent<VRCPhysBoneColliderBase>();
+                        ComponentUtility.CopyComponent(originCollider);
+                        ComponentUtility.PasteComponentValues(colBase);
+
+                        colBase.rootTransform = colRootTransGo.transform;
+                        colRootTransGo = optionColTransform.gameObject;
+                    }
+                    else
+                    {
+                        var colGo = new GameObject(colRootTransGo.name + "_PBC_Transfer")
                         {
                             transform =
                             {
-                                parent = parent.transform,
-                                localPosition = transform.localPosition,
-                                localRotation = transform.localRotation
+                                parent = colRootTransGo.transform,
+                                position = originCollider.transform.position,
+                                rotation = originCollider.transform.rotation
                             }
                         };
-                        Undo.RegisterCreatedObjectUndo(targetGo, "CreateNewCollider");
-                        ComponentUtility.CopyComponent(col);
-                        ComponentUtility.PasteComponentAsNew(targetGo);
+
+                        ComponentUtility.CopyComponent(originCollider);
+                        ComponentUtility.PasteComponentAsNew(colGo);
+                        var colBase = colGo.GetComponent<VRCPhysBoneColliderBase>();
+
+                        colBase.rootTransform = colGo.transform;
+                        colRootTransGo = colGo;
+                    }
+
+                    Undo.RegisterFullObjectHierarchyUndo(colRootTransGo, "CopyComponent");
+                }
+                else if (originCollider.transform.childCount == 0)
+                {
+                    // 如果目标collider对象不存在，且没有子对象，则创建到col.transform.parent的对应位置
+                    var parentPath = VRC.Core.ExtensionMethods.GetHierarchyPath(originCollider.transform.parent).Replace($"{_origin.name}", $"{_current.name}");
+                    var parent = GameObject.Find(parentPath);
+
+                    // 如果parent不为空，检测parent地下的是否有该对象
+                    if (parent != null)
+                    {
+                        var colGo = parent.transform.Find(originCollider.name);
+                        if (colGo != null)
+                        {
+                            colRootTransGo = colGo.gameObject;
+                            ComponentUtility.CopyComponent(originCollider);
+                            ComponentUtility.PasteComponentValues(colRootTransGo.GetComponent<VRCPhysBoneColliderBase>());
+                            var colBase = colRootTransGo.GetComponent<VRCPhysBoneColliderBase>();
+                            colBase.rootTransform = colBase.transform;
+                        }
+                        else
+                        {
+                            colRootTransGo = new GameObject(originCollider.name)
+                            {
+                                transform =
+                                {
+                                    parent = parent.transform,
+                                    position = originCollider.transform.position,
+                                    rotation = originCollider.transform.rotation
+                                }
+                            };
+                            Undo.RegisterCreatedObjectUndo(colRootTransGo, "CreateNewCollider");
+                            ComponentUtility.CopyComponent(originCollider);
+                            ComponentUtility.PasteComponentAsNew(colRootTransGo);
+                            var colBase = colRootTransGo.GetComponent<VRCPhysBoneColliderBase>();
+                            colBase.rootTransform = colBase.transform;
+                        }
                     }
                 }
 
-                if (targetGo != null)
-                    list.Add(targetGo.GetComponent<VRCPhysBoneColliderBase>());
+                if (colRootTransGo != null)
+                    list.Add(colRootTransGo.GetComponent<VRCPhysBoneColliderBase>());
             }
 
             return list;
