@@ -394,7 +394,13 @@ namespace Yueby.AvatarTools.ClothesManager
             }
             else
             {
-                target.CurrentReference = _descriptor.transform.Find(target.Path)?.gameObject;
+                // target.CurrentReference = null;
+                if (!string.IsNullOrEmpty(target.Path))
+                {
+                    var pathObj = _descriptor.transform.Find(target.Path);
+                    if (pathObj)
+                        target.CurrentReference = pathObj.gameObject;
+                }
             }
 
             var objFieldRect = new Rect(rect.x, rect.y + 2, rect.width / 2 - 1, height);

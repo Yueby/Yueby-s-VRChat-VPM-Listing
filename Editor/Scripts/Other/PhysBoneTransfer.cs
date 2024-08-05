@@ -65,6 +65,7 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
 
                 targetRenderer.sharedMaterials = materials;
                 Undo.RegisterFullObjectHierarchyUndo(targetGo, "TransferMaterial");
+                // Debug.Log("...Transfer Materials");
             }
         }
 
@@ -90,27 +91,30 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
             var positionConstraints = child.GetComponents<PositionConstraint>();
             CopyConstraint(parentConstraints, (c, t) =>
             {
-                t.rotationAtRest = c.rotationAtRest;
-                t.translationAtRest = c.translationAtRest;
+                // t.rotationAtRest = c.rotationAtRest;
+                // t.translationAtRest = c.translationAtRest;
 
                 // t.rotationOffsets = c.rotationOffsets;
                 // t.translationOffsets = c.translationOffsets;
-                t.weight = c.weight;
+                // t.weight = c.weight;
+                
             });
 
             CopyConstraint(rotationConstraints, (c, t) =>
             {
-                t.rotationAtRest = c.rotationAtRest;
-                t.rotationOffset = c.rotationOffset;
-                t.weight = c.weight;
+                // t.rotationAtRest = c.rotationAtRest;
+                // t.rotationOffset = c.rotationOffset;
+                // t.weight = c.weight;
+                
             });
 
 
             CopyConstraint(positionConstraints, (c, t) =>
             {
-                t.translationAtRest = c.translationAtRest;
-                t.translationOffset = c.translationOffset;
-                t.weight = c.weight;
+                // t.translationAtRest = c.translationAtRest;
+                // t.translationOffset = c.translationOffset;
+                // t.weight = c.weight;
+                
             });
 
             return;
@@ -121,6 +125,15 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
                 {
                     if (constraint == null)
                         continue;
+
+
+                    var constraintCurrent = constraint as IConstraint;
+
+                    var lastLocked = constraintCurrent.locked;
+                    var lastActive = constraintCurrent.constraintActive;
+
+                    constraintCurrent.locked = false;
+                    constraintCurrent.constraintActive = false;
 
                     ComponentUtility.CopyComponent(constraint);
                     var targetConstraint = targetGo.GetComponent<T>();
@@ -134,6 +147,8 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
                         targetConstraint = targetGo.GetComponent<T>();
                     }
 
+                    constraintCurrent.locked = lastLocked;
+                    constraintCurrent.constraintActive = lastActive;
                     action?.Invoke(constraint, targetConstraint);
                     ApplySource(constraint as IConstraint, targetConstraint as IConstraint);
                 }
@@ -159,10 +174,10 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
                         weight = source.weight
                     });
                 }
+
                 
-                target.locked = current.locked;
                 target.constraintActive = current.constraintActive;
-                
+                // target.locked = current.locked;
             }
         }
 
