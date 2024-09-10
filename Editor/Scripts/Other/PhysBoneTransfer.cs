@@ -97,7 +97,7 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
                 // t.rotationOffsets = c.rotationOffsets;
                 // t.translationOffsets = c.translationOffsets;
                 // t.weight = c.weight;
-                
+
             });
 
             CopyConstraint(rotationConstraints, (c, t) =>
@@ -105,16 +105,15 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
                 // t.rotationAtRest = c.rotationAtRest;
                 // t.rotationOffset = c.rotationOffset;
                 // t.weight = c.weight;
-                
-            });
 
+            });
 
             CopyConstraint(positionConstraints, (c, t) =>
             {
                 // t.translationAtRest = c.translationAtRest;
                 // t.translationOffset = c.translationOffset;
                 // t.weight = c.weight;
-                
+
             });
 
             return;
@@ -125,7 +124,6 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
                 {
                     if (constraint == null)
                         continue;
-
 
                     var constraintCurrent = constraint as IConstraint;
 
@@ -175,7 +173,6 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
                     });
                 }
 
-                
                 target.constraintActive = current.constraintActive;
                 // target.locked = current.locked;
             }
@@ -239,10 +236,11 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
         {
             // 如果collider的rootTransform为空，则将rootTransform设置为自己，放到另一边avatar，collider对应parent对象下
             // 如果collider的rootTransform不为空,则保留rootTransform, 将rootTransform不变，放入rootTransform对应对象下
-            var list = new List<VRCPhysBoneColliderBase>();
+            List<VRCPhysBoneColliderBase> list = new List<VRCPhysBoneColliderBase>();
             foreach (var originCollider in colliders)
             {
                 // 获得collider的RootTransform的路径
+                if (originCollider == null) continue;
                 if (originCollider.rootTransform == null)
                     originCollider.rootTransform = originCollider.transform;
 
@@ -266,7 +264,6 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
                     {
                         optionColTransform.transform.position = originCollider.transform.position;
                         optionColTransform.transform.rotation = originCollider.transform.rotation;
-
 
                         var colBase = optionColTransform.GetComponent<VRCPhysBoneColliderBase>();
                         ComponentUtility.CopyComponent(originCollider);
