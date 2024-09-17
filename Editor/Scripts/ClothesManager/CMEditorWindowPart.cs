@@ -634,7 +634,6 @@ namespace Yueby.AvatarTools.ClothesManager
                     {
                         target.Path = "";
                     }
-
                 }
             }
 
@@ -1558,6 +1557,7 @@ namespace Yueby.AvatarTools.ClothesManager
 
             foreach (var component in _captureGo.GetComponentsInChildren<Component>(true))
             {
+                if (!component) continue;
                 if (component.GetType() == typeof(Transform) || component.GetType() == typeof(SkinnedMeshRenderer)) continue;
                 DestroyImmediate(component);
             }
