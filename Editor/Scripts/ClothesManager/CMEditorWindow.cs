@@ -787,7 +787,7 @@ namespace Yueby.AvatarTools.ClothesManager
 
         private void DrawClothesAnimParameter()
         {
-            _clothesShowRl.DoLayoutList(Localization.Get("show"), new Vector2(ConfigureListWidth, ConfigureListHeight), false, true, true, objs =>
+            _clothesShowRl.DoLayout(Localization.Get("show"), new Vector2(ConfigureListWidth, ConfigureListHeight), false, true, true, objs =>
             {
                 // Show Paths
                 ListenToDrop(typeof(GameObject), ref _clothes.ShowParameters, parameter =>
@@ -799,7 +799,7 @@ namespace Yueby.AvatarTools.ClothesManager
                 EditorUtils.WaitToDo(20, "WaitToPreview", () => { PreviewGameObject(); });
             }, Repaint);
 
-            _clothesHideRl.DoLayoutList(Localization.Get("hide"), new Vector2(ConfigureListWidth, ConfigureListHeight), false, true, true, objs =>
+            _clothesHideRl.DoLayout(Localization.Get("hide"), new Vector2(ConfigureListWidth, ConfigureListHeight), false, true, true, objs =>
             {
                 // Hide Paths
                 ListenToDrop(typeof(GameObject), ref _clothes.HideParameters, parameter =>
@@ -811,7 +811,7 @@ namespace Yueby.AvatarTools.ClothesManager
                 EditorUtils.WaitToDo(20, "WaitToPreview", () => { PreviewGameObject(); });
             }, Repaint);
 
-            _clothesSmrRL.DoLayoutList(Localization.Get("skinned_mesh_renderer"), new Vector2(ConfigureListWidth, ConfigureListHeight), false, true, true, obj => { ListenToDrop(typeof(SkinnedMeshRenderer), ref _clothes.SMRParameters, null, obj); }, Repaint);
+            _clothesSmrRL.DoLayout(Localization.Get("skinned_mesh_renderer"), new Vector2(ConfigureListWidth, ConfigureListHeight), false, true, true, obj => { ListenToDrop(typeof(SkinnedMeshRenderer), ref _clothes.SMRParameters, null, obj); }, Repaint);
         }
 
         private void DrawClothesParameterDriver()
@@ -819,8 +819,8 @@ namespace Yueby.AvatarTools.ClothesManager
             _clothes.HasParameterDriver = EditorUI.Toggle(_clothes.HasParameterDriver, Localization.Get("driver_is_using"));
             if (_clothes.HasParameterDriver)
             {
-                _enterDriverRl.DoLayoutList(Localization.Get("driver_enter"), new Vector2(ConfigureListWidth, ConfigureListHeight), false, true, false, null, Repaint);
-                _exitDriverRl.DoLayoutList(Localization.Get("driver_exit"), new Vector2(ConfigureListWidth, ConfigureListHeight), false, true, false, null, Repaint);
+                _enterDriverRl.DoLayout(Localization.Get("driver_enter"), new Vector2(ConfigureListWidth, ConfigureListHeight), false, true, false, null, Repaint);
+                _exitDriverRl.DoLayout(Localization.Get("driver_exit"), new Vector2(ConfigureListWidth, ConfigureListHeight), false, true, false, null, Repaint);
 
                 EditorUI.Line();
 

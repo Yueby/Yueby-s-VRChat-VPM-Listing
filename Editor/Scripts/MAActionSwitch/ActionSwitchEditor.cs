@@ -1,18 +1,13 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using nadena.dev.modular_avatar.core;
 using UnityEditor;
-using UnityEditorInternal;
 using UnityEngine;
 using Yueby.Utils;
-using Editor = UnityEditor.Editor;
 using Object = UnityEngine.Object;
 
 namespace Yueby.AvatarTools.MAActionSwitch
 {
     [CustomEditor(typeof(ActionSwitch))]
-    public class ActionSwitchEditor : Editor
+    public class ActionSwitchEditor : UnityEditor.Editor
     {
         private ActionSwitch _target;
         private SerializedProperty _actionsProperty;
@@ -23,7 +18,6 @@ namespace Yueby.AvatarTools.MAActionSwitch
 
         private void OnEnable()
         {
-
             _target = (ActionSwitch)target;
 
             _nameProperty = serializedObject.FindProperty(nameof(ActionSwitch.Name));
@@ -42,7 +36,6 @@ namespace Yueby.AvatarTools.MAActionSwitch
 
             _reorderableListDroppable = CreateDroppableList();
             _reorderableListDroppable.AnimBool.value = true;
-
         }
 
         private ReorderableListDroppable CreateDroppableList()
@@ -89,7 +82,6 @@ namespace Yueby.AvatarTools.MAActionSwitch
                     // _actionsProperty.DeleteArrayElementAtIndex(list.index);
                     // serializedObject.ApplyModifiedProperties();
                 },
-
             };
 
             return list;
@@ -97,11 +89,9 @@ namespace Yueby.AvatarTools.MAActionSwitch
 
         public override void OnInspectorGUI()
         {
-
             serializedObject.UpdateIfRequiredOrScript();
             DrawEditor();
             serializedObject.ApplyModifiedProperties();
-
         }
 
         private void DrawEditor()
@@ -127,7 +117,7 @@ namespace Yueby.AvatarTools.MAActionSwitch
 
             // DropAreaGUI();
             // _reorderableList.DoLayoutList();
-            _reorderableListDroppable.DoLayoutList("Actions", new Vector2(0, 0), false, true, true, DropObjects, Repaint);
+            _reorderableListDroppable.DoLayout("Actions", new Vector2(0, 0), false, true, true, DropObjects, Repaint);
         }
 
         private void DropObjects(Object[] objects)
@@ -290,6 +280,7 @@ namespace Yueby.AvatarTools.MAActionSwitch
                             serializedObject.ApplyModifiedProperties();
                         }
                     }
+
                     break;
             }
         }
