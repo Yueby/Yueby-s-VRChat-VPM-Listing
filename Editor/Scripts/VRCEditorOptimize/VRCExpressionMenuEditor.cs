@@ -3,12 +3,12 @@ using System;
 using UnityEngine;
 using UnityEditor;
 using ExpressionsMenu = VRC.SDK3.Avatars.ScriptableObjects.VRCExpressionsMenu;
-using ExpressionControl = VRC.SDK3.Avatars.ScriptableObjects.VRCExpressionsMenu.Control;
 using ExpressionParameters = VRC.SDK3.Avatars.ScriptableObjects.VRCExpressionParameters;
 using VRC.SDK3.Avatars.ScriptableObjects;
 using UnityEngine.Events;
 using Yueby.Utils;
 using static VRC.SDK3.Avatars.ScriptableObjects.VRCExpressionsMenu;
+using Editor = UnityEditor.Editor;
 
 namespace Yueby.AvatarTools.VRCEditorOptimize
 {

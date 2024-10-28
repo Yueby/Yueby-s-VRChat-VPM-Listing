@@ -5,6 +5,7 @@ using UnityEditor;
 using ExpressionParameters = VRC.SDK3.Avatars.ScriptableObjects.VRCExpressionParameters;
 using ExpressionParameter = VRC.SDK3.Avatars.ScriptableObjects.VRCExpressionParameters.Parameter;
 using Yueby.Utils;
+using Editor = UnityEditor.Editor;
 
 namespace Yueby.AvatarTools.VRCEditorOptimize
 {

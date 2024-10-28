@@ -55,7 +55,7 @@ namespace Yueby.AvatarTools.MAActionSwitch
 
         private static RuntimeAnimatorController BuildAnimator(ActionSwitch actionSwitch)
         {
-            var transitionDuration = 0.1f;
+            var transitionDuration = 0f;
             var writeDefault = true;
             var parameterName = _toolLabel + actionSwitch.Name;
             var emptyClip = new AnimationClip();
@@ -76,14 +76,14 @@ namespace Yueby.AvatarTools.MAActionSwitch
             var waitState = CreateAnimatorState(layer.stateMachine, "Wait", emptyClip, writeDefault);
             var readyState = CreateAnimatorState(layer.stateMachine, "Ready", emptyClip, writeDefault);
             var endState = CreateAnimatorState(layer.stateMachine, "End", emptyClip, writeDefault);
-            var overState = CreateAnimatorState(layer.stateMachine, "Over", emptyClip, writeDefault);
+            // var overState = CreateAnimatorState(layer.stateMachine, "Over", emptyClip, writeDefault);
 
             AddTrackingControlStateBehaviour(readyState, VRC.SDKBase.VRC_AnimatorTrackingControl.TrackingType.Animation);
             AddTrackingControlStateBehaviour(endState, VRC.SDKBase.VRC_AnimatorTrackingControl.TrackingType.Tracking);
             AddPlayableLayerControl(readyState, 1);
             AddPlayableLayerControl(endState, 0);
 
-            overState.AddStateMachineBehaviour<VRCAvatarParameterDriver>().parameters.Add(new VRC.SDKBase.VRC_AvatarParameterDriver.Parameter
+            endState.AddStateMachineBehaviour<VRCAvatarParameterDriver>().parameters.Add(new VRC.SDKBase.VRC_AvatarParameterDriver.Parameter
             {
                 name = parameterName,
                 value = 0,
@@ -97,24 +97,28 @@ namespace Yueby.AvatarTools.MAActionSwitch
             //     type = VRC.SDKBase.VRC_AvatarParameterDriver.ChangeType.Set
             // });
 
-            var anyToOverTransition = layer.stateMachine.AddAnyStateTransition(overState);
+            var anyToOverTransition = layer.stateMachine.AddAnyStateTransition(endState);
             anyToOverTransition.AddCondition(AnimatorConditionMode.NotEqual, 0, parameterName);
             anyToOverTransition.AddCondition(AnimatorConditionMode.If, 1, "Seated");
             anyToOverTransition.hasExitTime = false;
             anyToOverTransition.duration = transitionDuration;
 
-            var overToEndTransition = overState.AddTransition(endState);
-            overToEndTransition.hasExitTime = true;
-            overToEndTransition.exitTime = 0.9f;
-            overToEndTransition.duration = transitionDuration;
-            overToEndTransition.hasFixedDuration = true;
+            // var overToEndTransition = overState.AddTransition(endState);
+            // overToEndTransition.hasExitTime = false;
+            // overToEndTransition.exitTime = 0f;
+            // overToEndTransition.duration = transitionDuration;
+            // overToEndTransition.hasFixedDuration = true;
+
+            // AddIntTransition(overState, endState, AnimatorConditionMode.Equals, parameterName, 0, transitionDuration);
 
             layer.stateMachine.defaultState = waitState;
             AddIntTransition(waitState, readyState, AnimatorConditionMode.NotEqual, parameterName, 0, transitionDuration);
+
             var exitTransition = endState.AddExitTransition();
-            exitTransition.hasExitTime = true;
+            exitTransition.hasExitTime = false;
             exitTransition.exitTime = 0;
             exitTransition.duration = transitionDuration;
+            exitTransition.AddCondition(AnimatorConditionMode.Equals, 0, parameterName);
 
             animatorController.AddLayer(layer);
             for (int i = 0; i < actionSwitch.Actions.Count; i++)
@@ -123,7 +127,13 @@ namespace Yueby.AvatarTools.MAActionSwitch
                 var actionState = CreateAnimatorState(layer.stateMachine, actionElement.Name, actionElement.Clip, writeDefault);
 
                 AddIntTransition(readyState, actionState, AnimatorConditionMode.Equals, parameterName, i + 1, transitionDuration);
-                AddIntTransition(actionState, endState, AnimatorConditionMode.NotEqual, parameterName, i + 1, transitionDuration);
+                var actionToExit = actionState.AddExitTransition();
+                actionToExit.hasExitTime = false;
+                actionToExit.exitTime = 0;
+                actionToExit.duration = transitionDuration;
+                actionToExit.AddCondition(AnimatorConditionMode.NotEqual, i + 1, parameterName);
+
+                // AddIntTransition(actionState, endState, AnimatorConditionMode.NotEqual, parameterName, i + 1, transitionDuration);
                 // add anyState transition
                 // var transition = layer.stateMachine.AddAnyStateTransition(state);
                 // transition.AddCondition(AnimatorConditionMode.Equals, i + 1, parameterName);
