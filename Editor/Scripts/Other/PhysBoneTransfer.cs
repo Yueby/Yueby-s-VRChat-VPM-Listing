@@ -351,7 +351,8 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
                             {
                                 parent = colRootTransGo.transform,
                                 position = originCollider.transform.position,
-                                rotation = originCollider.transform.rotation
+                                rotation = originCollider.transform.rotation,
+                                localScale = originCollider.transform.localScale
                             }
                         };
 
@@ -391,7 +392,8 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
                                 {
                                     parent = parent.transform,
                                     position = originCollider.transform.position,
-                                    rotation = originCollider.transform.rotation
+                                    rotation = originCollider.transform.rotation,
+                                    localScale = originCollider.transform.localScale
                                 }
                             };
                             Undo.RegisterCreatedObjectUndo(colRootTransGo, "CreateNewCollider");
