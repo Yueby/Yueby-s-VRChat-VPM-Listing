@@ -156,7 +156,6 @@ namespace Yueby.AvatarTools.Other
                         if (!_isPreview)
                         {
                             ResetToDefault();
-                            Debug.Log("Reset");
                         }
                         else
                             ApplyToMesh();

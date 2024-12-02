@@ -36,15 +36,39 @@ namespace Yueby.AvatarTools.Other
         [MenuItem("GameObject/YuebyTools/PhysBone Extractor", true)]
         public static bool ExtractOnObjectValidate()
         {
-            return Selection.activeGameObject != null;
+            return Selection.activeGameObject != null
+                && (
+                    Selection.activeGameObject.GetComponentsInChildren<VRCPhysBone>().Length > 0
+                    || Selection.activeGameObject.GetComponentsInChildren<VRCContactSender>().Length > 0
+                    || Selection.activeGameObject.GetComponentsInChildren<VRCContactReceiver>().Length > 0
+                    || Selection.activeGameObject.GetComponentsInChildren<VRCPhysBoneColliderBase>().Length > 0
+                );
         }
 
-        public static void Extract(PhysBoneExtractorDrawer drawer, bool isModel = false, bool isShowFocusCenter = false)
+        public static void Extract(
+            PhysBoneExtractorDrawer drawer,
+            bool isModel = false,
+            bool isShowFocusCenter = false
+        )
         {
             if (isModel)
-                ModalEditorWindow.Show(drawer, () => { StartExtract(drawer); }, showFocusCenter: isShowFocusCenter);
+                ModalEditorWindow.Show(
+                    drawer,
+                    () =>
+                    {
+                        StartExtract(drawer);
+                    },
+                    showFocusCenter: isShowFocusCenter
+                );
             else
-                ModalEditorWindow.ShowUtility(drawer, () => { StartExtract(drawer); }, showFocusCenter: isShowFocusCenter);
+                ModalEditorWindow.ShowUtility(
+                    drawer,
+                    () =>
+                    {
+                        StartExtract(drawer);
+                    },
+                    showFocusCenter: isShowFocusCenter
+                );
         }
 
         private static void StartExtract(PhysBoneExtractorDrawer drawer)
@@ -53,7 +77,14 @@ namespace Yueby.AvatarTools.Other
 
             if (target == null)
             {
-                EditorUtils.WaitToDo(40, "ShowTips", () => { ModalEditorWindow.ShowTip("Target is null!"); });
+                EditorUtils.WaitToDo(
+                    40,
+                    "ShowTips",
+                    () =>
+                    {
+                        ModalEditorWindow.ShowTip("Target is null!");
+                    }
+                );
                 return;
             }
 
@@ -70,9 +101,17 @@ namespace Yueby.AvatarTools.Other
             GameObject senderParent = null;
             GameObject receiverParent = null;
 
-            if (physBones.Count > 0 || colliders.Count > 0 || senders.Count > 0 || receivers.Count > 0)
+            if (
+                physBones.Count > 0
+                || colliders.Count > 0
+                || senders.Count > 0
+                || receivers.Count > 0
+            )
             {
-                root = new GameObject(PhyBoneRootName) { transform = { parent = target.transform } };
+                root = new GameObject(PhyBoneRootName)
+                {
+                    transform = { parent = target.transform },
+                };
                 Undo.RegisterCreatedObjectUndo(root, "Extract PhysBone");
             }
             else
@@ -92,7 +131,8 @@ namespace Yueby.AvatarTools.Other
                 for (var i = 0; i < pbColliders.Count; i++)
                 {
                     var col = pbColliders[i];
-                    if (col == null) continue;
+                    if (col == null)
+                        continue;
 
                     if (col.rootTransform == null)
                         col.rootTransform = col.transform;
@@ -110,15 +150,25 @@ namespace Yueby.AvatarTools.Other
                         colliders.Remove(col);
 
                     if (colliderParent == null)
-                        colliderParent = new GameObject("Colliders") { transform = { parent = root.transform } };
+                        colliderParent = new GameObject("Colliders")
+                        {
+                            transform = { parent = root.transform },
+                        };
 
-                    var component = CopyComponentToNewGameObject<VRCPhysBoneColliderBase>(col, colliderParent.transform, false);
+                    var component = CopyComponentToNewGameObject<VRCPhysBoneColliderBase>(
+                        col,
+                        colliderParent.transform,
+                        false
+                    );
                     colliderMappers.Add(new PhysBoneColliderMapper(id, col, component));
                     pb.colliders[i] = component;
                 }
 
                 if (physBoneParent == null)
-                    physBoneParent = new GameObject("PhysBones") { transform = { parent = root.transform } };
+                    physBoneParent = new GameObject("PhysBones")
+                    {
+                        transform = { parent = root.transform },
+                    };
 
                 if (pb.rootTransform == null)
                     pb.rootTransform = pb.transform;
@@ -128,12 +178,21 @@ namespace Yueby.AvatarTools.Other
             foreach (var col in colliders)
             {
                 if (colliderParent == null)
-                    colliderParent = new GameObject("Colliders") { transform = { parent = root.transform } };
+                    colliderParent = new GameObject("Colliders")
+                    {
+                        transform = { parent = root.transform },
+                    };
 
                 if (col.rootTransform == null)
                     col.rootTransform = col.transform;
-                var component = CopyComponentToNewGameObject<VRCPhysBoneColliderBase>(col, colliderParent.transform, false);
-                colliderMappers.Add(new PhysBoneColliderMapper(col.GetInstanceID(), col, component));
+                var component = CopyComponentToNewGameObject<VRCPhysBoneColliderBase>(
+                    col,
+                    colliderParent.transform,
+                    false
+                );
+                colliderMappers.Add(
+                    new PhysBoneColliderMapper(col.GetInstanceID(), col, component)
+                );
             }
 
             foreach (var mapper in colliderMappers)
@@ -146,7 +205,10 @@ namespace Yueby.AvatarTools.Other
             foreach (var sender in senders)
             {
                 if (senderParent == null)
-                    senderParent = new GameObject("Senders") { transform = { parent = root.transform } };
+                    senderParent = new GameObject("Senders")
+                    {
+                        transform = { parent = root.transform },
+                    };
                 if (sender.rootTransform == null)
                     sender.rootTransform = sender.transform;
                 CopyComponentToNewGameObject<VRCContactSender>(sender, senderParent.transform);
@@ -156,16 +218,29 @@ namespace Yueby.AvatarTools.Other
             foreach (var receiver in receivers)
             {
                 if (receiverParent == null)
-                    receiverParent = new GameObject("Receivers") { transform = { parent = root.transform } };
+                    receiverParent = new GameObject("Receivers")
+                    {
+                        transform = { parent = root.transform },
+                    };
                 if (receiver.rootTransform == null)
                     receiver.rootTransform = receiver.transform;
-                CopyComponentToNewGameObject<VRCContactReceiver>(receiver, receiverParent.transform);
+                CopyComponentToNewGameObject<VRCContactReceiver>(
+                    receiver,
+                    receiverParent.transform
+                );
             }
 
-            ModalEditorWindow.ShowTip("Extracted PhysBones and Contacts will be placed under a new GameObject named 'Physbone_Extract'.");
+            ModalEditorWindow.ShowTip(
+                "Extracted PhysBones and Contacts will be placed under a new GameObject named 'Physbone_Extract'."
+            );
         }
 
-        private static T CopyComponentToNewGameObject<T>(Component component, Transform parent, bool destroyOriginal = true) where T : Component
+        private static T CopyComponentToNewGameObject<T>(
+            Component component,
+            Transform parent,
+            bool destroyOriginal = true
+        )
+            where T : Component
         {
             var go = new GameObject(component.gameObject.name);
             go.transform.SetParent(parent);
@@ -196,7 +271,11 @@ namespace Yueby.AvatarTools.Other
             public VRCPhysBoneColliderBase Old;
             public VRCPhysBoneColliderBase New;
 
-            public PhysBoneColliderMapper(int instanceID, VRCPhysBoneColliderBase oldComponent, VRCPhysBoneColliderBase newComponent)
+            public PhysBoneColliderMapper(
+                int instanceID,
+                VRCPhysBoneColliderBase oldComponent,
+                VRCPhysBoneColliderBase newComponent
+            )
             {
                 InstanceID = instanceID;
                 Old = oldComponent;
