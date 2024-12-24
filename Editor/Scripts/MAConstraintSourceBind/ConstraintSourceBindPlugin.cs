@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using nadena.dev.modular_avatar.core;
+
 using nadena.dev.ndmf;
 using UnityEngine.Animations;
 using Yueby.AvatarTools.MAConstraintSourceBind;
