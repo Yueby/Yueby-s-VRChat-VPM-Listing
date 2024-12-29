@@ -7,7 +7,6 @@ using Yueby.AvatarTools.Other.ModalWindow;
 using Yueby.Core.Utils;
 using Yueby.ModalWindow;
 using Yueby.Utils;
-using Logger = Yueby.Core.Utils.Logger;
 
 namespace Yueby.AvatarTools.Other
 {
@@ -77,7 +76,7 @@ namespace Yueby.AvatarTools.Other
                 // 确保路径是相对于Assets文件夹的
                 if (!assetPath.StartsWith("Assets/"))
                 {
-                    Logger.LogError($"Invalid asset path: {assetPath}. Path must be inside Assets folder.");
+                    YuebyLogger.LogError($"Invalid asset path: {assetPath}. Path must be inside Assets folder.");
                     return;
                 }
 
@@ -85,13 +84,13 @@ namespace Yueby.AvatarTools.Other
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
 
-                Logger.LogInfo($"AnimationClip created: {assetPath}");
+                YuebyLogger.LogInfo($"AnimationClip created: {assetPath}");
 
                 EditorUtils.PingProject(animationClip);
             }
             catch (System.Exception ex)
             {
-                Logger.LogError($"Error when create animation clip: {ex.Message}");
+                YuebyLogger.LogError($"Error when create animation clip: {ex.Message}");
             }
         }
 
