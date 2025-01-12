@@ -8,6 +8,7 @@ using UnityEngine.Animations;
 using VRC.Dynamics;
 using VRC.SDK3.Dynamics.PhysBone.Components;
 using Yueby;
+using Yueby.Core.Utils;
 using Yueby.Utils;
 
 namespace YuebyAvatarTools.PhysBoneTransfer.Editor
@@ -16,6 +17,7 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
     {
         private Vector2 _pos;
         private Transform _origin;
+        private static bool _isOnlyTransferInArmature = false;
         private static bool _isTransferMAMergeArmature = true;
         private static bool _isTransferMAMergeAnimator = true;
         private static bool _isTransferMABoneProxy = true;
@@ -29,7 +31,7 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
         {
             var window = CreateWindow<PhysboneTransfer>();
             window.titleContent = new GUIContent("Avatar Component Transfer");
-            window.minSize = new Vector2(500, 450);
+            window.minSize = new Vector2(200, 250);
             window.Show();
         }
 
@@ -50,6 +52,8 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
 
             EditorUI.VerticalEGLTitled("Settings", () =>
             {
+                _isOnlyTransferInArmature = EditorUI.Toggle(_isOnlyTransferInArmature, "Only Transfer In Armature");
+                EditorUI.Line(LineType.Horizontal);
                 _isTransferMAMergeArmature = EditorUI.Toggle(_isTransferMAMergeArmature, "Transfer ModularAvatarMergeArmature");
                 _isTransferMAMergeAnimator = EditorUI.Toggle(_isTransferMAMergeAnimator, "Transfer ModularAvatarMergeAnimator");
                 _isTransferMABoneProxy = EditorUI.Toggle(_isTransferMABoneProxy, "Transfer ModularAvatarBoneProxy");
@@ -60,15 +64,32 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
 
                 if (GUILayout.Button("Transfer"))
                 {
-                    foreach (var selection in selections)
+                    if (_origin == null)
                     {
-                        Recursive(_origin, selection.transform);
-
-                        if (_isTransferMaterials)
-                            TransferMaterials(selection.transform);
-                        if (_isTransferMaterialSwitcher)
-                            TransferMaterialSwitcher(selection);
+                        EditorUtility.DisplayDialog("Error", "Please select a source armature first.", "OK");
+                        return;
                     }
+
+                    EditorUtility.DisplayProgressBar("Transferring Components", "Processing...", 0);
+                    try
+                    {
+                        foreach (var selection in selections)
+                        {
+                            Recursive(_origin, selection.transform);
+
+                            if (_isTransferMaterials)
+                                TransferMaterials(selection.transform);
+                            if (_isTransferMaterialSwitcher)
+                                TransferMaterialSwitcher(selection);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError($"Error during transfer: {e.Message}");
+                        EditorUtility.ClearProgressBar();
+                        return;
+                    }
+                    EditorUtility.ClearProgressBar();
                 }
             });
 
@@ -87,7 +108,7 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
 
         private void TransferMaterials(Transform current)
         {
-            var originRenderers = _origin.GetComponentsInChildren<Renderer>();
+            var originRenderers = _origin.GetComponentsInChildren<Renderer>(true);
 
             if (originRenderers.Length <= 0) return;
             foreach (var originRenderer in originRenderers)
@@ -116,7 +137,6 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
                     TransferParticleSystems(child, current);
                 TransferComponents(child, current);
                 Recursive(child, current);
-                // Debug.Log(child);
             }
         }
 
@@ -143,113 +163,60 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
 
         private void TransferComponents(Transform child, Transform current)
         {
-            var targetPath = VRC.Core.ExtensionMethods.GetHierarchyPath(child).Replace($"{_origin.name}", $"{current.name}");
-            var targetGo = GameObject.Find(targetPath);
+            var targetGo = GetOrCreateTargetObject(child, current);
             if (targetGo == null) return;
 
             if (_isTransferMABoneProxy)
-                CopyComponentByType<ModularAvatarBoneProxy>(targetGo, child);
+                CopyComponentWithUndo<ModularAvatarBoneProxy>(child.gameObject, targetGo);
             if (_isTransferMAMergeArmature)
-                CopyComponentByType<ModularAvatarMergeArmature>(targetGo, child);
+                CopyComponentWithUndo<ModularAvatarMergeArmature>(child.gameObject, targetGo);
             if (_isTransferMAMergeAnimator)
-                CopyComponentByType<ModularAvatarMergeAnimator>(targetGo, child);
+                CopyComponentWithUndo<ModularAvatarMergeAnimator>(child.gameObject, targetGo);
         }
 
         private void TransferConstraint(Transform child, Transform current)
         {
-            var targetPath = VRC.Core.ExtensionMethods.GetHierarchyPath(child).Replace($"{_origin.name}", $"{current.name}");
-            var targetGo = GameObject.Find(targetPath);
+            var targetGo = GetOrCreateTargetObject(child, current);
             if (targetGo == null) return;
 
-            var parentConstraints = child.GetComponents<ParentConstraint>();
-            var rotationConstraints = child.GetComponents<RotationConstraint>();
-            var positionConstraints = child.GetComponents<PositionConstraint>();
-            CopyConstraint(parentConstraints, (c, t) =>
+            CopyConstraintComponents<ParentConstraint>(child.gameObject, targetGo, current);
+            CopyConstraintComponents<RotationConstraint>(child.gameObject, targetGo, current);
+            CopyConstraintComponents<PositionConstraint>(child.gameObject, targetGo, current);
+        }
+
+        private void CopyConstraintComponents<T>(GameObject sourceObj, GameObject target, Transform current) where T : Component, IConstraint
+        {
+            var constraints = sourceObj.GetComponents<T>();
+            foreach (var constraint in constraints)
             {
-                // t.rotationAtRest = c.rotationAtRest;
-                // t.translationAtRest = c.translationAtRest;
+                var lastLocked = constraint.locked;
+                var lastActive = constraint.constraintActive;
 
-                // t.rotationOffsets = c.rotationOffsets;
-                // t.translationOffsets = c.translationOffsets;
-                // t.weight = c.weight;
+                constraint.locked = false;
+                constraint.constraintActive = false;
 
-            });
+                var targetConstraint = CopyComponentWithUndo<T>(sourceObj, target);
+                if (targetConstraint == null) continue;
 
-            CopyConstraint(rotationConstraints, (c, t) =>
-            {
-                // t.rotationAtRest = c.rotationAtRest;
-                // t.rotationOffset = c.rotationOffset;
-                // t.weight = c.weight;
+                // 恢复源约束的状态
+                constraint.locked = lastLocked;
+                constraint.constraintActive = lastActive;
 
-            });
-
-            CopyConstraint(positionConstraints, (c, t) =>
-            {
-                // t.translationAtRest = c.translationAtRest;
-                // t.translationOffset = c.translationOffset;
-                // t.weight = c.weight;
-
-            });
-
-            return;
-
-            void CopyConstraint<T>(T[] constraints, System.Action<T, T> action) where T : Component
-            {
-                foreach (var constraint in constraints)
+                // 处理约束源
+                for (var i = 0; i < constraint.sourceCount; i++)
                 {
-                    if (constraint == null)
-                        continue;
-
-                    var constraintCurrent = constraint as IConstraint;
-
-                    var lastLocked = constraintCurrent.locked;
-                    var lastActive = constraintCurrent.constraintActive;
-
-                    constraintCurrent.locked = false;
-                    constraintCurrent.constraintActive = false;
-
-                    ComponentUtility.CopyComponent(constraint);
-                    var targetConstraint = targetGo.GetComponent<T>();
-                    if (targetConstraint != null)
-                    {
-                        ComponentUtility.PasteComponentValues(targetConstraint);
-                    }
-                    else
-                    {
-                        ComponentUtility.PasteComponentAsNew(targetGo);
-                        targetConstraint = targetGo.GetComponent<T>();
-                    }
-
-                    constraintCurrent.locked = lastLocked;
-                    constraintCurrent.constraintActive = lastActive;
-                    action?.Invoke(constraint, targetConstraint);
-                    ApplySource(constraint as IConstraint, targetConstraint as IConstraint);
-                }
-            }
-
-            void ApplySource(IConstraint currentConstraint, IConstraint targetConstarint)
-            {
-                if (currentConstraint.sourceCount <= 0) return;
-
-                //clear target source
-                for (var i = 0; i < currentConstraint.sourceCount; i++)
-                {
-                    var source = currentConstraint.GetSource(i);
-                    var targetSourceObject = GameObject.Find(VRC.Core.ExtensionMethods.GetHierarchyPath(source.sourceTransform).Replace($"{_origin.name}", $"{current.name}"));
+                    var source = constraint.GetSource(i);
+                    var targetSourceObject = GetOrCreateTargetObject(source.sourceTransform, current);
                     if (targetSourceObject == null) continue;
 
-                    // Debug.Log(targetSourceObject.name);
-
-                    // target.RemoveSource(i);
-                    targetConstarint.SetSource(i, new ConstraintSource()
+                    targetConstraint.SetSource(i, new ConstraintSource()
                     {
                         sourceTransform = targetSourceObject.transform,
                         weight = source.weight
                     });
                 }
 
-                targetConstarint.constraintActive = currentConstraint.constraintActive;
-                // target.locked = current.locked;
+                targetConstraint.constraintActive = constraint.constraintActive;
             }
         }
 
@@ -258,31 +225,20 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
             var physBone = child.GetComponent<VRCPhysBone>();
             if (physBone == null) return;
 
-            var targetPath = VRC.Core.ExtensionMethods.GetHierarchyPath(child).Replace($"{_origin.name}", $"{current.name}");
-            var targetGo = GameObject.Find(targetPath);
+            var targetGo = GetOrCreateTargetObject(child, current);
+            if (targetGo == null) return;
 
-            if (targetGo != null)
+            var targetPhysBone = CopyComponentWithUndo<VRCPhysBone>(child.gameObject, targetGo);
+            if (targetPhysBone == null) return;
+
+            // 处理 rootTransform
+            if (physBone.rootTransform != null)
             {
-                ComponentUtility.CopyComponent(physBone);
-
-                if (targetGo.GetComponent<VRCPhysBone>() != null)
-                    ComponentUtility.PasteComponentValues(targetGo.GetComponent<VRCPhysBone>());
-                else
-                    ComponentUtility.PasteComponentAsNew(targetGo);
-
-                var targetPhysBone = targetGo.GetComponent<VRCPhysBone>();
-
-                // 只有当原始的rootTransform不为空时才进行映射
-                if (physBone.rootTransform != null)
-                {
-                    var rootTransPath = VRC.Core.ExtensionMethods.GetHierarchyPath(physBone.rootTransform).Replace($"{_origin.name}", $"{current.name}");
-                    var rootTransGo = GameObject.Find(rootTransPath);
-                    targetPhysBone.rootTransform = rootTransGo != null ? rootTransGo.transform : null;
-                }
-
-                targetPhysBone.colliders = GetColliders(targetPhysBone.colliders, current);
-                Undo.RegisterFullObjectHierarchyUndo(targetGo, "CopyComponent");
+                var rootTransGo = GetOrCreateTargetObject(physBone.rootTransform, current);
+                targetPhysBone.rootTransform = rootTransGo?.transform;
             }
+
+            targetPhysBone.colliders = GetColliders(targetPhysBone.colliders, current);
         }
 
         private List<VRCPhysBoneColliderBase> GetColliders(List<VRCPhysBoneColliderBase> colliders, Transform current)
@@ -292,154 +248,53 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
             {
                 if (originCollider == null) continue;
 
-                var targetPath = VRC.Core.ExtensionMethods.GetHierarchyPath(originCollider.transform).Replace($"{_origin.name}", $"{current.name}");
-                var targetGo = GameObject.Find(targetPath);
-
+                var targetGo = GetOrCreateTargetObject(originCollider.transform, current);
                 if (targetGo != null)
                 {
-                    var colBase = targetGo.GetComponent<VRCPhysBoneColliderBase>();
-                    if (colBase == null)
-                    {
-                        ComponentUtility.CopyComponent(originCollider);
-                        ComponentUtility.PasteComponentAsNew(targetGo);
-                        colBase = targetGo.GetComponent<VRCPhysBoneColliderBase>();
-                    }
-                    else
-                    {
-                        ComponentUtility.CopyComponent(originCollider);
-                        ComponentUtility.PasteComponentValues(colBase);
-                    }
+                    var colBase = CopyComponentWithUndo<VRCPhysBoneColliderBase>(originCollider.gameObject, targetGo);
+                    if (colBase == null) continue;
 
-                    // 只有当原始的rootTransform不为空时才进行映射
                     if (originCollider.rootTransform != null)
                     {
-                        var rootTransPath = VRC.Core.ExtensionMethods.GetHierarchyPath(originCollider.rootTransform).Replace($"{_origin.name}", $"{current.name}");
-                        var rootTransGo = GameObject.Find(rootTransPath);
-                        colBase.rootTransform = rootTransGo != null ? rootTransGo.transform : null;
+                        var rootTransGo = GetOrCreateTargetObject(originCollider.rootTransform, current);
+                        colBase.rootTransform = rootTransGo?.transform;
                     }
 
                     list.Add(colBase);
-                    Undo.RegisterFullObjectHierarchyUndo(targetGo, "CopyComponent");
-                }
-                else
-                {
-                    var parentPath = VRC.Core.ExtensionMethods.GetHierarchyPath(originCollider.transform.parent).Replace($"{_origin.name}", $"{current.name}");
-                    var parent = GameObject.Find(parentPath);
-
-                    if (parent != null)
-                    {
-                        var newGo = new GameObject(originCollider.name);
-                        newGo.transform.parent = parent.transform;
-                        newGo.transform.localPosition = originCollider.transform.localPosition;
-                        newGo.transform.localRotation = originCollider.transform.localRotation;
-                        newGo.transform.localScale = originCollider.transform.localScale;
-
-                        ComponentUtility.CopyComponent(originCollider);
-                        ComponentUtility.PasteComponentAsNew(newGo);
-                        var colBase = newGo.GetComponent<VRCPhysBoneColliderBase>();
-
-                        // 只有当原始的rootTransform不为空时才进行映射
-                        if (originCollider.rootTransform != null)
-                        {
-                            var rootTransPath = VRC.Core.ExtensionMethods.GetHierarchyPath(originCollider.rootTransform).Replace($"{_origin.name}", $"{current.name}");
-                            var rootTransGo = GameObject.Find(rootTransPath);
-                            colBase.rootTransform = rootTransGo != null ? rootTransGo.transform : null;
-                        }
-
-                        list.Add(colBase);
-                        Undo.RegisterCreatedObjectUndo(newGo, "Create Collider");
-                    }
                 }
             }
-
             return list;
         }
 
         private void TransferParticleSystems(Transform child, Transform current)
         {
-            var particleSystem = child.GetComponent<ParticleSystem>();
-            if (particleSystem == null) return;
-
-            // 先尝试找到目标对象
-            var targetPath = VRC.Core.ExtensionMethods.GetHierarchyPath(child).Replace($"{_origin.name}", $"{current.name}");
-            var targetGo = GameObject.Find(targetPath);
-            if (targetGo == null)
-            {
-                // 如果找不到，尝试找父对象
-                var parentPath = VRC.Core.ExtensionMethods.GetHierarchyPath(child.parent).Replace($"{_origin.name}", $"{current.name}");
-                var parentGo = GameObject.Find(parentPath);
-                if (parentGo != null)
-                {
-                    // 在父对象下创建新的粒子系统对象
-                    targetGo = new GameObject(child.name);
-                    targetGo.transform.parent = parentGo.transform;
-                    targetGo.transform.localPosition = child.localPosition;
-                    targetGo.transform.localRotation = child.localRotation;
-                    targetGo.transform.localScale = child.localScale;
-                }
-            }
+            var targetGo = GetOrCreateTargetObject(child, current);
             if (targetGo == null) return;
 
-            // 转移组件
-            ComponentUtility.CopyComponent(particleSystem);
-            if (targetGo.GetComponent<ParticleSystem>() != null)
-                ComponentUtility.PasteComponentValues(targetGo.GetComponent<ParticleSystem>());
-            else
-                ComponentUtility.PasteComponentAsNew(targetGo);
+            // 转移 ParticleSystem 组件
+            var particleSystem = CopyComponentWithUndo<ParticleSystem>(child.gameObject, targetGo);
+            if (particleSystem == null) return;
 
-            var renderer = child.GetComponent<ParticleSystemRenderer>();
-            if (renderer != null)
+            // 转移 ParticleSystemRenderer 组件
+            if (child.TryGetComponent<ParticleSystemRenderer>(out var renderer))
             {
-                ComponentUtility.CopyComponent(renderer);
-                if (targetGo.GetComponent<ParticleSystemRenderer>() != null)
-                    ComponentUtility.PasteComponentValues(targetGo.GetComponent<ParticleSystemRenderer>());
-                else
-                    ComponentUtility.PasteComponentAsNew(targetGo);
+                CopyComponentWithUndo<ParticleSystemRenderer>(child.gameObject, targetGo);
             }
 
             // 处理子粒子系统
-            var childParticleSystems = child.GetComponentsInChildren<ParticleSystem>(true);
-            foreach (var childPS in childParticleSystems)
+            foreach (var childPS in child.GetComponentsInChildren<ParticleSystem>(true))
             {
                 if (childPS.transform == child.transform) continue;
 
-                // 先尝试找到目标子对象
-                var childTargetPath = VRC.Core.ExtensionMethods.GetHierarchyPath(childPS.transform).Replace($"{_origin.name}", $"{current.name}");
-                var childTargetGo = GameObject.Find(childTargetPath);
-                if (childTargetGo == null)
-                {
-                    // 如果找不到，在父对象下创建
-                    var childParentPath = VRC.Core.ExtensionMethods.GetHierarchyPath(childPS.transform.parent).Replace($"{_origin.name}", $"{current.name}");
-                    var childParentGo = GameObject.Find(childParentPath);
-                    if (childParentGo != null)
-                    {
-                        childTargetGo = new GameObject(childPS.name);
-                        childTargetGo.transform.parent = childParentGo.transform;
-                        childTargetGo.transform.localPosition = childPS.transform.localPosition;
-                        childTargetGo.transform.localRotation = childPS.transform.localRotation;
-                        childTargetGo.transform.localScale = childPS.transform.localScale;
-                    }
-                }
+                var childTargetGo = GetOrCreateTargetObject(childPS.transform, current);
                 if (childTargetGo == null) continue;
 
-                ComponentUtility.CopyComponent(childPS);
-                if (childTargetGo.GetComponent<ParticleSystem>() != null)
-                    ComponentUtility.PasteComponentValues(childTargetGo.GetComponent<ParticleSystem>());
-                else
-                    ComponentUtility.PasteComponentAsNew(childTargetGo);
-
-                var childRenderer = childPS.GetComponent<ParticleSystemRenderer>();
-                if (childRenderer != null)
+                CopyComponentWithUndo<ParticleSystem>(childPS.gameObject, childTargetGo);
+                if (childPS.TryGetComponent<ParticleSystemRenderer>(out var childRenderer))
                 {
-                    ComponentUtility.CopyComponent(childRenderer);
-                    if (childTargetGo.GetComponent<ParticleSystemRenderer>() != null)
-                        ComponentUtility.PasteComponentValues(childTargetGo.GetComponent<ParticleSystemRenderer>());
-                    else
-                        ComponentUtility.PasteComponentAsNew(childTargetGo);
+                    CopyComponentWithUndo<ParticleSystemRenderer>(childPS.gameObject, childTargetGo);
                 }
             }
-
-            Undo.RegisterFullObjectHierarchyUndo(targetGo, "Transfer ParticleSystem");
         }
 
         private void TransferMaterialSwitcher(GameObject targetRoot)
@@ -460,6 +315,126 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
 
             Undo.RegisterCompleteObjectUndo(targetComponent, "Transfer MaterialSwitcher");
             EditorUtility.SetDirty(targetComponent);
+        }
+
+        /// <summary>
+        /// 根据路径创建或获取对象，确保路径上的所有对象都存在
+        /// </summary>
+        private GameObject EnsureGameObjectPath(string fullPath, Transform sourceRoot, Transform targetRoot)
+        {
+            var pathParts = fullPath.Split('/');
+            if (pathParts.Length == 0) return null;
+
+            // 优化：先尝试直接查找完整路径
+            var directGo = GameObject.Find(fullPath);
+            if (directGo != null) return directGo;
+
+            Transform current = targetRoot;
+            Transform sourceCurrent = sourceRoot;
+
+            foreach (var partName in pathParts)
+            {
+                var child = current.Find(partName);
+                if (child == null)
+                {
+                    var sourceChild = sourceCurrent?.Find(partName);
+                    if (sourceChild == null) continue;
+
+                    var newGo = new GameObject(partName);
+                    newGo.transform.SetParent(current, false); // 使用SetParent更高效
+
+                    // 一次性设置所有transform信息
+                    var sourceLocalTRS = new TransformData(sourceChild);
+                    sourceLocalTRS.ApplyTo(newGo.transform);
+
+                    child = newGo.transform;
+                    Undo.RegisterCreatedObjectUndo(newGo, $"Create Path Object: {partName}");
+                    YuebyLogger.LogInfo("PhysBoneTransfer", $"Created object in path: {VRC.Core.ExtensionMethods.GetHierarchyPath(newGo.transform)}");
+                }
+
+                current = child;
+                sourceCurrent = sourceCurrent?.Find(partName);
+            }
+
+            return current?.gameObject;
+        }
+
+        // 辅助类来处理Transform数据
+        private struct TransformData
+        {
+            private Vector3 localPosition;
+            private Quaternion localRotation;
+            private Vector3 localScale;
+
+            public TransformData(Transform transform)
+            {
+                localPosition = transform.localPosition;
+                localRotation = transform.localRotation;
+                localScale = transform.localScale;
+            }
+
+            public void ApplyTo(Transform transform)
+            {
+                transform.localPosition = localPosition;
+                transform.localRotation = localRotation;
+                transform.localScale = localScale;
+            }
+        }
+
+        /// <summary>
+        /// 统一的组件转移方法
+        /// </summary>
+        private GameObject GetOrCreateTargetObject(Transform sourceObj, Transform targetRoot, bool createIfNotExist = true)
+        {
+            var targetPath = GetTargetPath(sourceObj, targetRoot);
+
+            if (createIfNotExist && !_isOnlyTransferInArmature)
+            {
+                return EnsureGameObjectPath(targetPath, _origin, targetRoot);
+            }
+
+            return GameObject.Find(targetPath);
+        }
+
+        /// <summary>
+        /// 统一的组件复制方法
+        /// </summary>
+        private T CopyComponentWithUndo<T>(GameObject source, GameObject target, string undoName = null) where T : Component
+        {
+            var sourceComponent = source.GetComponent<T>();
+            if (sourceComponent == null)
+            {
+                // YuebyLogger.LogWarning("PhysBoneTransfer", $"Source component {typeof(T).Name} not found on {source.name}");
+                return null;
+            }
+
+            try
+            {
+                ComponentUtility.CopyComponent(sourceComponent);
+                var targetComponent = target.GetComponent<T>();
+
+                if (targetComponent != null)
+                    ComponentUtility.PasteComponentValues(targetComponent);
+                else
+                {
+                    ComponentUtility.PasteComponentAsNew(target);
+                    targetComponent = target.GetComponent<T>();
+                }
+
+                Undo.RegisterCompleteObjectUndo(target, undoName ?? $"Transfer {typeof(T).Name}");
+                return targetComponent;
+            }
+            catch (System.Exception e)
+            {
+                YuebyLogger.LogError("PhysBoneTransfer", $"Failed to copy {typeof(T).Name}: {e.Message}");
+                return null;
+            }
+        }
+
+        // 1. 统一路径处理
+        private string GetTargetPath(Transform source, Transform targetRoot)
+        {
+            return VRC.Core.ExtensionMethods.GetHierarchyPath(source).Replace($"{_origin.name}", $"{targetRoot.name}");
         }
     }
 }
