@@ -449,5 +449,125 @@ namespace YuebyAvatarTools.PhysBoneTransfer.Editor
         {
             return VRC.Core.ExtensionMethods.GetHierarchyPath(source).Replace($"{_origin.name}", $"{targetRoot.name}");
         }
+
+        /// <summary>
+        /// 根据路径创建或获取对象，确保路径上的所有对象都存在
+        /// </summary>
+        private GameObject EnsureGameObjectPath(string fullPath, Transform sourceRoot, Transform targetRoot)
+        {
+            var pathParts = fullPath.Split('/');
+            if (pathParts.Length == 0) return null;
+
+            // 优化：先尝试直接查找完整路径
+            var directGo = GameObject.Find(fullPath);
+            if (directGo != null) return directGo;
+
+            Transform current = targetRoot;
+            Transform sourceCurrent = sourceRoot;
+
+            foreach (var partName in pathParts)
+            {
+                var child = current.Find(partName);
+                if (child == null)
+                {
+                    var sourceChild = sourceCurrent?.Find(partName);
+                    if (sourceChild == null) continue;
+
+                    var newGo = new GameObject(partName);
+                    newGo.transform.SetParent(current, false); // 使用SetParent更高效
+
+                    // 一次性设置所有transform信息
+                    var sourceLocalTRS = new TransformData(sourceChild);
+                    sourceLocalTRS.ApplyTo(newGo.transform);
+
+                    child = newGo.transform;
+                    Undo.RegisterCreatedObjectUndo(newGo, $"Create Path Object: {partName}");
+                    YuebyLogger.LogInfo("PhysBoneTransfer", $"Created object in path: {VRC.Core.ExtensionMethods.GetHierarchyPath(newGo.transform)}");
+                }
+
+                current = child;
+                sourceCurrent = sourceCurrent?.Find(partName);
+            }
+
+            return current?.gameObject;
+        }
+
+        // 辅助类来处理Transform数据
+        private struct TransformData
+        {
+            private Vector3 localPosition;
+            private Quaternion localRotation;
+            private Vector3 localScale;
+
+            public TransformData(Transform transform)
+            {
+                localPosition = transform.localPosition;
+                localRotation = transform.localRotation;
+                localScale = transform.localScale;
+            }
+
+            public void ApplyTo(Transform transform)
+            {
+                transform.localPosition = localPosition;
+                transform.localRotation = localRotation;
+                transform.localScale = localScale;
+            }
+        }
+
+        /// <summary>
+        /// 统一的组件转移方法
+        /// </summary>
+        private GameObject GetOrCreateTargetObject(Transform sourceObj, Transform targetRoot, bool createIfNotExist = true)
+        {
+            var targetPath = GetTargetPath(sourceObj, targetRoot);
+
+            if (createIfNotExist && !_isOnlyTransferInArmature)
+            {
+                return EnsureGameObjectPath(targetPath, _origin, targetRoot);
+            }
+
+            return GameObject.Find(targetPath);
+        }
+
+        /// <summary>
+        /// 统一的组件复制方法
+        /// </summary>
+        private T CopyComponentWithUndo<T>(GameObject source, GameObject target, string undoName = null) where T : Component
+        {
+            var sourceComponent = source.GetComponent<T>();
+            if (sourceComponent == null)
+            {
+                // YuebyLogger.LogWarning("PhysBoneTransfer", $"Source component {typeof(T).Name} not found on {source.name}");
+                return null;
+            }
+
+            try
+            {
+                ComponentUtility.CopyComponent(sourceComponent);
+                var targetComponent = target.GetComponent<T>();
+
+                if (targetComponent != null)
+                    ComponentUtility.PasteComponentValues(targetComponent);
+                else
+                {
+                    ComponentUtility.PasteComponentAsNew(target);
+                    targetComponent = target.GetComponent<T>();
+                }
+
+                Undo.RegisterCompleteObjectUndo(target, undoName ?? $"Transfer {typeof(T).Name}");
+                return targetComponent;
+            }
+            catch (System.Exception e)
+            {
+                YuebyLogger.LogError("PhysBoneTransfer", $"Failed to copy {typeof(T).Name}: {e.Message}");
+                return null;
+            }
+        }
+
+        // 1. 统一路径处理
+        private string GetTargetPath(Transform source, Transform targetRoot)
+        {
+            return VRC.Core.ExtensionMethods.GetHierarchyPath(source).Replace($"{_origin.name}", $"{targetRoot.name}");
+        }
     }
 }
